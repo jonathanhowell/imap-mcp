@@ -12,7 +12,7 @@ Six phases building from the bottom of the architecture stack to the top. Config
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - MCP server shell, multi-account config, credential handling, and data model constraints
+- [x] **Phase 1: Foundation** - MCP server shell, multi-account config, credential handling, and data model constraints (completed 2026-03-11)
 - [ ] **Phase 2: Connection Management** - Persistent IMAP connections, TLS enforcement, reconnect with exponential backoff
 - [ ] **Phase 3: Core Read Operations** - Mailbox navigation, paginated message listing, full message reads, basic search, attachment metadata
 - [ ] **Phase 4: Multi-Account Unified View** - Named account targeting, unified unread inbox, per-account error isolation
@@ -101,7 +101,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 2/3 | In Progress|  |
+| 1. Foundation | 3/3 | Complete   | 2026-03-11 |
 | 2. Connection Management | 0/TBD | Not started | - |
 | 3. Core Read Operations | 0/TBD | Not started | - |
 | 4. Multi-Account Unified View | 0/TBD | Not started | - |

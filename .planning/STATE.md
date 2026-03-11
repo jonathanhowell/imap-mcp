@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-foundation-02-PLAN.md
-last_updated: "2026-03-11T21:21:11.741Z"
+stopped_at: Completed 01-foundation-03-PLAN.md
+last_updated: "2026-03-11T21:25:10.756Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-foundation P01 | 3 | 2 tasks | 8 files |
 | Phase 01-foundation P02 | 5 | 2 tasks | 7 files |
+| Phase 01-foundation P03 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: passWithNoTests and --no-error-on-unmatched-pattern added for clean bootstrap state with empty directories
 - [Phase 01-foundation]: zod v4 uses .issues not .errors — all schema error access must use result.error.issues
 - [Phase 01-foundation]: MessageRef {account_id, uid} contract established — bare UIDs must never be passed to MCP tools
+- [Phase 01-foundation]: Stub tool names (list_accounts, list_folders, list_messages, read_message, search_messages) are the stable MCP contract — Phase 3 replaces handlers not names
+- [Phase 01-foundation]: void config in src/index.ts suppresses unused-variable lint while keeping the config load side-effect (process.exit on invalid config)
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T21:21:11.739Z
-Stopped at: Completed 01-foundation-02-PLAN.md
+Last session: 2026-03-11T21:25:10.754Z
+Stopped at: Completed 01-foundation-03-PLAN.md
 Resume file: None
