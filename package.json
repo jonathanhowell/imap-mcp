@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "lint": "eslint src/ tests/",
-    "lint:fix": "eslint src/ tests/ --fix",
+    "lint": "eslint src/ tests/ --no-error-on-unmatched-pattern",
+    "lint:fix": "eslint src/ tests/ --fix --no-error-on-unmatched-pattern",
     "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -17,7 +17,11 @@
     "type": "git",
     "url": "git+https://github.com/jonathanhowell/imap-mcp.git"
   },
-  "keywords": ["imap", "mcp", "email"],
+  "keywords": [
+    "imap",
+    "mcp",
+    "email"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {
@@ -25,7 +29,10 @@
   },
   "homepage": "https://github.com/jonathanhowell/imap-mcp#readme",
   "lint-staged": {
-    "*.ts": ["eslint --fix", "prettier --write"]
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
