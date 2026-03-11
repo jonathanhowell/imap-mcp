@@ -7,9 +7,9 @@
 
 ### Configuration (CONF)
 
-- [ ] **CONF-01**: User can configure multiple named email accounts (e.g. "personal", "work") via a config file
-- [ ] **CONF-02**: IMAP credentials can be supplied via environment variables as an alternative to the config file
-- [ ] **CONF-03**: Server enforces TLS/SSL for all IMAP connections (port 993); plain-text connections are rejected at startup
+- [x] **CONF-01**: User can configure multiple named email accounts (e.g. "personal", "work") via a config file
+- [x] **CONF-02**: IMAP credentials can be supplied via environment variables as an alternative to the config file
+- [x] **CONF-03**: Server enforces TLS/SSL for all IMAP connections (port 993); plain-text connections are rejected at startup
 
 ### Connection Management (CONN)
 
@@ -100,9 +100,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONF-01 | Phase 1 | Pending |
-| CONF-02 | Phase 1 | Pending |
-| CONF-03 | Phase 1 | Pending |
+| CONF-01 | Phase 1 | Complete |
+| CONF-02 | Phase 1 | Complete |
+| CONF-03 | Phase 1 | Complete |
 | CONN-01 | Phase 2 | Pending |
 | CONN-02 | Phase 2 | Pending |
 | CONN-03 | Phase 2 | Pending |
