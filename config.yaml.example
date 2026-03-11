@@ -1,0 +1,34 @@
+# imap-mcp configuration
+# Copy this file to ~/.config/imap-mcp/config.yaml and fill in your values.
+# Override the default location with: IMAP_MCP_CONFIG=/path/to/config.yaml
+#
+# SECURITY: Store passwords as environment variable references ($VAR_NAME).
+# The actual secret lives in the environment, not in this file.
+# This file is safe to commit once passwords use $VAR_NAME references.
+
+accounts:
+  # Personal Gmail account (use an App Password — Google account password won't work)
+  - name: personal
+    host: imap.gmail.com
+    port: 993          # Must be 993 — TLS/SSL is enforced; plain-text (143) is rejected
+    username: you@gmail.com
+    password: $PERSONAL_IMAP_PASSWORD   # Set this env var to your App Password
+    display_name: Personal Gmail        # Optional: human-friendly label
+
+  # Work account
+  - name: work
+    host: imap.yourcompany.com
+    port: 993
+    username: you@yourcompany.com
+    password: $WORK_IMAP_PASSWORD
+    display_name: Work Email
+
+# Environment variables to set before starting the server:
+#   export PERSONAL_IMAP_PASSWORD="your-app-password-here"
+#   export WORK_IMAP_PASSWORD="your-work-password-here"
+#
+# Or add them to your Claude Desktop MCP config:
+#   "env": {
+#     "PERSONAL_IMAP_PASSWORD": "your-app-password-here",
+#     "IMAP_MCP_CONFIG": "/home/you/.config/imap-mcp/config.yaml"
+#   }
