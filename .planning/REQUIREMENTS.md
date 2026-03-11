@@ -13,9 +13,9 @@
 
 ### Connection Management (CONN)
 
-- [ ] **CONN-01**: Server maintains persistent IMAP connections per account (not opened on every tool call)
-- [ ] **CONN-02**: Connections automatically reconnect with exponential backoff after drop or timeout
-- [ ] **CONN-03**: One broken account connection does not crash the server or block operations on other accounts
+- [x] **CONN-01**: Server maintains persistent IMAP connections per account (not opened on every tool call)
+- [x] **CONN-02**: Connections automatically reconnect with exponential backoff after drop or timeout
+- [x] **CONN-03**: One broken account connection does not crash the server or block operations on other accounts
 
 ### Mailbox Navigation (MAIL)
 
@@ -103,9 +103,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONF-01 | Phase 1 | Complete |
 | CONF-02 | Phase 1 | Complete |
 | CONF-03 | Phase 1 | Complete |
-| CONN-01 | Phase 2 | Pending |
-| CONN-02 | Phase 2 | Pending |
-| CONN-03 | Phase 2 | Pending |
+| CONN-01 | Phase 2 | Complete |
+| CONN-02 | Phase 2 | Complete |
+| CONN-03 | Phase 2 | Complete |
 | MAIL-01 | Phase 3 | Pending |
 | MAIL-02 | Phase 3 | Pending |
 | MAIL-03 | Phase 3 | Pending |
