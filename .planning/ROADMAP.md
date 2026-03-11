@@ -31,7 +31,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Credentials are never written to stdout or any log output — only stderr, and only sanitized
   4. Server can be configured entirely via environment variables with no config file present
   5. All IMAP connections are refused at startup if TLS/SSL is not available (port 993 enforcement)
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Project scaffold (package.json, tsconfig, ESLint, Prettier, Vitest, Husky)
+- [ ] 01-02-PLAN.md — Core types, logger, config schema, loader, and unit tests
+- [ ] 01-03-PLAN.md — MCP server entry point, stub tools, startup smoke test, example config
 
 ### Phase 2: Connection Management
 **Goal**: The server maintains stable, persistent IMAP connections per account that survive drops and timeouts without crashing the server or blocking other accounts
@@ -96,7 +101,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/3 | Not started | - |
 | 2. Connection Management | 0/TBD | Not started | - |
 | 3. Core Read Operations | 0/TBD | Not started | - |
 | 4. Multi-Account Unified View | 0/TBD | Not started | - |
