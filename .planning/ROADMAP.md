@@ -47,7 +47,12 @@ Plans:
   2. After a simulated network drop, the server reconnects automatically and tool calls succeed within the next polling cycle
   3. When one account's IMAP server is unreachable, tool calls against other accounts continue to succeed
   4. The server process stays alive through at least one simulated connection drop per account
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Install imapflow and write failing test scaffolds for AccountConnection and ConnectionManager
+- [ ] 02-02-PLAN.md — Implement AccountConnection state machine with exponential backoff reconnect loop
+- [ ] 02-03-PLAN.md — Implement ConnectionManager, wire into src/index.ts with graceful SIGTERM/SIGINT shutdown
 
 ### Phase 3: Core Read Operations
 **Goal**: Agents can navigate mailboxes, list and read messages with pagination, search by headers, and inspect attachments — all via stable MCP tools with structured, normalized output
@@ -102,7 +107,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-03-11 |
-| 2. Connection Management | 0/TBD | Not started | - |
+| 2. Connection Management | 0/3 | Not started | - |
 | 3. Core Read Operations | 0/TBD | Not started | - |
 | 4. Multi-Account Unified View | 0/TBD | Not started | - |
 | 5. Background Polling | 0/TBD | Not started | - |
