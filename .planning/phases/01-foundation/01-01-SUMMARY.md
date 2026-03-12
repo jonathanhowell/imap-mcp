@@ -89,7 +89,7 @@ Each task was committed atomically:
 1. **Task 1: Initialize package.json and install dependencies** - `e349edc` (chore)
 2. **Task 2: Configure TypeScript, ESLint, Prettier, Vitest, and Husky** - `501621d` (chore)
 
-**Plan metadata:** _(to be added after final commit)_
+**Plan metadata:** `338e16c` (docs: complete project scaffold plan)
 
 ## Files Created/Modified
 - `package.json` - Project metadata, ESM type, scripts, lint-staged config, all dependencies

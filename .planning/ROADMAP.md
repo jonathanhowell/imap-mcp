@@ -116,7 +116,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-03-11 |
 | 2. Connection Management | 3/3 | Complete   | 2026-03-12 |
-| 3. Core Read Operations | 1/6 | In Progress|  |
+| 3. Core Read Operations | 2/6 | In Progress|  |
 | 4. Multi-Account Unified View | 0/TBD | Not started | - |
 | 5. Background Polling | 0/TBD | Not started | - |
 | 6. Hardening and Release | 0/TBD | Not started | - |

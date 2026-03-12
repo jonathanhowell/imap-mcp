@@ -19,31 +19,31 @@
 
 ### Mailbox Navigation (MAIL)
 
-- [ ] **MAIL-01**: Agent can list all folders/mailboxes in a named account
-- [ ] **MAIL-02**: Agent can retrieve total and unread message counts per folder
-- [ ] **MAIL-03**: Agent can list messages from any folder, not just Inbox
+- [x] **MAIL-01**: Agent can list all folders/mailboxes in a named account
+- [x] **MAIL-02**: Agent can retrieve total and unread message counts per folder
+- [x] **MAIL-03**: Agent can list messages from any folder, not just Inbox
 
 ### Message Listing (LIST)
 
-- [ ] **LIST-01**: Agent can list messages in a folder with pagination (limit and offset parameters)
-- [ ] **LIST-02**: Agent can list unread messages from a specific account or across all accounts
-- [ ] **LIST-03**: Message listings are sortable by date (newest-first or oldest-first)
-- [ ] **LIST-04**: Message list responses include headers only (sender, subject, date, UID) — no bodies
+- [x] **LIST-01**: Agent can list messages in a folder with pagination (limit and offset parameters)
+- [x] **LIST-02**: Agent can list unread messages from a specific account or across all accounts
+- [x] **LIST-03**: Message listings are sortable by date (newest-first or oldest-first)
+- [x] **LIST-04**: Message list responses include headers only (sender, subject, date, UID) — no bodies
 
 ### Message Reading (READ)
 
-- [ ] **READ-01**: Agent can fetch a full email by account name and UID (headers + plain text body)
-- [ ] **READ-02**: Agent can fetch a truncated email body (first N characters, configurable)
-- [ ] **READ-03**: Agent can fetch a cleaned email body: HTML converted to plain text, quoted reply chains and thread history removed
-- [ ] **READ-04**: Agent can list attachments for a message (filename, size, MIME type) without downloading content
-- [ ] **READ-05**: Agent can download a specific attachment by message UID and part identifier
+- [x] **READ-01**: Agent can fetch a full email by account name and UID (headers + plain text body)
+- [x] **READ-02**: Agent can fetch a truncated email body (first N characters, configurable)
+- [x] **READ-03**: Agent can fetch a cleaned email body: HTML converted to plain text, quoted reply chains and thread history removed
+- [x] **READ-04**: Agent can list attachments for a message (filename, size, MIME type) without downloading content
+- [x] **READ-05**: Agent can download a specific attachment by message UID and part identifier
 
 ### Search (SRCH)
 
-- [ ] **SRCH-01**: Agent can search messages by sender address or domain
-- [ ] **SRCH-02**: Agent can search messages by subject keyword
-- [ ] **SRCH-03**: Agent can search messages by date range (before, after, or between dates)
-- [ ] **SRCH-04**: Agent can filter messages by read/unread status
+- [x] **SRCH-01**: Agent can search messages by sender address or domain
+- [x] **SRCH-02**: Agent can search messages by subject keyword
+- [x] **SRCH-03**: Agent can search messages by date range (before, after, or between dates)
+- [x] **SRCH-04**: Agent can filter messages by read/unread status
 
 ### Multi-Account (ACCT)
 
@@ -106,22 +106,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONN-01 | Phase 2 | Complete |
 | CONN-02 | Phase 2 | Complete |
 | CONN-03 | Phase 2 | Complete |
-| MAIL-01 | Phase 3 | Pending |
-| MAIL-02 | Phase 3 | Pending |
-| MAIL-03 | Phase 3 | Pending |
-| LIST-01 | Phase 3 | Pending |
-| LIST-02 | Phase 3 | Pending |
-| LIST-03 | Phase 3 | Pending |
-| LIST-04 | Phase 3 | Pending |
-| READ-01 | Phase 3 | Pending |
-| READ-02 | Phase 3 | Pending |
-| READ-03 | Phase 3 | Pending |
-| READ-04 | Phase 3 | Pending |
-| READ-05 | Phase 3 | Pending |
-| SRCH-01 | Phase 3 | Pending |
-| SRCH-02 | Phase 3 | Pending |
-| SRCH-03 | Phase 3 | Pending |
-| SRCH-04 | Phase 3 | Pending |
+| MAIL-01 | Phase 3 | Complete |
+| MAIL-02 | Phase 3 | Complete |
+| MAIL-03 | Phase 3 | Complete |
+| LIST-01 | Phase 3 | Complete |
+| LIST-02 | Phase 3 | Complete |
+| LIST-03 | Phase 3 | Complete |
+| LIST-04 | Phase 3 | Complete |
+| READ-01 | Phase 3 | Complete |
+| READ-02 | Phase 3 | Complete |
+| READ-03 | Phase 3 | Complete |
+| READ-04 | Phase 3 | Complete |
+| READ-05 | Phase 3 | Complete |
+| SRCH-01 | Phase 3 | Complete |
+| SRCH-02 | Phase 3 | Complete |
+| SRCH-03 | Phase 3 | Complete |
+| SRCH-04 | Phase 3 | Complete |
 | ACCT-01 | Phase 4 | Pending |
 | ACCT-02 | Phase 4 | Pending |
 | ACCT-03 | Phase 4 | Pending |

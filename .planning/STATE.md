@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-12T13:50:17.079Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-12T13:57:03.998Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-connection-management P02 | 2 | 2 tasks | 3 files |
 | Phase 02-connection-management P03 | 20 | 2 tasks | 5 files |
 | Phase 03-core-read-operations P01 | 7min | 3 tasks | 8 files |
+| Phase 03-core-read-operations P02 | 8min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,8 @@ Recent decisions affecting current work:
 - [Phase 02-connection-management]: SIGTERM/SIGINT handlers registered after connectAll() — connections established before server accepts MCP calls
 - [Phase 03-core-read-operations]: eslint-disable block comment used for multi-line imports in Wave 0 scaffolds — preserves import intent while satisfying no-unused-vars rule
 - [Phase 03-core-read-operations]: ToolResult interface mirrors MCP SDK CallToolResult shape — all Phase 3 handlers return this type for structured error propagation
+- [Phase 03-core-read-operations]: folder-service is pure (no try/catch) — handler layer owns structured error formatting for ToolResult
+- [Phase 03-core-read-operations]: Service+handler split pattern established: service accepts ImapFlow directly, handler calls getClient and guards on error
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T13:50:17.076Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-12T13:57:03.996Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
