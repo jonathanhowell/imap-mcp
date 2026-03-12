@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-12T13:57:03.998Z"
+stopped_at: Completed 03-05-PLAN.md
+last_updated: "2026-03-12T20:55:00.000Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 8
+  completed_plans: 11
   percent: 0
 ---
 
@@ -58,6 +58,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-connection-management P03 | 20 | 2 tasks | 5 files |
 | Phase 03-core-read-operations P01 | 7min | 3 tasks | 8 files |
 | Phase 03-core-read-operations P02 | 8min | 2 tasks | 3 files |
+| Phase 03-core-read-operations P03 | verified | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Recent decisions affecting current work:
 - [Phase 03-core-read-operations]: ToolResult interface mirrors MCP SDK CallToolResult shape — all Phase 3 handlers return this type for structured error propagation
 - [Phase 03-core-read-operations]: folder-service is pure (no try/catch) — handler layer owns structured error formatting for ToolResult
 - [Phase 03-core-read-operations]: Service+handler split pattern established: service accepts ImapFlow directly, handler calls getClient and guards on error
+- [Phase 03-core-read-operations]: listMessages uses UID-slice pagination: search all UIDs, sort+slice in memory, fetchAll only the page — establishes pattern for all Phase 3 services
+- [Phase 03-core-read-operations]: Mailbox lock guard: getMailboxLock in try block with lock.release() in finally — required pattern for all services calling getMailboxLock
+- [Phase 03-core-read-operations]: search() || [] normalization: imapflow search() returns false when no results — always normalize to empty array immediately
 
 ### Pending Todos
 
@@ -100,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T13:57:03.996Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-12T20:54:36.753Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
