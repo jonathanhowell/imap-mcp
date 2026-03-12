@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - MCP server shell, multi-account config, credential handling, and data model constraints (completed 2026-03-11)
 - [x] **Phase 2: Connection Management** - Persistent IMAP connections, TLS enforcement, reconnect with exponential backoff (completed 2026-03-12)
-- [ ] **Phase 3: Core Read Operations** - Mailbox navigation, paginated message listing, full message reads, basic search, attachment metadata
+- [x] **Phase 3: Core Read Operations** - Mailbox navigation, paginated message listing, full message reads, basic search, attachment metadata (completed 2026-03-12)
 - [ ] **Phase 4: Multi-Account Unified View** - Named account targeting, unified unread inbox, per-account error isolation
 - [ ] **Phase 5: Background Polling** - Configurable polling loop, in-memory header cache, new-mail-since query
 - [ ] **Phase 6: Hardening and Release** - Response size verification, reconnect testing, credential audit, TLS enforcement, open-source readiness
@@ -116,7 +116,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-03-11 |
 | 2. Connection Management | 3/3 | Complete   | 2026-03-12 |
-| 3. Core Read Operations | 5/6 | In Progress|  |
+| 3. Core Read Operations | 6/6 | Complete   | 2026-03-12 |
 | 4. Multi-Account Unified View | 0/TBD | Not started | - |
 | 5. Background Polling | 0/TBD | Not started | - |
 | 6. Hardening and Release | 0/TBD | Not started | - |
