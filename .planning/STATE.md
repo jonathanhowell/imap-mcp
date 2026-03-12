@@ -59,6 +59,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-core-read-operations P01 | 7min | 3 tasks | 8 files |
 | Phase 03-core-read-operations P02 | 8min | 2 tasks | 3 files |
 | Phase 03-core-read-operations P03 | verified | 2 tasks | 3 files |
+| Phase 03-core-read-operations P04 | pre-committed | 2 tasks | 7 files |
+| Phase 03-core-read-operations P05 | ~20min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -91,6 +93,12 @@ Recent decisions affecting current work:
 - [Phase 03-core-read-operations]: listMessages uses UID-slice pagination: search all UIDs, sort+slice in memory, fetchAll only the page — establishes pattern for all Phase 3 services
 - [Phase 03-core-read-operations]: Mailbox lock guard: getMailboxLock in try block with lock.release() in finally — required pattern for all services calling getMailboxLock
 - [Phase 03-core-read-operations]: search() || [] normalization: imapflow search() returns false when no results — always normalize to empty array immediately
+- [Phase 03-core-read-operations]: Root BODYSTRUCTURE node with undefined .part is treated as part '1' — single-part messages always addressable via fetchOne bodyParts '1'
+- [Phase 03-core-read-operations]: read_message default format is 'clean' (reply-chain stripped) — reduces noise for agent consumers; callers pass format='full' for raw content
+- [Phase 03-core-read-operations]: Two fetchOne calls under single lock: first for envelope+bodyStructure, second for body part buffers — avoids double-lock overhead while keeping payloads minimal
+- [Phase 03-core-read-operations]: download_attachment acquires its own lock in attachment-service — service is self-contained and directly testable without handler layer mock
+- [Phase 03-core-read-operations]: unread param maps inverted to IMAP seen flag: unread=true → seen: false; unread=false → seen: true; unread=undefined → seen omitted entirely
+- [Phase 03-core-read-operations]: folder='all' search uses client.list() + sequential per-folder loop with early exit at max_results — simpler than parallel, documented as potentially slow
 
 ### Pending Todos
 
@@ -104,6 +112,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T20:54:36.753Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-03-12T20:55:00.000Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None
