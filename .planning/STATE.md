@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-connection-management/02-02-PLAN.md
-last_updated: "2026-03-12T07:35:46.866Z"
+stopped_at: Completed 02-connection-management/02-03-PLAN.md
+last_updated: "2026-03-12T08:08:39.576Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 0
 ---
 
@@ -55,6 +55,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P03 | 2 | 2 tasks | 4 files |
 | Phase 02-connection-management P01 | 2 | 2 tasks | 4 files |
 | Phase 02-connection-management P02 | 2 | 2 tasks | 3 files |
+| Phase 02-connection-management P03 | 20 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 02-connection-management]: imapflow ships own .d.ts at lib/imap-flow.d.ts; @types/imapflow not installed (community stub is outdated)
 - [Phase 02-connection-management]: Use globalThis.setTimeout (not node:timers/promises) for backoff sleep — vitest fake timers do not intercept node:timers/promises.setTimeout
 - [Phase 02-connection-management]: AbortController + AbortSignal pattern for interrupting sleeping backoff delay during gracefulClose()
+- [Phase 02-connection-management]: vi.fn(function(){}) required for vitest constructor mocks — arrow functions fail silently with new
+- [Phase 02-connection-management]: ConnectionManager.getClient() returns ImapFlow | { error: string } discriminated union — callers check 'error' in result
+- [Phase 02-connection-management]: SIGTERM/SIGINT handlers registered after connectAll() — connections established before server accepts MCP calls
 
 ### Pending Todos
 
@@ -90,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T07:35:46.863Z
-Stopped at: Completed 02-connection-management/02-02-PLAN.md
+Last session: 2026-03-12T08:08:39.574Z
+Stopped at: Completed 02-connection-management/02-03-PLAN.md
 Resume file: None
