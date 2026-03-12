@@ -36,11 +36,14 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "email-reply-parser": "^2.3.5",
+    "html-to-text": "^9.0.5",
     "imapflow": "^1.2.13",
     "yaml": "^2.8.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/html-to-text": "^9.0.4",
     "@types/node": "^22.19.15",
     "eslint": "^10.0.3",
     "husky": "^9.1.7",
