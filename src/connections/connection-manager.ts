@@ -76,6 +76,14 @@ export class ConnectionManager {
   }
 
   /**
+   * Returns the names of all configured accounts (regardless of connection state).
+   * Used by the list_accounts tool to enumerate accounts.
+   */
+  getAccountIds(): string[] {
+    return Array.from(this.connections.keys());
+  }
+
+  /**
    * Gracefully closes all connections. Uses Promise.allSettled so one
    * failed logout does not prevent others from closing.
    */
