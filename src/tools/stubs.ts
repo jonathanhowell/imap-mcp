@@ -1,4 +1,5 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
+import type { ConnectionManager } from "../connections/index.js";
 
 export const STUB_TOOLS: Tool[] = [
   {
@@ -61,7 +62,11 @@ export const STUB_TOOLS: Tool[] = [
   },
 ];
 
-export function handleStubToolCall(toolName: string): {
+export function handleStubToolCall(
+  toolName: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _manager?: ConnectionManager
+): {
   content: Array<{ type: "text"; text: string }>;
   isError: boolean;
 } {

@@ -3,11 +3,23 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { loadConfig } from "./config/loader.js";
 import { STUB_TOOLS, handleStubToolCall } from "./tools/stubs.js";
+import { ConnectionManager } from "./connections/index.js";
 
 async function main(): Promise<void> {
   // loadConfig() exits process with code 1 on any config error.
   // It never throws — no try/catch needed here.
   const config = await loadConfig();
+
+  const manager = new ConnectionManager(config);
+  await manager.connectAll();
+
+  const shutdown = (): void => {
+    void manager.closeAll().then(() => {
+      process.exit(0);
+    });
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 
   const server = new Server(
     { name: "imap-mcp", version: "1.0.0" },
@@ -20,14 +32,12 @@ async function main(): Promise<void> {
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const toolName = request.params.name;
-    return handleStubToolCall(toolName);
+    return handleStubToolCall(toolName, manager);
   });
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
   // Successful startup is intentionally silent.
-  // config is validated — Phase 2 will use it to open connections.
-  void config;
 }
 
 main().catch((err: unknown) => {
