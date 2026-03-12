@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-connection-management/02-01-PLAN.md
-last_updated: "2026-03-11T22:18:16.334Z"
+stopped_at: Completed 02-connection-management/02-02-PLAN.md
+last_updated: "2026-03-12T07:35:46.866Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P02 | 5 | 2 tasks | 7 files |
 | Phase 01-foundation P03 | 2 | 2 tasks | 4 files |
 | Phase 02-connection-management P01 | 2 | 2 tasks | 4 files |
+| Phase 02-connection-management P02 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: void config in src/index.ts suppresses unused-variable lint while keeping the config load side-effect (process.exit on invalid config)
 - [Phase 02-connection-management]: TDD RED commits use --no-verify to bypass pre-commit test runner when committing intentionally failing test stubs
 - [Phase 02-connection-management]: imapflow ships own .d.ts at lib/imap-flow.d.ts; @types/imapflow not installed (community stub is outdated)
+- [Phase 02-connection-management]: Use globalThis.setTimeout (not node:timers/promises) for backoff sleep — vitest fake timers do not intercept node:timers/promises.setTimeout
+- [Phase 02-connection-management]: AbortController + AbortSignal pattern for interrupting sleeping backoff delay during gracefulClose()
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-11T22:18:16.331Z
-Stopped at: Completed 02-connection-management/02-01-PLAN.md
+Last session: 2026-03-12T07:35:46.863Z
+Stopped at: Completed 02-connection-management/02-02-PLAN.md
 Resume file: None
