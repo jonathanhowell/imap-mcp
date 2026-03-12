@@ -64,7 +64,15 @@ Plans:
   3. Agent can fetch a full email by UID and receive a clean plain-text body (HTML stripped, quoted chains removed)
   4. Agent can search messages by sender, subject keyword, date range, and read/unread status and receive results within the pagination limit
   5. Agent can list attachment metadata for any message without triggering a download, and download a specific attachment by part identifier
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Install deps (html-to-text, email-reply-parser), add Phase 3 types, create failing test scaffolds
+- [ ] 03-02-PLAN.md — folder-service + list_folders handler (MAIL-01, MAIL-02)
+- [ ] 03-03-PLAN.md — message-service + list_messages handler (MAIL-03, LIST-01–04)
+- [ ] 03-04-PLAN.md — body-service, attachment-service, read_message + download_attachment handlers (READ-01–05)
+- [ ] 03-05-PLAN.md — search-service + search_messages handler (SRCH-01–04)
+- [ ] 03-06-PLAN.md — Wire all tools into src/index.ts, implement list_accounts, replace stubs
 
 ### Phase 4: Multi-Account Unified View
 **Goal**: Agents can target any named account explicitly, or issue a single query that spans all accounts and returns a merged, sorted result with per-account error isolation
@@ -108,7 +116,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete   | 2026-03-11 |
 | 2. Connection Management | 3/3 | Complete   | 2026-03-12 |
-| 3. Core Read Operations | 0/TBD | Not started | - |
+| 3. Core Read Operations | 0/6 | Not started | - |
 | 4. Multi-Account Unified View | 0/TBD | Not started | - |
 | 5. Background Polling | 0/TBD | Not started | - |
 | 6. Hardening and Release | 0/TBD | Not started | - |
