@@ -1,3 +1,4 @@
+import { Readable } from "stream";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { ConnectionManager } from "../connections/index.js";
 import { parseBodyStructure, extractBody } from "../services/body-service.js";
@@ -77,32 +78,22 @@ export async function handleReadMessage(
     }
 
     const { textPartId, htmlPartId, attachments } = parseBodyStructure(
-      meta.bodyStructure ?? { type: "text", subtype: "plain" }
+      meta.bodyStructure ?? { type: "text/plain" }
     );
 
-    // Determine which parts to fetch
-    const partsToFetch: string[] = [];
-    if (textPartId !== null) partsToFetch.push(textPartId);
-    if (htmlPartId !== null && textPartId === null) partsToFetch.push(htmlPartId);
-
+    // Use client.download() which automatically decodes Content-Transfer-Encoding
+    // (base64, quoted-printable, etc.) — fetchOne bodyParts returns raw encoded bytes
+    const partId = textPartId ?? htmlPartId;
+    const isHtml = textPartId === null && htmlPartId !== null;
     let bodyText = "";
-    if (partsToFetch.length > 0) {
-      // Second fetch: get body parts
-      const bodyMsg = await client.fetchOne(
-        String(uid),
-        { bodyParts: partsToFetch },
-        { uid: true }
-      );
 
-      if (bodyMsg && bodyMsg.bodyParts) {
-        bodyText = extractBody(
-          bodyMsg.bodyParts as Map<string, Buffer>,
-          textPartId,
-          htmlPartId,
-          format,
-          max_chars
-        );
+    if (partId !== null) {
+      const { content } = await client.download(String(uid), partId, { uid: true });
+      const chunks: Buffer[] = [];
+      for await (const chunk of content as Readable) {
+        chunks.push(chunk as Buffer);
       }
+      bodyText = extractBody(Buffer.concat(chunks).toString("utf-8"), isHtml, format, max_chars);
     }
 
     const envelope = meta.envelope ?? {};

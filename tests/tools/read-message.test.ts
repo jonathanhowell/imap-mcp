@@ -1,3 +1,4 @@
+import { Readable } from "stream";
 import { describe, it, expect, vi } from "vitest";
 import { handleReadMessage } from "../../src/tools/read-message.js";
 import type { ConnectionManager } from "../../src/connections/index.js";
@@ -16,18 +17,23 @@ function makeEnvelope(from: string, subject: string, date: Date) {
   };
 }
 
-// Simple single-part text/plain body structure
+// Simple single-part text/plain body structure (imapflow sets type as full content-type string)
 const plainTextBodyStructure = {
-  type: "text",
-  subtype: "plain",
+  type: "text/plain",
   size: 50,
 };
 
-// Helper to build a mock ConnectionManager
+// Create a mock download response — content is a Readable stream of decoded bytes
+function makeDownloadResponse(text: string) {
+  return { content: Readable.from([Buffer.from(text, "utf-8")]) };
+}
+
+// Helper to build a mock ConnectionManager with both fetchOne and download mocked
 function makeMockManager(clientOverrides: Record<string, unknown> = {}): ConnectionManager {
   const client = {
     getMailboxLock: vi.fn().mockResolvedValue(makeMockLock()),
     fetchOne: vi.fn(),
+    download: vi.fn(),
     ...clientOverrides,
   };
   return {
@@ -37,16 +43,14 @@ function makeMockManager(clientOverrides: Record<string, unknown> = {}): Connect
 
 describe("read_message", () => {
   it("READ-01: format=full returns plain text body", async () => {
-    const bodyPartsMap = new Map([["1", Buffer.from("Hello plain text", "utf-8")]]);
     const manager = makeMockManager();
     const client = (manager.getClient as ReturnType<typeof vi.fn>)();
-    client.fetchOne
-      .mockResolvedValueOnce({
-        bodyStructure: plainTextBodyStructure,
-        envelope: makeEnvelope("test@example.com", "Test Subject", new Date("2024-01-01")),
-        flags: new Set(),
-      })
-      .mockResolvedValueOnce({ bodyParts: bodyPartsMap });
+    client.fetchOne.mockResolvedValueOnce({
+      bodyStructure: plainTextBodyStructure,
+      envelope: makeEnvelope("test@example.com", "Test Subject", new Date("2024-01-01")),
+      flags: new Set(),
+    });
+    client.download.mockResolvedValueOnce(makeDownloadResponse("Hello plain text"));
 
     const result = await handleReadMessage({ account: "test", uid: 42, format: "full" }, manager);
     expect(result.isError).toBe(false);
@@ -59,21 +63,15 @@ describe("read_message", () => {
   });
 
   it("READ-01: format=full falls back to HTML-stripped body when no text/plain part", async () => {
-    const htmlBodyStructure = {
-      type: "text",
-      subtype: "html",
-      size: 100,
-    };
-    const bodyPartsMap = new Map([["1", Buffer.from("<p>Hello <b>HTML</b></p>", "utf-8")]]);
+    const htmlBodyStructure = { type: "text/html", size: 100 };
     const manager = makeMockManager();
     const client = (manager.getClient as ReturnType<typeof vi.fn>)();
-    client.fetchOne
-      .mockResolvedValueOnce({
-        bodyStructure: htmlBodyStructure,
-        envelope: makeEnvelope("test@example.com", "HTML Message", new Date("2024-01-01")),
-        flags: new Set(),
-      })
-      .mockResolvedValueOnce({ bodyParts: bodyPartsMap });
+    client.fetchOne.mockResolvedValueOnce({
+      bodyStructure: htmlBodyStructure,
+      envelope: makeEnvelope("test@example.com", "HTML Message", new Date("2024-01-01")),
+      flags: new Set(),
+    });
+    client.download.mockResolvedValueOnce(makeDownloadResponse("<p>Hello <b>HTML</b></p>"));
 
     const result = await handleReadMessage({ account: "test", uid: 43, format: "full" }, manager);
     expect(result.isError).toBe(false);
@@ -84,17 +82,14 @@ describe("read_message", () => {
   });
 
   it("READ-02: format=truncated returns at most max_chars characters", async () => {
-    const longText = "x".repeat(5000);
-    const bodyPartsMap = new Map([["1", Buffer.from(longText, "utf-8")]]);
     const manager = makeMockManager();
     const client = (manager.getClient as ReturnType<typeof vi.fn>)();
-    client.fetchOne
-      .mockResolvedValueOnce({
-        bodyStructure: plainTextBodyStructure,
-        envelope: makeEnvelope("test@example.com", "Long Message", new Date("2024-01-01")),
-        flags: new Set(),
-      })
-      .mockResolvedValueOnce({ bodyParts: bodyPartsMap });
+    client.fetchOne.mockResolvedValueOnce({
+      bodyStructure: plainTextBodyStructure,
+      envelope: makeEnvelope("test@example.com", "Long Message", new Date("2024-01-01")),
+      flags: new Set(),
+    });
+    client.download.mockResolvedValueOnce(makeDownloadResponse("x".repeat(5000)));
 
     const result = await handleReadMessage(
       { account: "test", uid: 44, format: "truncated", max_chars: 100 },
@@ -106,17 +101,14 @@ describe("read_message", () => {
   });
 
   it("READ-02: format=truncated defaults to 2000 chars when max_chars omitted", async () => {
-    const longText = "y".repeat(5000);
-    const bodyPartsMap = new Map([["1", Buffer.from(longText, "utf-8")]]);
     const manager = makeMockManager();
     const client = (manager.getClient as ReturnType<typeof vi.fn>)();
-    client.fetchOne
-      .mockResolvedValueOnce({
-        bodyStructure: plainTextBodyStructure,
-        envelope: makeEnvelope("test@example.com", "Long Default", new Date("2024-01-01")),
-        flags: new Set(),
-      })
-      .mockResolvedValueOnce({ bodyParts: bodyPartsMap });
+    client.fetchOne.mockResolvedValueOnce({
+      bodyStructure: plainTextBodyStructure,
+      envelope: makeEnvelope("test@example.com", "Long Default", new Date("2024-01-01")),
+      flags: new Set(),
+    });
+    client.download.mockResolvedValueOnce(makeDownloadResponse("y".repeat(5000)));
 
     const result = await handleReadMessage(
       { account: "test", uid: 45, format: "truncated" },
@@ -134,36 +126,31 @@ describe("read_message", () => {
       "On Mon Jan 1 2024, Sender wrote:",
       "> Original message here",
     ].join("\n");
-    const bodyPartsMap = new Map([["1", Buffer.from(textWithQuote, "utf-8")]]);
     const manager = makeMockManager();
     const client = (manager.getClient as ReturnType<typeof vi.fn>)();
-    client.fetchOne
-      .mockResolvedValueOnce({
-        bodyStructure: plainTextBodyStructure,
-        envelope: makeEnvelope("sender@example.com", "Re: Test", new Date("2024-01-01")),
-        flags: new Set(),
-      })
-      .mockResolvedValueOnce({ bodyParts: bodyPartsMap });
+    client.fetchOne.mockResolvedValueOnce({
+      bodyStructure: plainTextBodyStructure,
+      envelope: makeEnvelope("sender@example.com", "Re: Test", new Date("2024-01-01")),
+      flags: new Set(),
+    });
+    client.download.mockResolvedValueOnce(makeDownloadResponse(textWithQuote));
 
     // No format specified — should default to 'clean'
     const result = await handleReadMessage({ account: "test", uid: 46 }, manager);
     expect(result.isError).toBe(false);
     const body = JSON.parse(result.content[0].text);
-    // The visible text should contain the reply (clean format strips quote markers)
     expect(body.body).toContain("Hello there.");
   });
 
   it("response always includes attachments array", async () => {
-    const bodyPartsMap = new Map([["1", Buffer.from("Simple message", "utf-8")]]);
     const manager = makeMockManager();
     const client = (manager.getClient as ReturnType<typeof vi.fn>)();
-    client.fetchOne
-      .mockResolvedValueOnce({
-        bodyStructure: plainTextBodyStructure,
-        envelope: makeEnvelope("a@b.com", "Subject", new Date("2024-01-01")),
-        flags: new Set(),
-      })
-      .mockResolvedValueOnce({ bodyParts: bodyPartsMap });
+    client.fetchOne.mockResolvedValueOnce({
+      bodyStructure: plainTextBodyStructure,
+      envelope: makeEnvelope("a@b.com", "Subject", new Date("2024-01-01")),
+      flags: new Set(),
+    });
+    client.download.mockResolvedValueOnce(makeDownloadResponse("Simple message"));
 
     const result = await handleReadMessage({ account: "test", uid: 47, format: "full" }, manager);
     expect(result.isError).toBe(false);

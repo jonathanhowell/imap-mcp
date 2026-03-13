@@ -5,15 +5,17 @@ import type { AttachmentMeta } from "../types.js";
 /**
  * Minimal shape of imapflow's MessageStructureObject used for BODYSTRUCTURE traversal.
  * Only the fields we access are declared here.
+ *
+ * Note: imapflow sets `type` as the full content-type string (e.g. "text/plain",
+ * "multipart/mixed") and sets `part` to the correct IMAP section number on each node.
  */
 export interface MessageStructureObject {
   part?: string;
   type: string;
-  subtype?: string;
   childNodes?: MessageStructureObject[];
   disposition?: string;
   dispositionParameters?: { filename?: string };
-  parameters?: { charset?: string; name?: string };
+  parameters?: { [key: string]: string };
   size?: number;
 }
 
@@ -29,44 +31,43 @@ export interface ParsedBodyStructure {
  * - htmlPartId: first non-attachment text/html part
  * - attachments: all attachment or non-text/non-multipart parts
  *
- * Root node with no childNodes (single-part): treated as part '1' regardless of node.part.
+ * Uses node.part (set by imapflow) for section numbers.
+ * Single-part root with no part field defaults to "1".
  */
 export function parseBodyStructure(root: MessageStructureObject): ParsedBodyStructure {
   let textPartId: string | null = null;
   let htmlPartId: string | null = null;
   const attachments: AttachmentMeta[] = [];
 
-  function traverse(node: MessageStructureObject, partPath: string): void {
-    const part = partPath;
-
+  function traverse(node: MessageStructureObject): void {
     if (node.childNodes && node.childNodes.length > 0) {
-      // Multipart: recurse into children
-      node.childNodes.forEach((child, i) => traverse(child, `${partPath}.${i + 1}`));
+      // Multipart: recurse into children (each child already has node.part set by imapflow)
+      node.childNodes.forEach((child) => traverse(child));
     } else {
+      const part = node.part ?? "1"; // single-part root has no part field
+      const [mainType, subtype] = node.type.split("/");
       const isAttachment = node.disposition === "attachment";
-      const isText = node.type === "text";
-      const isMultipart = node.type === "multipart";
+      const isText = mainType === "text";
+      const isMultipart = mainType === "multipart";
 
-      if (!isAttachment && isText && node.subtype === "plain" && textPartId === null) {
+      if (!isAttachment && isText && subtype === "plain" && textPartId === null) {
         textPartId = part;
-      } else if (!isAttachment && isText && node.subtype === "html" && htmlPartId === null) {
+      } else if (!isAttachment && isText && subtype === "html" && htmlPartId === null) {
         htmlPartId = part;
       } else if (isAttachment || (!isText && !isMultipart)) {
         const filename =
-          node.dispositionParameters?.filename ??
-          (node.parameters as { name?: string } | undefined)?.name ??
-          "attachment";
+          node.dispositionParameters?.filename ?? node.parameters?.["name"] ?? "attachment";
         attachments.push({
           part_id: part,
           filename,
           size: node.size ?? 0,
-          mime_type: `${node.type}/${node.subtype ?? "octet-stream"}`,
+          mime_type: node.type,
         });
       }
     }
   }
 
-  traverse(root, "1");
+  traverse(root);
 
   return { textPartId, htmlPartId, attachments };
 }
@@ -74,28 +75,23 @@ export function parseBodyStructure(root: MessageStructureObject): ParsedBodyStru
 export type BodyFormat = "full" | "clean" | "truncated";
 
 /**
- * Extract and format message body from fetched body parts.
+ * Format a decoded message body string.
  *
- * @param bodyPartsMap - Map from part id to Buffer (as returned by imapflow fetchOne bodyParts)
- * @param textPartId - Part id for text/plain part, or null
- * @param htmlPartId - Part id for text/html part, or null
+ * @param rawText - Decoded body text (plain text, or HTML string if isHtml=true)
+ * @param isHtml - True if rawText is HTML and should be converted to plain text
  * @param format - 'full' | 'clean' | 'truncated'
  * @param maxChars - Maximum characters for truncated format (default 2000)
  */
 export function extractBody(
-  bodyPartsMap: Map<string, Buffer>,
-  textPartId: string | null,
-  htmlPartId: string | null,
+  rawText: string,
+  isHtml: boolean,
   format: BodyFormat = "full",
   maxChars = 2000
 ): string {
-  let plainText = "";
+  let plainText = rawText;
 
-  if (textPartId !== null && bodyPartsMap.has(textPartId)) {
-    plainText = bodyPartsMap.get(textPartId)!.toString("utf-8");
-  } else if (htmlPartId !== null && bodyPartsMap.has(htmlPartId)) {
-    const html = bodyPartsMap.get(htmlPartId)!.toString("utf-8");
-    plainText = convert(html, {
+  if (isHtml) {
+    plainText = convert(rawText, {
       wordwrap: false,
       selectors: [
         { selector: "a", options: { ignoreHref: true } },
