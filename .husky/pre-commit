@@ -1,3 +1,8 @@
 #!/usr/bin/env sh
 npx lint-staged
 npx vitest run --reporter=verbose
+if ! command -v gitleaks &> /dev/null; then
+  echo "WARNING: gitleaks not found — skipping secret scan. Install: brew install gitleaks"
+  exit 0
+fi
+gitleaks protect --staged --redact
