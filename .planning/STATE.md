@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 04-multi-account-unified-view 04-01-PLAN.md
-last_updated: "2026-03-14T10:32:19.905Z"
+stopped_at: Completed 04-multi-account-unified-view 04-03-PLAN.md
+last_updated: "2026-03-14T10:37:48.948Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 15
   percent: 0
 ---
 
@@ -63,6 +63,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-core-read-operations P05 | ~20min | 2 tasks | 3 files |
 | Phase 03-core-read-operations P06 | 15min | 2 tasks | 3 files |
 | Phase 04-multi-account-unified-view P01 | 3min | 2 tasks | 4 files |
+| Phase 04-multi-account-unified-view P03 | 3min | 2 tasks | 3 files |
+| Phase 04-multi-account-unified-view P02 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -106,6 +108,11 @@ Recent decisions affecting current work:
 - [Phase 04-multi-account-unified-view]: fanOutAccounts returns errors as Record<string, string> (always present) so callers can iterate without null guard
 - [Phase 04-multi-account-unified-view]: safeTime uses || 0 not ?? 0 because new Date('').getTime() returns NaN which is falsy
 - [Phase 04-multi-account-unified-view]: fanOutAccounts enriches items via object spread to preserve T shape without mutation
+- [Phase 04-multi-account-unified-view]: search_messages multi-account returns { results, errors? } wrapper; single-account returns flat array — shapes discriminated by presence of account param
+- [Phase 04-multi-account-unified-view]: index.ts dispatch args ?? {} preserves absent keys as undefined — no account defaulting needed at dispatch layer
+- [Phase 04-multi-account-unified-view]: list_messages multi-account sort: safeTime descending (newest-first), consistent with single-account default
+- [Phase 04-multi-account-unified-view]: list_folders multi-account sort: localeCompare alphabetical (stable, deterministic for folder names)
+- [Phase 04-multi-account-unified-view]: Per-account limit for fan-out = (limit ?? 50) + (offset ?? 0) to ensure global top-N captured before merge+slice
 
 ### Pending Todos
 
@@ -119,6 +126,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T10:32:19.902Z
-Stopped at: Completed 04-multi-account-unified-view 04-01-PLAN.md
+Last session: 2026-03-14T10:37:45.691Z
+Stopped at: Completed 04-multi-account-unified-view 04-03-PLAN.md
 Resume file: None
