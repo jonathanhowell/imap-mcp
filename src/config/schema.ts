@@ -32,4 +32,9 @@ export const AccountSchema = z.object({
 
 export const AppConfigSchema = z.object({
   accounts: z.array(AccountSchema).min(1, "at least one account is required"),
+  polling: z
+    .object({
+      interval_seconds: z.number().int().positive().optional(),
+    })
+    .optional(),
 });
