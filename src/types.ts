@@ -87,3 +87,38 @@ export interface ToolResult {
   content: Array<{ type: "text"; text: string }>;
   isError: boolean;
 }
+
+// --- Phase 4 multi-account types ---
+
+/**
+ * A message header enriched with its source account.
+ * Returned in multi-account list_messages results.
+ */
+export interface MultiAccountMessageHeader extends MessageHeader {
+  account: string;
+}
+
+/**
+ * A search result item enriched with its source account.
+ * Returned in multi-account search_messages results.
+ */
+export interface MultiAccountSearchResultItem extends SearchResultItem {
+  account: string;
+}
+
+/**
+ * A folder entry enriched with its source account.
+ * Returned in multi-account list_folders results.
+ */
+export interface MultiAccountFolderEntry extends FolderEntry {
+  account: string;
+}
+
+/**
+ * Wrapper returned by multi-account tool calls (when account param is omitted).
+ * errors is omitted when empty — callers check `if (response.errors)`.
+ */
+export interface MultiAccountResult<T> {
+  results: T[];
+  errors?: Record<string, string>;
+}
