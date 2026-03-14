@@ -246,6 +246,108 @@ describe("list_messages", () => {
     });
   });
 
+  describe("200-result hard cap", () => {
+    it("single-account: limit=500 clamps to at most 200 results", async () => {
+      // 300 UIDs available, limit=500 requested — cap should fire at 200
+      const uids = Array.from({ length: 300 }, (_, i) => i + 1);
+      const { mockManager } = makeManagerWithClient({
+        search: vi.fn().mockResolvedValue(uids),
+        fetchAll: vi
+          .fn()
+          .mockImplementation((pageUids: number[]) =>
+            Promise.resolve(pageUids.map((uid) => makeMockMessage(uid)))
+          ),
+      });
+
+      const result = await handleListMessages(
+        { account: "work", folder: "INBOX", limit: 500 },
+        mockManager
+      );
+
+      expect(result.isError).toBe(false);
+      const headers = JSON.parse(result.content[0].text);
+      expect(headers.length).toBeLessThanOrEqual(200);
+    });
+
+    it("single-account: limit=50 (below cap) returns up to 50 results — cap does not lower default", async () => {
+      // 300 UIDs available, limit=50 — cap should not reduce below requested limit
+      const uids = Array.from({ length: 300 }, (_, i) => i + 1);
+      const { mockManager } = makeManagerWithClient({
+        search: vi.fn().mockResolvedValue(uids),
+        fetchAll: vi
+          .fn()
+          .mockImplementation((pageUids: number[]) =>
+            Promise.resolve(pageUids.map((uid) => makeMockMessage(uid)))
+          ),
+      });
+
+      const result = await handleListMessages(
+        { account: "work", folder: "INBOX", limit: 50 },
+        mockManager
+      );
+
+      expect(result.isError).toBe(false);
+      const headers = JSON.parse(result.content[0].text);
+      expect(headers).toHaveLength(50);
+    });
+
+    it("single-account: limit=undefined uses default 50 — unaffected by cap", async () => {
+      const uids = Array.from({ length: 300 }, (_, i) => i + 1);
+      const { mockManager } = makeManagerWithClient({
+        search: vi.fn().mockResolvedValue(uids),
+        fetchAll: vi
+          .fn()
+          .mockImplementation((pageUids: number[]) =>
+            Promise.resolve(pageUids.map((uid) => makeMockMessage(uid)))
+          ),
+      });
+
+      const result = await handleListMessages(
+        { account: "work", folder: "INBOX" },
+        mockManager
+      );
+
+      expect(result.isError).toBe(false);
+      const headers = JSON.parse(result.content[0].text);
+      expect(headers).toHaveLength(50);
+    });
+
+    it("multi-account: limit=500 clamps to at most 200 results in merged output", async () => {
+      // Build a multi-account manager with two accounts each returning 200 messages
+      function makeMultiCapClient(count: number) {
+        const uids = Array.from({ length: count }, (_, i) => i + 1);
+        const msgs = uids.map((uid) =>
+          makeMockMessage(uid, { date: new Date(`2024-01-${String(uid % 28 + 1).padStart(2, "0")}T00:00:00.000Z`) })
+        );
+        return {
+          getMailboxLock: vi.fn().mockResolvedValue({ release: vi.fn() }),
+          search: vi.fn().mockResolvedValue(uids),
+          fetchAll: vi
+            .fn()
+            .mockImplementation((pageUids: number[]) =>
+              Promise.resolve(msgs.filter((m) => pageUids.includes(m.uid)))
+            ),
+        } as unknown as import("imapflow").ImapFlow;
+      }
+
+      const gmailClient = makeMultiCapClient(200);
+      const workClient = makeMultiCapClient(200);
+
+      const manager = {
+        getClient: vi.fn().mockImplementation((id: string) =>
+          id === "gmail" ? gmailClient : workClient
+        ),
+        getAccountIds: vi.fn().mockReturnValue(["gmail", "work"]),
+      } as unknown as import("../../src/connections/index.js").ConnectionManager;
+
+      const result = await handleListMessages({ folder: "INBOX", limit: 500 }, manager);
+
+      expect(result.isError).toBe(false);
+      const response = JSON.parse(result.content[0].text);
+      expect(response.results.length).toBeLessThanOrEqual(200);
+    });
+  });
+
   describe("Multi-account fan-out (account omitted)", () => {
     // Helper to build a multi-account manager mock
     function makeMultiAccountManager(accounts: Record<string, ImapFlow | { error: string }>) {

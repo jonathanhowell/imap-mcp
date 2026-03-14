@@ -191,6 +191,107 @@ describe("search_messages", () => {
     expect(result.content[0].text).toContain("account unavailable");
   });
 
+  describe("200-result hard cap", () => {
+    it("single-account: max_results=300 clamps to at most 200 results", async () => {
+      // 300 UIDs, each returning a message — cap should fire at 200
+      const manyUids = Array.from({ length: 300 }, (_, i) => i + 1);
+      const manyMessages = Array.from({ length: 300 }, (_, i) => ({
+        uid: i + 1,
+        envelope: {
+          from: [{ address: `user${i}@example.com` }],
+          subject: `Message ${i}`,
+          date: new Date("2024-01-01"),
+        },
+        flags: new Set<string>(),
+        internalDate: new Date("2024-01-01"),
+      }));
+
+      const client = makeMockClient({
+        search: vi.fn().mockResolvedValue(manyUids),
+        fetchAll: vi
+          .fn()
+          .mockImplementation((pageUids: number[]) =>
+            Promise.resolve(manyMessages.filter((m) => pageUids.includes(m.uid)))
+          ),
+      });
+      const manager = makeManager(client);
+
+      const result = await handleSearchMessages(
+        { account: "personal", max_results: 300 },
+        manager
+      );
+
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as unknown[];
+      expect(parsed.length).toBeLessThanOrEqual(200);
+    });
+
+    it("single-account: max_results=10 (below cap) returns at most 10 results — cap does not lower", async () => {
+      const manyUids = Array.from({ length: 300 }, (_, i) => i + 1);
+      const tenMessages = Array.from({ length: 10 }, (_, i) => ({
+        uid: i + 1,
+        envelope: {
+          from: [{ address: `user${i}@example.com` }],
+          subject: `Message ${i}`,
+          date: new Date("2024-01-01"),
+        },
+        flags: new Set<string>(),
+        internalDate: new Date("2024-01-01"),
+      }));
+
+      const client = makeMockClient({
+        search: vi.fn().mockResolvedValue(manyUids),
+        fetchAll: vi.fn().mockResolvedValue(tenMessages),
+      });
+      const manager = makeManager(client);
+
+      const result = await handleSearchMessages(
+        { account: "personal", max_results: 10 },
+        manager
+      );
+
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as unknown[];
+      expect(parsed).toHaveLength(10);
+    });
+
+    it("multi-account: max_results=300 clamps merged results to at most 200", async () => {
+      // Two accounts each returning 200 messages → merged cap should still be 200
+      const makeCapClient = (count: number) => {
+        const uids = Array.from({ length: count }, (_, i) => i + 1);
+        const msgs = uids.map((uid) => ({
+          uid,
+          envelope: {
+            from: [{ address: `user${uid}@example.com` }],
+            subject: `Message ${uid}`,
+            date: new Date("2024-01-01"),
+          },
+          flags: new Set<string>(),
+          internalDate: new Date("2024-01-01"),
+        }));
+        return makeMockClient({
+          search: vi.fn().mockResolvedValue(uids),
+          fetchAll: vi
+            .fn()
+            .mockImplementation((pageUids: number[]) =>
+              Promise.resolve(msgs.filter((m) => pageUids.includes(m.uid)))
+            ),
+        });
+      };
+
+      const manager = makeMultiManager({
+        acct_a: makeCapClient(200),
+        acct_b: makeCapClient(200),
+      });
+
+      const result = await handleSearchMessages({ max_results: 300 }, manager);
+
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as MultiAccountResult<MultiAccountSearchResultItem>;
+      expect(parsed.results.length).toBeLessThanOrEqual(200);
+    });
+  });
+
   describe("multi-account (account omitted)", () => {
     it("SRCH-MA-01: two accounts succeed → merged array with account field, sorted newest-first", async () => {
       const clientA = makeMockClient({
