@@ -9,6 +9,8 @@ import { LIST_MESSAGES_TOOL, handleListMessages } from "./tools/list-messages.js
 import { READ_MESSAGE_TOOL, handleReadMessage } from "./tools/read-message.js";
 import { SEARCH_MESSAGES_TOOL, handleSearchMessages } from "./tools/search-messages.js";
 import { DOWNLOAD_ATTACHMENT_TOOL, handleDownloadAttachment } from "./tools/download-attachment.js";
+import { Poller } from "./polling/poller.js";
+import { GET_NEW_MAIL_TOOL, handleGetNewMail } from "./tools/get-new-mail.js";
 
 const TOOLS = [
   LIST_ACCOUNTS_TOOL,
@@ -17,6 +19,7 @@ const TOOLS = [
   READ_MESSAGE_TOOL,
   SEARCH_MESSAGES_TOOL,
   DOWNLOAD_ATTACHMENT_TOOL,
+  GET_NEW_MAIL_TOOL,
 ];
 
 async function main(): Promise<void> {
@@ -27,7 +30,11 @@ async function main(): Promise<void> {
   const manager = new ConnectionManager(config);
   await manager.connectAll();
 
+  const poller = new Poller(manager, config.polling?.interval_seconds ?? 300);
+  poller.start(); // first poll fires immediately; subsequent polls on interval
+
   const shutdown = (): void => {
+    poller.stop(); // must stop BEFORE closeAll — prevents setTimeout re-entry during shutdown
     void manager.closeAll().then(() => {
       process.exit(0);
     });
@@ -77,6 +84,11 @@ async function main(): Promise<void> {
         return handleDownloadAttachment(
           params as unknown as Parameters<typeof handleDownloadAttachment>[0],
           manager
+        ) as AnyToolResult;
+      case "get_new_mail":
+        return handleGetNewMail(
+          params as unknown as Parameters<typeof handleGetNewMail>[0],
+          poller
         ) as AnyToolResult;
       default:
         return {
