@@ -82,7 +82,12 @@ Plans:
   1. Every read and search tool accepts an account name parameter and returns results scoped to that account
   2. Agent can retrieve a single unified unread inbox list merged and sorted across all configured accounts
   3. When one account has an IMAP error during a multi-account query, the response returns partial results from other accounts plus a per-account error detail, rather than failing the entire request
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Multi-account types (src/types.ts) and fanOutAccounts helper (src/tools/multi-account.ts)
+- [ ] 04-02-PLAN.md — Multi-account branches for list_messages and list_folders handlers
+- [ ] 04-03-PLAN.md — Multi-account branch for search_messages handler and src/index.ts dispatch audit
 
 ### Phase 5: Background Polling
 **Goal**: The server proactively polls all accounts at a configurable interval, pre-populates a header cache, and exposes a new-mail-since query so agents can detect arrivals without issuing IMAP round-trips
@@ -117,6 +122,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Foundation | 3/3 | Complete   | 2026-03-11 |
 | 2. Connection Management | 3/3 | Complete   | 2026-03-12 |
 | 3. Core Read Operations | 6/6 | Complete   | 2026-03-12 |
-| 4. Multi-Account Unified View | 0/TBD | Not started | - |
+| 4. Multi-Account Unified View | 0/3 | Not started | - |
 | 5. Background Polling | 0/TBD | Not started | - |
 | 6. Hardening and Release | 0/TBD | Not started | - |
