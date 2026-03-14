@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 05-background-polling-03-PLAN.md
-last_updated: "2026-03-14T13:38:02.026Z"
+stopped_at: Completed 05-background-polling-02-PLAN.md
+last_updated: "2026-03-14T13:42:07.565Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 18
   percent: 0
 ---
 
@@ -67,6 +67,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-multi-account-unified-view P02 | 3min | 2 tasks | 4 files |
 | Phase 05-background-polling P01 | 5 | 2 tasks | 2 files |
 | Phase 05-background-polling P03 | 4min | 1 tasks | 3 files |
+| Phase 05-background-polling P02 | 7min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,9 @@ Recent decisions affecting current work:
 - [Phase 05-background-polling]: Wave 0 scaffolds use it.todo stubs (not it.skip) so Vitest reports pending count without any failures
 - [Phase 05-background-polling]: No top-level import of non-existent source files in Wave 0 scaffolds — avoids compile errors while preserving test intent
 - [Phase 05-background-polling]: handleGetNewMail is async for consistency even though no async work; no try/catch (Poller injected); isError false when cache ready with errors in JSON body; Poller skeleton created for type import only
+- [Phase 05-background-polling]: Recursive globalThis.setTimeout loop for fake-timer testability in Poller class
+- [Phase 05-background-polling]: vi.advanceTimersByTimeAsync(0) for TDD fake timer tests with recursive polling loops — avoids infinite loop
+- [Phase 05-background-polling]: Poller.stop() sets flag only — current poll always completes before timer is skipped
 
 ### Pending Todos
 
@@ -131,6 +135,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T13:38:02.023Z
-Stopped at: Completed 05-background-polling-03-PLAN.md
+Last session: 2026-03-14T13:42:07.562Z
+Stopped at: Completed 05-background-polling-02-PLAN.md
 Resume file: None
