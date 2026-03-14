@@ -56,7 +56,7 @@ completed: 2026-03-14
 - **Duration:** ~2 min
 - **Started:** 2026-03-14T13:51:23Z
 - **Completed:** 2026-03-14T13:52:43Z
-- **Tasks:** 1 (+ human-verify checkpoint)
+- **Tasks:** 2/2 complete (including human-verify checkpoint — approved)
 - **Files modified:** 1
 
 ## Accomplishments
@@ -74,6 +74,7 @@ completed: 2026-03-14
 Each task was committed atomically:
 
 1. **Task 1: Wire Poller and get_new_mail into src/index.ts** - `1462742` (feat(05-04): wire Poller and get_new_mail into src/index.ts)
+2. **Task 2: Verify Phase 5 integration end-to-end** - checkpoint approved; 135/135 tests pass, build clean
 
 ## Files Created/Modified
 
