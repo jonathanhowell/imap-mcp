@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-14T11:40:49.091Z"
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-14T13:34:35.076Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 19
+  completed_plans: 16
   percent: 0
 ---
 
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-multi-account-unified-view P01 | 3min | 2 tasks | 4 files |
 | Phase 04-multi-account-unified-view P03 | 3min | 2 tasks | 3 files |
 | Phase 04-multi-account-unified-view P02 | 3min | 2 tasks | 4 files |
+| Phase 05-background-polling P01 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,8 @@ Recent decisions affecting current work:
 - [Phase 04-multi-account-unified-view]: list_messages multi-account sort: safeTime descending (newest-first), consistent with single-account default
 - [Phase 04-multi-account-unified-view]: list_folders multi-account sort: localeCompare alphabetical (stable, deterministic for folder names)
 - [Phase 04-multi-account-unified-view]: Per-account limit for fan-out = (limit ?? 50) + (offset ?? 0) to ensure global top-N captured before merge+slice
+- [Phase 05-background-polling]: Wave 0 scaffolds use it.todo stubs (not it.skip) so Vitest reports pending count without any failures
+- [Phase 05-background-polling]: No top-level import of non-existent source files in Wave 0 scaffolds — avoids compile errors while preserving test intent
 
 ### Pending Todos
 
@@ -126,6 +129,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T11:40:49.088Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-background-polling/05-CONTEXT.md
+Last session: 2026-03-14T13:34:35.074Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None

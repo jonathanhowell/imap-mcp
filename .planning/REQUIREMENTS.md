@@ -53,9 +53,9 @@
 
 ### Background Polling (POLL)
 
-- [ ] **POLL-01**: Server polls all configured accounts at a configurable interval (default: 3 minutes)
-- [ ] **POLL-02**: Server pre-fetches unread message headers into an in-memory cache so agent queries are served without an IMAP round-trip
-- [ ] **POLL-03**: Agent can query what new messages have arrived since a given timestamp
+- [x] **POLL-01**: Server polls all configured accounts at a configurable interval (default: 3 minutes)
+- [x] **POLL-02**: Server pre-fetches unread message headers into an in-memory cache so agent queries are served without an IMAP round-trip
+- [x] **POLL-03**: Agent can query what new messages have arrived since a given timestamp
 
 ## v2 Requirements
 
@@ -125,9 +125,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ACCT-01 | Phase 4 | Complete |
 | ACCT-02 | Phase 4 | Complete |
 | ACCT-03 | Phase 4 | Complete |
-| POLL-01 | Phase 5 | Pending |
-| POLL-02 | Phase 5 | Pending |
-| POLL-03 | Phase 5 | Pending |
+| POLL-01 | Phase 5 | Complete |
+| POLL-02 | Phase 5 | Complete |
+| POLL-03 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 28 total
