@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-03-14T15:42:43.889Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-03-14T15:43:13.430Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 23
-  completed_plans: 21
+  completed_plans: 22
   percent: 0
 ---
 
@@ -71,6 +71,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-background-polling P04 | 2min | 1 tasks | 1 files |
 | Phase 06-hardening-and-release P01 | 2 | 2 tasks | 6 files |
 | Phase 06-hardening-and-release P02 | 1min | 2 tasks | 2 files |
+| Phase 06-hardening-and-release P03 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,8 @@ Recent decisions affecting current work:
 - [Phase 06-hardening-and-release]: ESLint argsIgnorePattern added for _ prefix — standardizes underscore convention project-wide rather than per-line disables
 - [Phase 06-hardening-and-release]: gitleaks protect --staged --redact used (not --no-redact) to avoid leaking secrets in hook output
 - [Phase 06-hardening-and-release]: Advisory exit 0 when gitleaks binary missing so hook does not block contributors without gitleaks installed
+- [Phase 06-hardening-and-release]: README tone is practical reference — no marketing copy; target is technical user running in 5 minutes
+- [Phase 06-hardening-and-release]: Outlook Basic Auth deprecation warning placed in both Provider Compatibility and Troubleshooting sections for maximum visibility
 
 ### Pending Todos
 
@@ -143,6 +146,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T15:42:43.887Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-03-14T15:43:13.428Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
