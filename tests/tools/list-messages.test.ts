@@ -245,4 +245,159 @@ describe("list_messages", () => {
       expect(result.content[0].text).toContain("account not found");
     });
   });
+
+  describe("Multi-account fan-out (account omitted)", () => {
+    // Helper to build a multi-account manager mock
+    function makeMultiAccountManager(accounts: Record<string, ImapFlow | { error: string }>) {
+      const mockLocks: Record<string, { release: ReturnType<typeof vi.fn> }> = {};
+
+      for (const [accountId, clientOrErr] of Object.entries(accounts)) {
+        if (!("error" in clientOrErr)) {
+          mockLocks[accountId] = { release: vi.fn() };
+          (clientOrErr as unknown as Record<string, unknown>).getMailboxLock = vi
+            .fn()
+            .mockResolvedValue(mockLocks[accountId]);
+        }
+      }
+
+      return {
+        getClient: vi.fn().mockImplementation((id: string) => accounts[id]),
+        getAccountIds: vi.fn().mockReturnValue(Object.keys(accounts)),
+      } as unknown as ConnectionManager;
+    }
+
+    function makeMultiClient(messages: ReturnType<typeof makeMockMessage>[]) {
+      return {
+        getMailboxLock: vi.fn(),
+        search: vi.fn().mockResolvedValue(messages.map((m) => m.uid)),
+        fetchAll: vi
+          .fn()
+          .mockImplementation((pageUids: number[]) =>
+            Promise.resolve(messages.filter((m) => pageUids.includes(m.uid)))
+          ),
+      } as unknown as ImapFlow;
+    }
+
+    it("two accounts succeed — merged flat array with account field, sorted newest-first", async () => {
+      const gmailMessages = [
+        makeMockMessage(10, { date: new Date("2024-01-10T00:00:00.000Z"), subject: "Gmail 10" }),
+        makeMockMessage(5, { date: new Date("2024-01-05T00:00:00.000Z"), subject: "Gmail 5" }),
+      ];
+      const workMessages = [
+        makeMockMessage(8, { date: new Date("2024-01-08T00:00:00.000Z"), subject: "Work 8" }),
+        makeMockMessage(3, { date: new Date("2024-01-03T00:00:00.000Z"), subject: "Work 3" }),
+      ];
+
+      const gmailClient = makeMultiClient(gmailMessages);
+      const workClient = makeMultiClient(workMessages);
+
+      const manager = makeMultiAccountManager({ gmail: gmailClient, work: workClient });
+
+      const result = await handleListMessages({ folder: "INBOX" }, manager);
+
+      expect(result.isError).toBe(false);
+      const response = JSON.parse(result.content[0].text);
+      expect(response).toHaveProperty("results");
+      expect(response.results).toHaveLength(4);
+
+      // Results should be sorted newest-first by date
+      const dates = response.results.map((r: { date: string }) => new Date(r.date).getTime());
+      for (let i = 0; i < dates.length - 1; i++) {
+        expect(dates[i]).toBeGreaterThanOrEqual(dates[i + 1]);
+      }
+
+      // Each result should have an account field
+      for (const item of response.results) {
+        expect(item).toHaveProperty("account");
+        expect(["gmail", "work"]).toContain(item.account);
+      }
+
+      // No errors key when all succeed
+      expect(response.errors).toBeUndefined();
+    });
+
+    it("unified INBOX unread: account omitted, folder=INBOX, unread_only=true — results from both accounts", async () => {
+      const gmailClient = makeMultiClient([
+        makeMockMessage(1, { date: new Date("2024-01-10T00:00:00.000Z") }),
+      ]);
+      const workClient = makeMultiClient([
+        makeMockMessage(2, { date: new Date("2024-01-09T00:00:00.000Z") }),
+      ]);
+
+      const manager = makeMultiAccountManager({ gmail: gmailClient, work: workClient });
+
+      const result = await handleListMessages(
+        { folder: "INBOX", unread_only: true },
+        manager
+      );
+
+      expect(result.isError).toBe(false);
+      const response = JSON.parse(result.content[0].text);
+      expect(response.results).toHaveLength(2);
+      expect(response.results[0].account).toBeDefined();
+      expect(response.results[1].account).toBeDefined();
+    });
+
+    it("one account fails — partial result with errors key, isError: false", async () => {
+      const gmailMessages = [
+        makeMockMessage(10, { date: new Date("2024-01-10T00:00:00.000Z") }),
+      ];
+      const gmailClient = makeMultiClient(gmailMessages);
+
+      const manager = makeMultiAccountManager({
+        gmail: gmailClient,
+        work: { error: "work account not connected" },
+      });
+
+      const result = await handleListMessages({ folder: "INBOX" }, manager);
+
+      expect(result.isError).toBe(false);
+      const response = JSON.parse(result.content[0].text);
+      expect(response.results).toHaveLength(1);
+      expect(response.results[0].account).toBe("gmail");
+      expect(response.errors).toBeDefined();
+      expect(response.errors.work).toBeDefined();
+    });
+
+    it("all accounts fail — isError: true", async () => {
+      const manager = makeMultiAccountManager({
+        gmail: { error: "gmail not connected" },
+        work: { error: "work not connected" },
+      });
+
+      const result = await handleListMessages({ folder: "INBOX" }, manager);
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain("All accounts failed");
+    });
+
+    it("pagination: offset applied to merged result, not per account", async () => {
+      const gmailMessages = [
+        makeMockMessage(10, { date: new Date("2024-01-10T00:00:00.000Z") }),
+        makeMockMessage(8, { date: new Date("2024-01-08T00:00:00.000Z") }),
+        makeMockMessage(6, { date: new Date("2024-01-06T00:00:00.000Z") }),
+      ];
+      const workMessages = [
+        makeMockMessage(9, { date: new Date("2024-01-09T00:00:00.000Z") }),
+        makeMockMessage(7, { date: new Date("2024-01-07T00:00:00.000Z") }),
+        makeMockMessage(5, { date: new Date("2024-01-05T00:00:00.000Z") }),
+      ];
+
+      const gmailClient = makeMultiClient(gmailMessages);
+      const workClient = makeMultiClient(workMessages);
+
+      const manager = makeMultiAccountManager({ gmail: gmailClient, work: workClient });
+
+      // offset=2, limit=2 → items at index 2 and 3 of merged sorted results
+      const result = await handleListMessages({ folder: "INBOX", limit: 2, offset: 2 }, manager);
+
+      expect(result.isError).toBe(false);
+      const response = JSON.parse(result.content[0].text);
+      // Merged sorted newest-first: dates jan10,9,8,7,6,5
+      // offset=2 → start from index 2 → jan8, jan7
+      expect(response.results).toHaveLength(2);
+      expect(new Date(response.results[0].date).getDate()).toBe(8);
+      expect(new Date(response.results[1].date).getDate()).toBe(7);
+    });
+  });
 });
