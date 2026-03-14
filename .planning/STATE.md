@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-03-14T15:39:46.210Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-14T15:42:43.889Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 23
-  completed_plans: 20
+  completed_plans: 21
   percent: 0
 ---
 
@@ -70,6 +70,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-background-polling P02 | 7min | 2 tasks | 3 files |
 | Phase 05-background-polling P04 | 2min | 1 tasks | 1 files |
 | Phase 06-hardening-and-release P01 | 2 | 2 tasks | 6 files |
+| Phase 06-hardening-and-release P02 | 1min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,8 @@ Recent decisions affecting current work:
 - [Phase 05-background-polling]: Poller instantiated with config.polling?.interval_seconds ?? 300 and stop() called before closeAll() in shutdown
 - [Phase 06-hardening-and-release]: 200-result cap applied at handler entry point (not service layer) so both account paths inherit the same ceiling without modifying services
 - [Phase 06-hardening-and-release]: ESLint argsIgnorePattern added for _ prefix — standardizes underscore convention project-wide rather than per-line disables
+- [Phase 06-hardening-and-release]: gitleaks protect --staged --redact used (not --no-redact) to avoid leaking secrets in hook output
+- [Phase 06-hardening-and-release]: Advisory exit 0 when gitleaks binary missing so hook does not block contributors without gitleaks installed
 
 ### Pending Todos
 
@@ -140,6 +143,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T15:39:46.208Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-03-14T15:42:43.887Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
