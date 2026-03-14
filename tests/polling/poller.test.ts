@@ -1,4 +1,5 @@
-// Wave 0 scaffold — all tests are .todo stubs. Implement as src/polling/poller.ts is built.
+// Tests for AppConfigSchema polling field (Task 1) and Poller class (Task 2).
+// Replaces Wave 0 it.todo stubs.
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // --- Task 1: AppConfigSchema polling field tests ---
@@ -14,9 +15,7 @@ const validAccount = {
 
 describe("AppConfigSchema polling field", () => {
   it("Test 1: succeeds when polling is omitted", () => {
-    expect(() =>
-      AppConfigSchema.parse({ accounts: [validAccount] })
-    ).not.toThrow();
+    expect(() => AppConfigSchema.parse({ accounts: [validAccount] })).not.toThrow();
   });
 
   it("Test 2: succeeds with polling.interval_seconds: 60", () => {
@@ -75,10 +74,27 @@ function makeMockManager(accountIds: string[] = ["acct1"]): ConnectionManager {
   } as unknown as ConnectionManager;
 }
 
+/**
+ * Run one poll cycle and stop after it completes.
+ * Uses advanceTimersByTimeAsync(0) to flush promise microtasks without
+ * advancing fake time, so the poll resolves but no scheduled setTimeout fires.
+ * Then stops the poller to prevent further scheduling.
+ */
+async function runOnePoll(poller: Poller): Promise<void> {
+  poller.start();
+  // Flush all pending promises/microtasks (0ms = no timer advancement)
+  // Repeat to ensure nested async operations complete
+  for (let i = 0; i < 10; i++) {
+    await vi.advanceTimersByTimeAsync(0);
+  }
+  poller.stop();
+}
+
 describe("Poller", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.spyOn(globalThis, "setTimeout");
+    mockSearchMessages.mockReset();
     mockSearchMessages.mockResolvedValue([]);
     vi.spyOn(logger, "error").mockImplementation(() => undefined);
   });
@@ -96,16 +112,14 @@ describe("Poller", () => {
   it("Test 2: isCacheReady() returns true after first poll completes", async () => {
     const manager = makeMockManager();
     const poller = new Poller(manager);
-    poller.start();
-    await vi.runAllTimersAsync();
+    await runOnePoll(poller);
     expect(poller.isCacheReady()).toBe(true);
   });
 
   it("Test 3: start() calls searchMessages for each account immediately", async () => {
     const manager = makeMockManager(["acct1", "acct2"]);
     const poller = new Poller(manager);
-    poller.start();
-    await vi.runAllTimersAsync();
+    await runOnePoll(poller);
     expect(mockSearchMessages).toHaveBeenCalledTimes(2);
   });
 
@@ -113,38 +127,32 @@ describe("Poller", () => {
     const manager = makeMockManager();
     const poller = new Poller(manager, 60);
     poller.start();
-    await vi.runAllTimersAsync();
-    expect(globalThis.setTimeout).toHaveBeenCalledWith(
-      expect.any(Function),
-      60 * 1000
-    );
+    // Flush promises so the first poll completes (no timer advancement needed)
+    await vi.advanceTimersByTimeAsync(0);
+    poller.stop();
+    expect(globalThis.setTimeout).toHaveBeenCalledWith(expect.any(Function), 60 * 1000);
   });
 
   it("Test 5: after stop(), no further setTimeout calls are scheduled", async () => {
     const manager = makeMockManager();
     const poller = new Poller(manager, 60);
-    poller.start();
-    // Let the first poll complete
-    await vi.runAllTimersAsync();
-    const callCountAfterFirstPoll = (
-      globalThis.setTimeout as ReturnType<typeof vi.fn>
-    ).mock.calls.length;
-    poller.stop();
-    // Advance timers — no new loop should be scheduled
-    await vi.runAllTimersAsync();
-    expect(
-      (globalThis.setTimeout as ReturnType<typeof vi.fn>).mock.calls.length
-    ).toBe(callCountAfterFirstPoll);
+    // Let first poll complete (this schedules the next setTimeout)
+    await runOnePoll(poller);
+    const callCountBeforeStop = (globalThis.setTimeout as ReturnType<typeof vi.fn>).mock.calls
+      .length;
+    // stop() has already been called by runOnePoll — no new timers should fire
+    // Advance timers substantially — no new loop should be scheduled
+    await vi.advanceTimersByTimeAsync(120 * 1000);
+    expect((globalThis.setTimeout as ReturnType<typeof vi.fn>).mock.calls.length).toBe(
+      callCountBeforeStop
+    );
   });
 
   it("Test 6: per-account exception is caught; other accounts still polled; logger.error called", async () => {
     const manager = makeMockManager(["failAcct", "okAcct"]);
-    mockSearchMessages
-      .mockRejectedValueOnce(new Error("IMAP error"))
-      .mockResolvedValueOnce([]);
+    mockSearchMessages.mockRejectedValueOnce(new Error("IMAP error")).mockResolvedValueOnce([]);
     const poller = new Poller(manager);
-    poller.start();
-    await vi.runAllTimersAsync();
+    await runOnePoll(poller);
     expect(logger.error).toHaveBeenCalled();
     // Both accounts were attempted
     expect(mockSearchMessages).toHaveBeenCalledTimes(2);
@@ -161,16 +169,12 @@ describe("Poller", () => {
       folder: "INBOX",
       account: "acct1",
     };
-    mockSearchMessages
-      .mockResolvedValueOnce([msg])
-      .mockResolvedValueOnce([msg]); // same message again on second poll
+    mockSearchMessages.mockResolvedValueOnce([msg]).mockResolvedValueOnce([msg]); // same message again on second poll
     const poller = new Poller(manager, 60);
-    poller.start();
     // First poll
-    await vi.runAllTimersAsync();
-    // Advance to trigger second poll
-    vi.advanceTimersByTime(60 * 1000);
-    await vi.runAllTimersAsync();
+    await runOnePoll(poller);
+    // Start again to trigger second poll
+    await runOnePoll(poller);
     const result = poller.query(new Date(0).toISOString());
     expect(result.results.length).toBe(1);
   });
@@ -197,8 +201,7 @@ describe("Poller", () => {
     };
     mockSearchMessages.mockResolvedValueOnce([older, newer]);
     const poller = new Poller(manager);
-    poller.start();
-    await vi.runAllTimersAsync();
+    await runOnePoll(poller);
     const result = poller.query("2020-06-01T00:00:00.000Z");
     expect(result.results.length).toBe(1);
     expect(result.results[0].uid).toBe(2);
@@ -224,12 +227,9 @@ describe("Poller", () => {
       folder: "INBOX",
       account: "acct2",
     };
-    mockSearchMessages
-      .mockResolvedValueOnce([msg1])
-      .mockResolvedValueOnce([msg2]);
+    mockSearchMessages.mockResolvedValueOnce([msg1]).mockResolvedValueOnce([msg2]);
     const poller = new Poller(manager);
-    poller.start();
-    await vi.runAllTimersAsync();
+    await runOnePoll(poller);
     const result = poller.query(new Date(0).toISOString());
     expect(result.results.length).toBe(2);
   });
@@ -254,12 +254,9 @@ describe("Poller", () => {
       folder: "INBOX",
       account: "acct2",
     };
-    mockSearchMessages
-      .mockResolvedValueOnce([msg1])
-      .mockResolvedValueOnce([msg2]);
+    mockSearchMessages.mockResolvedValueOnce([msg1]).mockResolvedValueOnce([msg2]);
     const poller = new Poller(manager);
-    poller.start();
-    await vi.runAllTimersAsync();
+    await runOnePoll(poller);
     const result = poller.query(new Date(0).toISOString(), "acct1");
     expect(result.results.length).toBe(1);
     expect(result.results[0].account).toBe("acct1");
@@ -267,17 +264,14 @@ describe("Poller", () => {
 
   it("Test 11: incremental poll uses lastPollTime - 24h as since date", async () => {
     const manager = makeMockManager(["acct1"]);
-    mockSearchMessages.mockResolvedValue([]);
     const poller = new Poller(manager, 60);
-    poller.start();
-    // First poll (seed)
-    await vi.runAllTimersAsync();
+    // First poll (seed) — run and let it complete
+    await runOnePoll(poller);
     // Reset call tracking
     mockSearchMessages.mockClear();
-    // Advance to trigger incremental poll
-    vi.advanceTimersByTime(60 * 1000);
-    await vi.runAllTimersAsync();
-    // The since param on the second call should be ~24h before lastPollTime
+    // Run one more incremental poll
+    await runOnePoll(poller);
+    // The since param on the incremental call should be ~24h before lastPollTime
     expect(mockSearchMessages).toHaveBeenCalledTimes(1);
     const callArgs = mockSearchMessages.mock.calls[0][1];
     expect(callArgs).toHaveProperty("since");
@@ -292,10 +286,9 @@ describe("Poller", () => {
     const manager = makeMockManager();
     const poller = new Poller(manager); // no intervalSeconds
     poller.start();
-    await vi.runAllTimersAsync();
-    expect(globalThis.setTimeout).toHaveBeenCalledWith(
-      expect.any(Function),
-      300 * 1000
-    );
+    // Flush promises so the first poll completes (no timer advancement needed)
+    await vi.advanceTimersByTimeAsync(0);
+    poller.stop();
+    expect(globalThis.setTimeout).toHaveBeenCalledWith(expect.any(Function), 300 * 1000);
   });
 });
