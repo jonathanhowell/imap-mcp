@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { handleSearchMessages } from "../../src/tools/search-messages.js";
 import type { ConnectionManager } from "../../src/connections/index.js";
 import type { ImapFlow } from "imapflow";
+import type { MultiAccountResult, MultiAccountSearchResultItem } from "../../src/types.js";
 
 /** Build a minimal mock ImapFlow client for search tests */
 function makeMockClient(overrides: Partial<Record<string, unknown>> = {}): ImapFlow {
@@ -37,6 +38,7 @@ function makeMockClient(overrides: Partial<Record<string, unknown>> = {}): ImapF
 function makeManager(client: ImapFlow): ConnectionManager {
   return {
     getClient: vi.fn().mockReturnValue(client),
+    getAccountIds: vi.fn().mockReturnValue([]),
   } as unknown as ConnectionManager;
 }
 
@@ -44,6 +46,22 @@ function makeManager(client: ImapFlow): ConnectionManager {
 function makeErrorManager(message = "account unavailable"): ConnectionManager {
   return {
     getClient: vi.fn().mockReturnValue({ error: message }),
+    getAccountIds: vi.fn().mockReturnValue([]),
+  } as unknown as ConnectionManager;
+}
+
+/**
+ * Build a multi-account ConnectionManager.
+ * clientMap: { accountId -> ImapFlow | null } where null means getClient returns an error.
+ */
+function makeMultiManager(clientMap: Record<string, ImapFlow | null>): ConnectionManager {
+  const accountIds = Object.keys(clientMap);
+  return {
+    getAccountIds: vi.fn().mockReturnValue(accountIds),
+    getClient: vi.fn().mockImplementation((id: string) => {
+      const c = clientMap[id];
+      return c === null ? { error: `${id} unavailable` } : c;
+    }),
   } as unknown as ConnectionManager;
 }
 
@@ -171,5 +189,106 @@ describe("search_messages", () => {
 
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toContain("account unavailable");
+  });
+
+  describe("multi-account (account omitted)", () => {
+    it("SRCH-MA-01: two accounts succeed → merged array with account field, sorted newest-first", async () => {
+      const clientA = makeMockClient({
+        search: vi.fn().mockResolvedValue([1]),
+        fetchAll: vi.fn().mockResolvedValue([
+          {
+            uid: 1,
+            envelope: {
+              from: [{ address: "alice@example.com" }],
+              subject: "Older message",
+              date: new Date("2024-01-01T09:00:00Z"),
+            },
+            flags: new Set<string>(),
+            internalDate: new Date("2024-01-01T09:00:00Z"),
+          },
+        ]),
+      });
+      const clientB = makeMockClient({
+        search: vi.fn().mockResolvedValue([2]),
+        fetchAll: vi.fn().mockResolvedValue([
+          {
+            uid: 2,
+            envelope: {
+              from: [{ address: "bob@example.com" }],
+              subject: "Newer message",
+              date: new Date("2024-06-15T12:00:00Z"),
+            },
+            flags: new Set<string>(),
+            internalDate: new Date("2024-06-15T12:00:00Z"),
+          },
+        ]),
+      });
+
+      const manager = makeMultiManager({ acct_a: clientA, acct_b: clientB });
+      // account omitted → multi-account mode
+      const result = await handleSearchMessages({}, manager);
+
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as MultiAccountResult<MultiAccountSearchResultItem>;
+      expect(parsed).toHaveProperty("results");
+      expect(parsed.results).toHaveLength(2);
+      // sorted newest-first
+      expect(parsed.results[0].subject).toBe("Newer message");
+      expect(parsed.results[1].subject).toBe("Older message");
+      // account field present
+      expect(parsed.results[0]).toHaveProperty("account", "acct_b");
+      expect(parsed.results[1]).toHaveProperty("account", "acct_a");
+      // no errors key
+      expect(parsed.errors).toBeUndefined();
+    });
+
+    it("SRCH-MA-02: one account fails → partial result with errors key, isError: false", async () => {
+      const clientA = makeMockClient({
+        search: vi.fn().mockResolvedValue([1]),
+        fetchAll: vi.fn().mockResolvedValue([
+          {
+            uid: 1,
+            envelope: {
+              from: [{ address: "alice@example.com" }],
+              subject: "Good message",
+              date: new Date("2024-03-01T10:00:00Z"),
+            },
+            flags: new Set<string>(),
+            internalDate: new Date("2024-03-01T10:00:00Z"),
+          },
+        ]),
+      });
+
+      const manager = makeMultiManager({ acct_ok: clientA, acct_bad: null });
+      const result = await handleSearchMessages({}, manager);
+
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as MultiAccountResult<MultiAccountSearchResultItem>;
+      expect(parsed.results).toHaveLength(1);
+      expect(parsed.results[0]).toHaveProperty("account", "acct_ok");
+      expect(parsed.errors).toBeDefined();
+      expect(parsed.errors).toHaveProperty("acct_bad");
+    });
+
+    it("SRCH-MA-03: all accounts fail → isError: true", async () => {
+      const manager = makeMultiManager({ acct1: null, acct2: null });
+      const result = await handleSearchMessages({}, manager);
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain("All accounts failed");
+    });
+
+    it("SRCH-MA-04: single-account path unchanged when account provided", async () => {
+      const client = makeMockClient();
+      const manager = makeManager(client);
+
+      const result = await handleSearchMessages({ account: "personal" }, manager);
+
+      // Single-account path returns flat array, not wrapped
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as unknown[];
+      expect(Array.isArray(parsed)).toBe(true);
+      expect(parsed.length).toBeGreaterThan(0);
+    });
   });
 });
