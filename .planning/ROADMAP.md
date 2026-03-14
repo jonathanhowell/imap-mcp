@@ -97,8 +97,14 @@ Plans:
   1. Unread message headers are available in-memory after the first polling cycle completes, without requiring an agent tool call to trigger the fetch
   2. Agent can query for messages that have arrived since a given timestamp and receive results from the cache
   3. The polling loop continues running after a simulated IMAP drop for one account and recovers when the account reconnects
-  4. Polling interval is configurable and defaults to 3 minutes when not specified
-**Plans**: TBD
+  4. Polling interval is configurable and defaults to 5 minutes when not specified
+**Plans**: 4 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Test scaffolds: poller.test.ts and get-new-mail.test.ts (it.todo stubs)
+- [ ] 05-02-PLAN.md — Config schema extension (polling.interval_seconds) + Poller class (POLL-01, POLL-02)
+- [ ] 05-03-PLAN.md — get_new_mail tool handler (POLL-03)
+- [ ] 05-04-PLAN.md — Wire Poller + get_new_mail into src/index.ts; integration verification
 
 ### Phase 6: Hardening and Release
 **Goal**: The server is verified safe, stable, and clean enough to publish — credentials cannot leak, responses cannot overflow agent context, reconnect survives production conditions, and the codebase is open-source presentable
@@ -123,5 +129,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Connection Management | 3/3 | Complete   | 2026-03-12 |
 | 3. Core Read Operations | 6/6 | Complete   | 2026-03-12 |
 | 4. Multi-Account Unified View | 3/3 | Complete   | 2026-03-14 |
-| 5. Background Polling | 0/TBD | Not started | - |
+| 5. Background Polling | 0/4 | Not started | - |
 | 6. Hardening and Release | 0/TBD | Not started | - |
