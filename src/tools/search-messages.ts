@@ -71,10 +71,12 @@ export async function handleSearchMessages(
 ): Promise<ToolResult> {
   const { account, from, subject, since, before, unread, folder, max_results } = params;
 
+  const MAX_RESULTS = 200;
+  const effectiveMax = Math.min(max_results ?? 50, MAX_RESULTS);
+
   // account is intentionally not defaulted — absence signals multi-account mode
   if (account === undefined) {
     const accountIds = manager.getAccountIds();
-    const effectiveMax = max_results ?? 50;
     const { results, errors } = await fanOutAccounts(accountIds, manager, (client) =>
       searchMessages(client, {
         from,
@@ -121,7 +123,7 @@ export async function handleSearchMessages(
     before,
     unread,
     folder,
-    maxResults: max_results,
+    maxResults: effectiveMax,
   });
 
   return {

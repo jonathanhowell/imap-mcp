@@ -61,9 +61,12 @@ export async function handleListMessages(
 ): Promise<ToolResult> {
   const { account, folder, limit, offset, sort, unread_only } = params;
 
+  const MAX_RESULTS = 200;
+  const cappedLimit = Math.min(limit ?? 50, MAX_RESULTS);
+
   if (account === undefined) {
     const accountIds = manager.getAccountIds();
-    const perAccountLimit = (limit ?? 50) + (offset ?? 0);
+    const perAccountLimit = cappedLimit + (offset ?? 0);
     const { results, errors } = await fanOutAccounts(accountIds, manager, (client) =>
       listMessages(client, folder, { limit: perAccountLimit, sort, unreadOnly: unread_only })
     );
@@ -77,7 +80,7 @@ export async function handleListMessages(
 
     results.sort((a, b) => safeTime(b.date) - safeTime(a.date));
     const effectiveOffset = offset ?? 0;
-    const effectiveLimit = limit ?? 50;
+    const effectiveLimit = cappedLimit;
     const page = results.slice(effectiveOffset, effectiveOffset + effectiveLimit);
 
     const response: MultiAccountResult<MultiAccountMessageHeader> = {
@@ -98,7 +101,7 @@ export async function handleListMessages(
   }
 
   const headers = await listMessages(clientResult, folder, {
-    limit,
+    limit: cappedLimit,
     offset,
     sort,
     unreadOnly: unread_only,
