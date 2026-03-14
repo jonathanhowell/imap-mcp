@@ -47,9 +47,9 @@
 
 ### Multi-Account (ACCT)
 
-- [ ] **ACCT-01**: All tool calls accept an optional account name parameter to target a specific account
-- [ ] **ACCT-02**: Agent can retrieve a unified unread inbox merged and sorted across all configured accounts
-- [ ] **ACCT-03**: When an operation spans multiple accounts, per-account errors return partial results with error details rather than failing the entire request
+- [x] **ACCT-01**: All tool calls accept an optional account name parameter to target a specific account
+- [x] **ACCT-02**: Agent can retrieve a unified unread inbox merged and sorted across all configured accounts
+- [x] **ACCT-03**: When an operation spans multiple accounts, per-account errors return partial results with error details rather than failing the entire request
 
 ### Background Polling (POLL)
 
@@ -122,9 +122,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRCH-02 | Phase 3 | Complete |
 | SRCH-03 | Phase 3 | Complete |
 | SRCH-04 | Phase 3 | Complete |
-| ACCT-01 | Phase 4 | Pending |
-| ACCT-02 | Phase 4 | Pending |
-| ACCT-03 | Phase 4 | Pending |
+| ACCT-01 | Phase 4 | Complete |
+| ACCT-02 | Phase 4 | Complete |
+| ACCT-03 | Phase 4 | Complete |
 | POLL-01 | Phase 5 | Pending |
 | POLL-02 | Phase 5 | Pending |
 | POLL-03 | Phase 5 | Pending |

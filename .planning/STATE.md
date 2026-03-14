@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-13T19:58:08.646Z"
+stopped_at: Completed 04-multi-account-unified-view 04-01-PLAN.md
+last_updated: "2026-03-14T10:32:19.905Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
   percent: 0
 ---
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-core-read-operations P04 | pre-committed | 2 tasks | 7 files |
 | Phase 03-core-read-operations P05 | ~20min | 2 tasks | 3 files |
 | Phase 03-core-read-operations P06 | 15min | 2 tasks | 3 files |
+| Phase 04-multi-account-unified-view P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -102,6 +103,9 @@ Recent decisions affecting current work:
 - [Phase 03-core-read-operations]: folder='all' search uses client.list() + sequential per-folder loop with early exit at max_results — simpler than parallel, documented as potentially slow
 - [Phase 03-core-read-operations]: as unknown as Parameters<typeof handler>[0] required for strict TypeScript dispatch in index.ts switch-router
 - [Phase 03-core-read-operations]: stubs.ts retained because startup.test.ts imports it directly — server no longer uses it but tests do
+- [Phase 04-multi-account-unified-view]: fanOutAccounts returns errors as Record<string, string> (always present) so callers can iterate without null guard
+- [Phase 04-multi-account-unified-view]: safeTime uses || 0 not ?? 0 because new Date('').getTime() returns NaN which is falsy
+- [Phase 04-multi-account-unified-view]: fanOutAccounts enriches items via object spread to preserve T shape without mutation
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T19:58:08.644Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-multi-account-unified-view/04-CONTEXT.md
+Last session: 2026-03-14T10:32:19.902Z
+Stopped at: Completed 04-multi-account-unified-view 04-01-PLAN.md
+Resume file: None
