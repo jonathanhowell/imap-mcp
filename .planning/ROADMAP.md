@@ -116,7 +116,13 @@ Plans:
   3. A linter rule is in place that prevents `console.log` from being used anywhere in the codebase
   4. MCP Inspector validates all tool schemas with no errors
   5. Server README documents configuration options, provider compatibility (including Outlook limitation), and Claude Desktop setup steps
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — 200-result hard cap in list_messages and search_messages (TDD)
+- [ ] 06-02-PLAN.md — Credential audit: gitleaks history scan, Husky pre-commit hook, rename config.example.yaml
+- [ ] 06-03-PLAN.md — README.md and LICENSE file
+- [ ] 06-04-PLAN.md — Version bump to 0.1.0, MCP Inspector checkpoint, v0.1.0 release tag
 
 ## Progress
 
@@ -130,4 +136,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Core Read Operations | 6/6 | Complete   | 2026-03-12 |
 | 4. Multi-Account Unified View | 3/3 | Complete   | 2026-03-14 |
 | 5. Background Polling | 4/4 | Complete   | 2026-03-14 |
-| 6. Hardening and Release | 0/TBD | Not started | - |
+| 6. Hardening and Release | 0/4 | Not started | - |
