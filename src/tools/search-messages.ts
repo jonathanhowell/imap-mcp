@@ -1,10 +1,12 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { ConnectionManager } from "../connections/index.js";
 import type { ToolResult } from "../types.js";
+import type { MultiAccountSearchResultItem, MultiAccountResult } from "../types.js";
 import { searchMessages } from "../services/search-service.js";
+import { fanOutAccounts, safeTime } from "./multi-account.js";
 
 export interface SearchMessagesParams {
-  account: string;
+  account?: string;
   from?: string;
   subject?: string;
   since?: string;
@@ -22,7 +24,10 @@ export const SEARCH_MESSAGES_TOOL: Tool = {
   inputSchema: {
     type: "object",
     properties: {
-      account: { type: "string", description: "Account name from config" },
+      account: {
+        type: "string",
+        description: "Account name from config. Omit to search across all accounts.",
+      },
       from: { type: "string", description: "Filter by sender address (partial match)" },
       subject: { type: "string", description: "Filter by subject text (partial match)" },
       since: {
@@ -48,21 +53,57 @@ export const SEARCH_MESSAGES_TOOL: Tool = {
         description: "Maximum number of results to return (default 50)",
       },
     },
-    required: ["account"],
+    required: [],
   },
 };
 
 /**
  * Handle the search_messages MCP tool call.
  *
- * Returns a JSON array of SearchResultItem objects (each includes a folder field),
- * or an error ToolResult when the account is unavailable.
+ * When account is omitted, fans out to all accounts and returns
+ * { results, errors? } wrapper with items sorted newest-first.
+ *
+ * When account is provided, returns flat JSON array of SearchResultItem objects.
  */
 export async function handleSearchMessages(
   params: SearchMessagesParams,
   manager: ConnectionManager
 ): Promise<ToolResult> {
   const { account, from, subject, since, before, unread, folder, max_results } = params;
+
+  // account is intentionally not defaulted — absence signals multi-account mode
+  if (account === undefined) {
+    const accountIds = manager.getAccountIds();
+    const effectiveMax = max_results ?? 50;
+    const { results, errors } = await fanOutAccounts(accountIds, manager, (client) =>
+      searchMessages(client, {
+        from,
+        subject,
+        since,
+        before,
+        unread,
+        folder,
+        maxResults: effectiveMax,
+      })
+    );
+
+    if (results.length === 0 && Object.keys(errors).length === accountIds.length) {
+      return {
+        content: [{ type: "text", text: `All accounts failed: ${JSON.stringify(errors)}` }],
+        isError: true,
+      };
+    }
+
+    results.sort((a, b) => safeTime(b.date) - safeTime(a.date));
+    const page = results.slice(0, effectiveMax);
+
+    const response: MultiAccountResult<MultiAccountSearchResultItem> = {
+      results: page,
+      ...(Object.keys(errors).length > 0 ? { errors } : {}),
+    };
+
+    return { content: [{ type: "text", text: JSON.stringify(response) }], isError: false };
+  }
 
   const clientResult = manager.getClient(account);
 

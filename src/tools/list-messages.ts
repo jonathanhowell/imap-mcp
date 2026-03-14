@@ -1,10 +1,12 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { ConnectionManager } from "../connections/index.js";
 import type { ToolResult } from "../types.js";
+import type { MultiAccountMessageHeader, MultiAccountResult } from "../types.js";
 import { listMessages } from "../services/message-service.js";
+import { fanOutAccounts, safeTime } from "./multi-account.js";
 
 export interface ListMessagesParams {
-  account: string;
+  account?: string;
   folder: string;
   limit?: number;
   offset?: number;
@@ -18,7 +20,10 @@ export const LIST_MESSAGES_TOOL: Tool = {
   inputSchema: {
     type: "object",
     properties: {
-      account: { type: "string", description: "Account name from config" },
+      account: {
+        type: "string",
+        description: "Account name from config. Omit to query all accounts.",
+      },
       folder: { type: "string", description: "Mailbox folder path (e.g. INBOX, Work/Projects)" },
       limit: {
         type: "number",
@@ -39,21 +44,49 @@ export const LIST_MESSAGES_TOOL: Tool = {
         description: "When true, returns only unread messages (default false)",
       },
     },
-    required: ["account", "folder"],
+    required: ["folder"],
   },
 };
 
 /**
  * Handle the list_messages MCP tool call.
  *
- * Returns a JSON array of MessageHeader objects, or an error ToolResult
- * when the account is unavailable.
+ * When account is omitted, fans out to all accounts in parallel and returns
+ * a { results, errors? } wrapper. When account is provided, returns the
+ * existing flat MessageHeader[] response (single-account path unchanged).
  */
 export async function handleListMessages(
   params: ListMessagesParams,
   manager: ConnectionManager
 ): Promise<ToolResult> {
   const { account, folder, limit, offset, sort, unread_only } = params;
+
+  if (account === undefined) {
+    const accountIds = manager.getAccountIds();
+    const perAccountLimit = (limit ?? 50) + (offset ?? 0);
+    const { results, errors } = await fanOutAccounts(accountIds, manager, (client) =>
+      listMessages(client, folder, { limit: perAccountLimit, sort, unreadOnly: unread_only })
+    );
+
+    if (results.length === 0 && Object.keys(errors).length === accountIds.length) {
+      return {
+        content: [{ type: "text", text: `All accounts failed: ${JSON.stringify(errors)}` }],
+        isError: true,
+      };
+    }
+
+    results.sort((a, b) => safeTime(b.date) - safeTime(a.date));
+    const effectiveOffset = offset ?? 0;
+    const effectiveLimit = limit ?? 50;
+    const page = results.slice(effectiveOffset, effectiveOffset + effectiveLimit);
+
+    const response: MultiAccountResult<MultiAccountMessageHeader> = {
+      results: page,
+      ...(Object.keys(errors).length > 0 ? { errors } : {}),
+    };
+
+    return { content: [{ type: "text", text: JSON.stringify(response) }], isError: false };
+  }
 
   const clientResult = manager.getClient(account);
 
