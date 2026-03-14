@@ -51,11 +51,13 @@ async function main(): Promise<void> {
       case "list_accounts":
         return handleListAccounts(manager) as AnyToolResult;
       case "list_folders":
+        // account is intentionally not defaulted — absence signals multi-account mode
         return handleListFolders(
           params as unknown as { account: string },
           manager
         ) as AnyToolResult;
       case "list_messages":
+        // account is intentionally not defaulted — absence signals multi-account mode
         return handleListMessages(
           params as unknown as Parameters<typeof handleListMessages>[0],
           manager
@@ -66,6 +68,7 @@ async function main(): Promise<void> {
           manager
         ) as AnyToolResult;
       case "search_messages":
+        // account is intentionally not defaulted — absence signals multi-account mode
         return handleSearchMessages(
           params as unknown as Parameters<typeof handleSearchMessages>[0],
           manager
