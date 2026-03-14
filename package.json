@@ -1,6 +1,6 @@
 {
   "name": "imap-mcp",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "IMAP Model Context Protocol server for reading, searching, and monitoring email",
   "type": "module",
   "scripts": {
@@ -22,8 +22,8 @@
     "mcp",
     "email"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Jonathan Howell",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/jonathanhowell/imap-mcp/issues"
   },

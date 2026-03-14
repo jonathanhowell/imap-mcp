@@ -43,7 +43,7 @@ async function main(): Promise<void> {
   process.on("SIGINT", shutdown);
 
   const server = new Server(
-    { name: "imap-mcp", version: "1.0.0" },
+    { name: "imap-mcp", version: "0.1.0" },
     { capabilities: { tools: {} } }
   );
 
