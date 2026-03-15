@@ -62,5 +62,17 @@ Background polling default is 3 min (configurable); header cache avoids IMAP rou
 | stderr-only logging | Prevents stdout contamination of MCP JSON-RPC | ✓ Good — no protocol corruption |
 | Exponential backoff reconnect | Handles transient drops without crashing | ✓ Good — isolated per-account |
 
+## Current Milestone: v0.2 Agent UX
+
+**Goal:** Reduce agent round-trips and enrich tool responses with context that LLM personal assistants need to act without guessing.
+
+**Target features:**
+- `list_accounts` returns `display_name` and email address
+- New `read_messages` batch tool (multiple UIDs → full bodies in one call)
+- Body text search in `search_messages`
+- `to`/`cc` fields in `list_messages` and `search_messages` responses
+- `download_attachment` accepts `filename` as alternative to `part_id`
+- `list_messages` `folder` parameter optional (defaults to INBOX)
+
 ---
 *Last updated: 2026-03-15 after v0.1.0 milestone*

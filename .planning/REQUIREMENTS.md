@@ -1,139 +1,74 @@
 # Requirements: IMAP MCP Server
 
-**Defined:** 2026-03-11
+**Defined:** 2026-03-15
 **Core Value:** An agent can reliably read, search, and monitor email across multiple accounts so important messages are never missed.
 
-## v1 Requirements
+## v0.2 Requirements
 
-### Configuration (CONF)
+### Account Context
 
-- [x] **CONF-01**: User can configure multiple named email accounts (e.g. "personal", "work") via a config file
-- [x] **CONF-02**: IMAP credentials can be supplied via environment variables as an alternative to the config file
-- [x] **CONF-03**: Server enforces TLS/SSL for all IMAP connections (port 993); plain-text connections are rejected at startup
+- [ ] **ACTX-01**: `list_accounts` response includes `display_name` for each account (when configured)
+- [ ] **ACTX-02**: `list_accounts` response includes the email address for each account
 
-### Connection Management (CONN)
+### Message Header Enrichment
 
-- [x] **CONN-01**: Server maintains persistent IMAP connections per account (not opened on every tool call)
-- [x] **CONN-02**: Connections automatically reconnect with exponential backoff after drop or timeout
-- [x] **CONN-03**: One broken account connection does not crash the server or block operations on other accounts
+- [ ] **HDR-01**: `list_messages` response includes `to` and `cc` recipient fields for each message
+- [ ] **HDR-02**: `search_messages` response includes `to` and `cc` recipient fields for each result
 
-### Mailbox Navigation (MAIL)
+### Batch Operations
 
-- [x] **MAIL-01**: Agent can list all folders/mailboxes in a named account
-- [x] **MAIL-02**: Agent can retrieve total and unread message counts per folder
-- [x] **MAIL-03**: Agent can list messages from any folder, not just Inbox
+- [ ] **BATCH-01**: Agent can call `read_messages` with a list of UIDs and receive full message bodies for all of them in a single response
+- [ ] **BATCH-02**: `read_messages` accepts the same `format` and `max_chars` options as `read_message`
 
-### Message Listing (LIST)
+### Search Enhancements
 
-- [x] **LIST-01**: Agent can list messages in a folder with pagination (limit and offset parameters)
-- [x] **LIST-02**: Agent can list unread messages from a specific account or across all accounts
-- [x] **LIST-03**: Message listings are sortable by date (newest-first or oldest-first)
-- [x] **LIST-04**: Message list responses include headers only (sender, subject, date, UID) — no bodies
+- [ ] **SRCH-05**: Agent can search messages by body text content (partial match)
+- [ ] **SRCH-06**: `list_messages` `folder` parameter is optional, defaulting to INBOX when omitted
 
-### Message Reading (READ)
+### Attachment UX
 
-- [x] **READ-01**: Agent can fetch a full email by account name and UID (headers + plain text body)
-- [x] **READ-02**: Agent can fetch a truncated email body (first N characters, configurable)
-- [x] **READ-03**: Agent can fetch a cleaned email body: HTML converted to plain text, quoted reply chains and thread history removed
-- [x] **READ-04**: Agent can list attachments for a message (filename, size, MIME type) without downloading content
-- [x] **READ-05**: Agent can download a specific attachment by message UID and part identifier
+- [ ] **ATCH-01**: Agent can download an attachment by `filename` instead of `part_id` when the exact part ID is unknown
 
-### Search (SRCH)
-
-- [x] **SRCH-01**: Agent can search messages by sender address or domain
-- [x] **SRCH-02**: Agent can search messages by subject keyword
-- [x] **SRCH-03**: Agent can search messages by date range (before, after, or between dates)
-- [x] **SRCH-04**: Agent can filter messages by read/unread status
-
-### Multi-Account (ACCT)
-
-- [x] **ACCT-01**: All tool calls accept an optional account name parameter to target a specific account
-- [x] **ACCT-02**: Agent can retrieve a unified unread inbox merged and sorted across all configured accounts
-- [x] **ACCT-03**: When an operation spans multiple accounts, per-account errors return partial results with error details rather than failing the entire request
-
-### Background Polling (POLL)
-
-- [x] **POLL-01**: Server polls all configured accounts at a configurable interval (default: 3 minutes)
-- [x] **POLL-02**: Server pre-fetches unread message headers into an in-memory cache so agent queries are served without an IMAP round-trip
-- [x] **POLL-03**: Agent can query what new messages have arrived since a given timestamp
-
-## v2 Requirements
+## v0.3 Requirements (deferred)
 
 ### Write Operations
 
-- **WRIT-01**: Agent can mark messages as read or unread
-- **WRIT-02**: Agent can move messages between folders
-- **WRIT-03**: Agent can delete messages (move to Trash)
+- **WRITE-01**: Agent can mark a message as read or unread
+- **WRITE-02**: Agent can move a message to a different folder
+- **WRITE-03**: Agent can delete or archive a message
 
-### Email Composition (v2+)
+### Monitoring
 
-- **SEND-01**: Agent can compose and send a new email via SMTP
-- **SEND-02**: Agent can reply to an existing email thread
-- **SEND-03**: Agent can forward an email to another recipient
-
-### Advanced Search
-
-- **SRCH-05**: Agent can search message bodies using full-text IMAP SEARCH TEXT
-- **SRCH-06**: Agent can combine multiple search criteria in a single query (AND conditions)
-
-### Enhanced Features
-
-- **FEAT-01**: Agent can group messages into threads (via References/In-Reply-To headers)
-- **FEAT-02**: Server generates and caches LLM summaries of emails on request
-- **FEAT-03**: Per-account configurable polling intervals
-- **FEAT-04**: IMAP IDLE push notifications replacing polling (lower latency)
+- **MON-01**: `get_new_mail` response includes cache metadata (last_polled, cache_age_seconds)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| OAuth2 redirect flow implementation | Provider-specific complexity; v1 accepts pre-obtained tokens/app passwords as credentials |
-| Folder/label creation and deletion | High-risk destructive operations; not needed for read-only use case |
-| Calendar/contacts (CalDAV/CardDAV) | Different protocols; separate product surface |
-| Web UI or dashboard | Agent interface only; no human-facing UI planned |
-| Outlook / Hotmail support | Deprecated Basic Auth for IMAP; requires OAuth2 which is out of scope for v1 |
-| Real-time sync / IMAP IDLE (v1) | Polling covers the use case; IDLE adds reconnect complexity deferred to v2 |
+| Sending / replying / forwarding | High stakes write operation — planned for v0.3+ |
+| Web UI or dashboard | Agent interface only |
+| OAuth / provider APIs | IMAP-only for maximum compatibility |
+| Thread / conversation grouping | Requires IMAP THREAD extension, not universally supported |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONF-01 | Phase 1 | Complete |
-| CONF-02 | Phase 1 | Complete |
-| CONF-03 | Phase 1 | Complete |
-| CONN-01 | Phase 2 | Complete |
-| CONN-02 | Phase 2 | Complete |
-| CONN-03 | Phase 2 | Complete |
-| MAIL-01 | Phase 3 | Complete |
-| MAIL-02 | Phase 3 | Complete |
-| MAIL-03 | Phase 3 | Complete |
-| LIST-01 | Phase 3 | Complete |
-| LIST-02 | Phase 3 | Complete |
-| LIST-03 | Phase 3 | Complete |
-| LIST-04 | Phase 3 | Complete |
-| READ-01 | Phase 3 | Complete |
-| READ-02 | Phase 3 | Complete |
-| READ-03 | Phase 3 | Complete |
-| READ-04 | Phase 3 | Complete |
-| READ-05 | Phase 3 | Complete |
-| SRCH-01 | Phase 3 | Complete |
-| SRCH-02 | Phase 3 | Complete |
-| SRCH-03 | Phase 3 | Complete |
-| SRCH-04 | Phase 3 | Complete |
-| ACCT-01 | Phase 4 | Complete |
-| ACCT-02 | Phase 4 | Complete |
-| ACCT-03 | Phase 4 | Complete |
-| POLL-01 | Phase 5 | Complete |
-| POLL-02 | Phase 5 | Complete |
-| POLL-03 | Phase 5 | Complete |
+| ACTX-01 | — | Pending |
+| ACTX-02 | — | Pending |
+| HDR-01 | — | Pending |
+| HDR-02 | — | Pending |
+| BATCH-01 | — | Pending |
+| BATCH-02 | — | Pending |
+| SRCH-05 | — | Pending |
+| SRCH-06 | — | Pending |
+| ATCH-01 | — | Pending |
 
 **Coverage:**
-- v1 requirements: 28 total
-- Mapped to phases: 28
-- Unmapped: 0 ✓
+- v0.2 requirements: 9 total
+- Mapped to phases: 0
+- Unmapped: 9 ⚠️
 
 ---
-*Requirements defined: 2026-03-11*
-*Last updated: 2026-03-11 after initial definition*
+*Requirements defined: 2026-03-15*
+*Last updated: 2026-03-15 after initial definition*
