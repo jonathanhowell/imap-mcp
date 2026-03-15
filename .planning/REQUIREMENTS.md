@@ -54,21 +54,21 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ACTX-01 | — | Pending |
-| ACTX-02 | — | Pending |
-| HDR-01 | — | Pending |
-| HDR-02 | — | Pending |
-| BATCH-01 | — | Pending |
-| BATCH-02 | — | Pending |
-| SRCH-05 | — | Pending |
-| SRCH-06 | — | Pending |
-| ATCH-01 | — | Pending |
+| ACTX-01 | Phase 8 | Pending |
+| ACTX-02 | Phase 8 | Pending |
+| HDR-01 | Phase 7 | Pending |
+| HDR-02 | Phase 7 | Pending |
+| BATCH-01 | Phase 9 | Pending |
+| BATCH-02 | Phase 9 | Pending |
+| SRCH-05 | Phase 10 | Pending |
+| SRCH-06 | Phase 8 | Pending |
+| ATCH-01 | Phase 10 | Pending |
 
 **Coverage:**
 - v0.2 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9 ⚠️
+- Mapped to phases: 9
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after initial definition*
+*Last updated: 2026-03-15 — traceability filled after v0.2 roadmap creation*

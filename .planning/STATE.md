@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1
-milestone_name: milestone
+milestone: v0.2
+milestone_name: Agent UX
 status: planning
-stopped_at: Completed 06-04-PLAN.md
-last_updated: "2026-03-15T21:15:41.155Z"
-last_activity: 2026-03-11 — Roadmap created
+stopped_at: Roadmap created for v0.2 (Phases 7–10)
+last_updated: "2026-03-15"
+last_activity: 2026-03-15 — v0.2 roadmap created
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 23
-  completed_plans: 23
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -18,61 +18,34 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-11)
+See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** An agent can reliably read, search, and monitor email across multiple accounts so important messages are never missed.
-**Current focus:** Phase 1 — Foundation
+**Current focus:** Phase 7 — Header Enrichment
 
 ## Current Position
 
-Phase: 1 of 6 (Foundation)
+Phase: 7 of 10 (Header Enrichment)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-03-11 — Roadmap created
+Last activity: 2026-03-15 — v0.2 roadmap created
 
 Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0 hours
+- Total plans completed: 23 (v0.1)
+- Average duration: ~5 min/plan (v0.1)
+- Total execution time: ~2 hours (v0.1)
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
-
-**Recent Trend:**
-- Last 5 plans: —
-- Trend: —
+| v0.1 phases 1–6 | 23 | ~2h | ~5min |
 
 *Updated after each plan completion*
-| Phase 01-foundation P01 | 3 | 2 tasks | 8 files |
-| Phase 01-foundation P02 | 5 | 2 tasks | 7 files |
-| Phase 01-foundation P03 | 2 | 2 tasks | 4 files |
-| Phase 02-connection-management P01 | 2 | 2 tasks | 4 files |
-| Phase 02-connection-management P02 | 2 | 2 tasks | 3 files |
-| Phase 02-connection-management P03 | 20 | 2 tasks | 5 files |
-| Phase 03-core-read-operations P01 | 7min | 3 tasks | 8 files |
-| Phase 03-core-read-operations P02 | 8min | 2 tasks | 3 files |
-| Phase 03-core-read-operations P03 | verified | 2 tasks | 3 files |
-| Phase 03-core-read-operations P04 | pre-committed | 2 tasks | 7 files |
-| Phase 03-core-read-operations P05 | ~20min | 2 tasks | 3 files |
-| Phase 03-core-read-operations P06 | 15min | 2 tasks | 3 files |
-| Phase 04-multi-account-unified-view P01 | 3min | 2 tasks | 4 files |
-| Phase 04-multi-account-unified-view P03 | 3min | 2 tasks | 3 files |
-| Phase 04-multi-account-unified-view P02 | 3min | 2 tasks | 4 files |
-| Phase 05-background-polling P01 | 5 | 2 tasks | 2 files |
-| Phase 05-background-polling P03 | 4min | 1 tasks | 3 files |
-| Phase 05-background-polling P02 | 7min | 2 tasks | 3 files |
-| Phase 05-background-polling P04 | 2min | 1 tasks | 1 files |
-| Phase 06-hardening-and-release P01 | 2 | 2 tasks | 6 files |
-| Phase 06-hardening-and-release P02 | 1min | 2 tasks | 2 files |
-| Phase 06-hardening-and-release P03 | 2 | 2 tasks | 2 files |
-| Phase 06-hardening-and-release P04 | 10min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -81,60 +54,12 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Architecture: Multi-account `{account_id, uid}` tuple data model must be established in Phase 1 before any feature code — retrofitting is a breaking API change
-- Architecture: All logging must use stderr only — stdout is the JSON-RPC channel for MCP stdio transport
-- Architecture: Phase 3 tool schemas (pagination, response size limits) must not change after Phase 3 — downstream tools depend on stable contracts
-- [Phase 01-foundation]: ESLint 9 flat config (eslint.config.mjs) required — .eslintrc format removed in ESLint 9
-- [Phase 01-foundation]: no-console:error enforced to hard-block stdout contamination of MCP JSON-RPC channel
-- [Phase 01-foundation]: passWithNoTests and --no-error-on-unmatched-pattern added for clean bootstrap state with empty directories
-- [Phase 01-foundation]: zod v4 uses .issues not .errors — all schema error access must use result.error.issues
-- [Phase 01-foundation]: MessageRef {account_id, uid} contract established — bare UIDs must never be passed to MCP tools
-- [Phase 01-foundation]: Stub tool names (list_accounts, list_folders, list_messages, read_message, search_messages) are the stable MCP contract — Phase 3 replaces handlers not names
-- [Phase 01-foundation]: void config in src/index.ts suppresses unused-variable lint while keeping the config load side-effect (process.exit on invalid config)
-- [Phase 02-connection-management]: TDD RED commits use --no-verify to bypass pre-commit test runner when committing intentionally failing test stubs
-- [Phase 02-connection-management]: imapflow ships own .d.ts at lib/imap-flow.d.ts; @types/imapflow not installed (community stub is outdated)
-- [Phase 02-connection-management]: Use globalThis.setTimeout (not node:timers/promises) for backoff sleep — vitest fake timers do not intercept node:timers/promises.setTimeout
-- [Phase 02-connection-management]: AbortController + AbortSignal pattern for interrupting sleeping backoff delay during gracefulClose()
-- [Phase 02-connection-management]: vi.fn(function(){}) required for vitest constructor mocks — arrow functions fail silently with new
-- [Phase 02-connection-management]: ConnectionManager.getClient() returns ImapFlow | { error: string } discriminated union — callers check 'error' in result
-- [Phase 02-connection-management]: SIGTERM/SIGINT handlers registered after connectAll() — connections established before server accepts MCP calls
-- [Phase 03-core-read-operations]: eslint-disable block comment used for multi-line imports in Wave 0 scaffolds — preserves import intent while satisfying no-unused-vars rule
-- [Phase 03-core-read-operations]: ToolResult interface mirrors MCP SDK CallToolResult shape — all Phase 3 handlers return this type for structured error propagation
-- [Phase 03-core-read-operations]: folder-service is pure (no try/catch) — handler layer owns structured error formatting for ToolResult
-- [Phase 03-core-read-operations]: Service+handler split pattern established: service accepts ImapFlow directly, handler calls getClient and guards on error
-- [Phase 03-core-read-operations]: listMessages uses UID-slice pagination: search all UIDs, sort+slice in memory, fetchAll only the page — establishes pattern for all Phase 3 services
-- [Phase 03-core-read-operations]: Mailbox lock guard: getMailboxLock in try block with lock.release() in finally — required pattern for all services calling getMailboxLock
-- [Phase 03-core-read-operations]: search() || [] normalization: imapflow search() returns false when no results — always normalize to empty array immediately
-- [Phase 03-core-read-operations]: Root BODYSTRUCTURE node with undefined .part is treated as part '1' — single-part messages always addressable via fetchOne bodyParts '1'
-- [Phase 03-core-read-operations]: read_message default format is 'clean' (reply-chain stripped) — reduces noise for agent consumers; callers pass format='full' for raw content
-- [Phase 03-core-read-operations]: Two fetchOne calls under single lock: first for envelope+bodyStructure, second for body part buffers — avoids double-lock overhead while keeping payloads minimal
-- [Phase 03-core-read-operations]: download_attachment acquires its own lock in attachment-service — service is self-contained and directly testable without handler layer mock
-- [Phase 03-core-read-operations]: unread param maps inverted to IMAP seen flag: unread=true → seen: false; unread=false → seen: true; unread=undefined → seen omitted entirely
-- [Phase 03-core-read-operations]: folder='all' search uses client.list() + sequential per-folder loop with early exit at max_results — simpler than parallel, documented as potentially slow
-- [Phase 03-core-read-operations]: as unknown as Parameters<typeof handler>[0] required for strict TypeScript dispatch in index.ts switch-router
-- [Phase 03-core-read-operations]: stubs.ts retained because startup.test.ts imports it directly — server no longer uses it but tests do
-- [Phase 04-multi-account-unified-view]: fanOutAccounts returns errors as Record<string, string> (always present) so callers can iterate without null guard
-- [Phase 04-multi-account-unified-view]: safeTime uses || 0 not ?? 0 because new Date('').getTime() returns NaN which is falsy
-- [Phase 04-multi-account-unified-view]: fanOutAccounts enriches items via object spread to preserve T shape without mutation
-- [Phase 04-multi-account-unified-view]: search_messages multi-account returns { results, errors? } wrapper; single-account returns flat array — shapes discriminated by presence of account param
-- [Phase 04-multi-account-unified-view]: index.ts dispatch args ?? {} preserves absent keys as undefined — no account defaulting needed at dispatch layer
-- [Phase 04-multi-account-unified-view]: list_messages multi-account sort: safeTime descending (newest-first), consistent with single-account default
-- [Phase 04-multi-account-unified-view]: list_folders multi-account sort: localeCompare alphabetical (stable, deterministic for folder names)
-- [Phase 04-multi-account-unified-view]: Per-account limit for fan-out = (limit ?? 50) + (offset ?? 0) to ensure global top-N captured before merge+slice
-- [Phase 05-background-polling]: Wave 0 scaffolds use it.todo stubs (not it.skip) so Vitest reports pending count without any failures
-- [Phase 05-background-polling]: No top-level import of non-existent source files in Wave 0 scaffolds — avoids compile errors while preserving test intent
-- [Phase 05-background-polling]: handleGetNewMail is async for consistency even though no async work; no try/catch (Poller injected); isError false when cache ready with errors in JSON body; Poller skeleton created for type import only
-- [Phase 05-background-polling]: Recursive globalThis.setTimeout loop for fake-timer testability in Poller class
-- [Phase 05-background-polling]: vi.advanceTimersByTimeAsync(0) for TDD fake timer tests with recursive polling loops — avoids infinite loop
-- [Phase 05-background-polling]: Poller.stop() sets flag only — current poll always completes before timer is skipped
-- [Phase 05-background-polling]: Poller instantiated with config.polling?.interval_seconds ?? 300 and stop() called before closeAll() in shutdown
-- [Phase 06-hardening-and-release]: 200-result cap applied at handler entry point (not service layer) so both account paths inherit the same ceiling without modifying services
-- [Phase 06-hardening-and-release]: ESLint argsIgnorePattern added for _ prefix — standardizes underscore convention project-wide rather than per-line disables
-- [Phase 06-hardening-and-release]: gitleaks protect --staged --redact used (not --no-redact) to avoid leaking secrets in hook output
-- [Phase 06-hardening-and-release]: Advisory exit 0 when gitleaks binary missing so hook does not block contributors without gitleaks installed
-- [Phase 06-hardening-and-release]: README tone is practical reference — no marketing copy; target is technical user running in 5 minutes
-- [Phase 06-hardening-and-release]: Outlook Basic Auth deprecation warning placed in both Provider Compatibility and Troubleshooting sections for maximum visibility
-- [Phase 06-hardening-and-release]: v0.1.0 annotated tag applied to version-bump commit after human checkpoint verified MCP Inspector (all 7 tools) and README
+- [Phase 07]: MessageHeader type in src/types.ts needs `to` and `cc` fields added; both list_messages and search_messages consume this type
+- [Phase 08]: list_accounts only has access to ConnectionManager — config must be threaded through to expose display_name and email
+- [Phase 08]: list_messages folder parameter defaults to INBOX when omitted; existing callers passing folder explicitly are unaffected
+- [Phase 09]: read_messages is a new tool alongside existing read_message (singular); does not replace it
+- [Phase 10]: download_attachment by filename requires fetching bodyStructure first to find matching part_id; then delegates to existing logic
+- [Phase 10]: IMAP body search uses imapflow search() with `{ body: "text" }` criteria
 
 ### Pending Todos
 
@@ -142,12 +67,10 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 2: imapflow reconnect API specifics need verification against imapflow.com docs before implementation (research MEDIUM confidence on library internals)
-- Phase 3: IMAP SEARCH grammar mapping and imapflow BODYSTRUCTURE/ENVELOPE fetch API need verification (research flags these for phase research)
-- Release gate: Gmail app password policy and Outlook Basic Auth deprecation status should be verified before finalizing auth strategy documentation
+None identified. All v0.2 changes are additive (new fields, new tool, new parameters) — no breaking changes to existing tool contracts.
 
 ## Session Continuity
 
-Last session: 2026-03-15T20:57:27.611Z
-Stopped at: Completed 06-04-PLAN.md
+Last session: 2026-03-15
+Stopped at: v0.2 roadmap created — ready to plan Phase 7
 Resume file: None
