@@ -59,6 +59,11 @@ export async function searchMessages(
   return results;
 }
 
+function formatAddress(entry: { name?: string; address?: string }): string {
+  if (entry.name && entry.address) return `${entry.name} <${entry.address}>`;
+  return entry.address ?? "";
+}
+
 async function searchFolder(
   client: ImapFlow,
   folder: string,
@@ -77,7 +82,7 @@ async function searchFolder(
     );
     return messages.map((msg) => ({
       uid: msg.uid,
-      from: msg.envelope?.from?.[0]?.address ?? "",
+      from: formatAddress(msg.envelope?.from?.[0] ?? {}),
       subject: msg.envelope?.subject ?? "",
       date:
         msg.internalDate instanceof Date
@@ -85,6 +90,12 @@ async function searchFolder(
           : String(msg.internalDate ?? ""),
       unread: !msg.flags?.has("\\Seen"),
       folder,
+      to: (msg.envelope?.to ?? [])
+        .filter((e): e is { name?: string; address: string } => e.address !== undefined)
+        .map(formatAddress),
+      cc: (msg.envelope?.cc ?? [])
+        .filter((e): e is { name?: string; address: string } => e.address !== undefined)
+        .map(formatAddress),
     }));
   } finally {
     lock.release();
