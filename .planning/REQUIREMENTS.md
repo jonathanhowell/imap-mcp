@@ -12,8 +12,8 @@
 
 ### Message Header Enrichment
 
-- [ ] **HDR-01**: `list_messages` response includes `to` and `cc` recipient fields for each message
-- [ ] **HDR-02**: `search_messages` response includes `to` and `cc` recipient fields for each result
+- [x] **HDR-01**: `list_messages` response includes `to` and `cc` recipient fields for each message
+- [x] **HDR-02**: `search_messages` response includes `to` and `cc` recipient fields for each result
 
 ### Batch Operations
 
@@ -56,8 +56,8 @@
 |-------------|-------|--------|
 | ACTX-01 | Phase 8 | Pending |
 | ACTX-02 | Phase 8 | Pending |
-| HDR-01 | Phase 7 | Pending |
-| HDR-02 | Phase 7 | Pending |
+| HDR-01 | Phase 7 | Complete |
+| HDR-02 | Phase 7 | Complete |
 | BATCH-01 | Phase 9 | Pending |
 | BATCH-02 | Phase 9 | Pending |
 | SRCH-05 | Phase 10 | Pending |

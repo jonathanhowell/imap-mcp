@@ -90,7 +90,7 @@ Plans:
 | 4. Multi-Account Unified View | v0.1.0 | 3/3 | Complete | 2026-03-14 |
 | 5. Background Polling | v0.1.0 | 4/4 | Complete | 2026-03-14 |
 | 6. Hardening and Release | v0.1.0 | 4/4 | Complete | 2026-03-15 |
-| 7. Header Enrichment | v0.2 | 0/2 | Not started | - |
+| 7. Header Enrichment | 1/2 | In Progress|  | - |
 | 8. Account Context and Tool Ergonomics | v0.2 | 0/TBD | Not started | - |
 | 9. Batch Read | v0.2 | 0/TBD | Not started | - |
 | 10. Search and Attachment UX | v0.2 | 0/TBD | Not started | - |

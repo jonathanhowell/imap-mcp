@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
 status: planning
-stopped_at: Phase 7 context gathered
-last_updated: "2026-03-15T21:54:10.612Z"
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-03-15T22:10:33.831Z"
 last_activity: 2026-03-15 — v0.2 roadmap created
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -46,6 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 | v0.1 phases 1–6 | 23 | ~2h | ~5min |
 
 *Updated after each plan completion*
+| Phase 07-header-enrichment P01 | 6 | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,8 @@ Recent decisions affecting current work:
 - [Phase 09]: read_messages is a new tool alongside existing read_message (singular); does not replace it
 - [Phase 10]: download_attachment by filename requires fetching bodyStructure first to find matching part_id; then delegates to existing logic
 - [Phase 10]: IMAP body search uses imapflow search() with `{ body: "text" }` criteria
+- [Phase 07-header-enrichment]: formatAddress returns Name <addr> when both fields present, bare address when name absent, empty string when address undefined
+- [Phase 07-header-enrichment]: to and cc are required non-optional fields on MessageHeader to guarantee arrays in all responses
 
 ### Pending Todos
 
@@ -71,6 +74,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-15T21:54:10.610Z
-Stopped at: Phase 7 context gathered
-Resume file: .planning/phases/07-header-enrichment/07-CONTEXT.md
+Last session: 2026-03-15T22:10:33.829Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None
