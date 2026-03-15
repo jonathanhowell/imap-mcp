@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
 status: planning
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-03-15T22:10:33.831Z"
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-03-15T22:15:14.479Z"
 last_activity: 2026-03-15 — v0.2 roadmap created
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -47,6 +47,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 07-header-enrichment P01 | 6 | 3 tasks | 3 files |
+| Phase 07-header-enrichment P02 | 172 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - [Phase 10]: IMAP body search uses imapflow search() with `{ body: "text" }` criteria
 - [Phase 07-header-enrichment]: formatAddress returns Name <addr> when both fields present, bare address when name absent, empty string when address undefined
 - [Phase 07-header-enrichment]: to and cc are required non-optional fields on MessageHeader to guarantee arrays in all responses
+- [Phase 07-header-enrichment]: Envelope mock helper extended with fromName/to/cc opts so existing tests need no structural changes
+- [Phase 07-header-enrichment]: to and cc added inline to every envelope mock in search-messages.test.ts to match updated service output shape
 
 ### Pending Todos
 
@@ -74,6 +77,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-15T22:10:33.829Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-03-15T22:15:14.477Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
