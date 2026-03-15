@@ -41,7 +41,11 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
   2. A call to `search_messages` returns `to` and `cc` arrays on every result item in the response
   3. The `to` and `cc` fields are present even when empty (empty array, not absent key)
   4. Existing tests for list_messages and search_messages continue to pass
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Add to/cc to MessageHeader type and update service mapping closures
+- [ ] 07-02-PLAN.md — Update tests for new MessageHeader shape and add HDR-01/HDR-02 test cases
 
 ### Phase 8: Account Context and Tool Ergonomics
 **Goal**: Agent gets display names and email addresses from list_accounts; folder parameter no longer required for list_messages
@@ -86,7 +90,7 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
 | 4. Multi-Account Unified View | v0.1.0 | 3/3 | Complete | 2026-03-14 |
 | 5. Background Polling | v0.1.0 | 4/4 | Complete | 2026-03-14 |
 | 6. Hardening and Release | v0.1.0 | 4/4 | Complete | 2026-03-15 |
-| 7. Header Enrichment | v0.2 | 0/TBD | Not started | - |
+| 7. Header Enrichment | v0.2 | 0/2 | Not started | - |
 | 8. Account Context and Tool Ergonomics | v0.2 | 0/TBD | Not started | - |
 | 9. Batch Read | v0.2 | 0/TBD | Not started | - |
 | 10. Search and Attachment UX | v0.2 | 0/TBD | Not started | - |
