@@ -8,17 +8,22 @@ function makeMockMessage(
   uid: number,
   opts: {
     from?: string;
+    fromName?: string;
     subject?: string;
     date?: Date;
     seen?: boolean;
+    to?: Array<{ name?: string; address: string }>;
+    cc?: Array<{ name?: string; address: string }>;
   } = {}
 ) {
   return {
     seq: uid,
     uid,
     envelope: {
-      from: opts.from ? [{ address: opts.from }] : [],
+      from: opts.from ? [{ address: opts.from, name: opts.fromName }] : [],
       subject: opts.subject ?? `Subject ${uid}`,
+      to: opts.to ?? [],
+      cc: opts.cc ?? [],
     },
     flags: new Set<string>(opts.seen ? ["\\Seen"] : []),
     internalDate: opts.date ?? new Date("2024-01-01T00:00:00.000Z"),
@@ -223,7 +228,7 @@ describe("list_messages", () => {
         expect(h).not.toHaveProperty("html");
         // Should only have MessageHeader fields
         expect(Object.keys(h)).toEqual(
-          expect.arrayContaining(["uid", "from", "subject", "date", "unread"])
+          expect.arrayContaining(["uid", "from", "subject", "date", "unread", "to", "cc"])
         );
       }
       expect(mockLock.release.mock.calls.length).toBeGreaterThan(0);
@@ -302,10 +307,7 @@ describe("list_messages", () => {
           ),
       });
 
-      const result = await handleListMessages(
-        { account: "work", folder: "INBOX" },
-        mockManager
-      );
+      const result = await handleListMessages({ account: "work", folder: "INBOX" }, mockManager);
 
       expect(result.isError).toBe(false);
       const headers = JSON.parse(result.content[0].text);
@@ -317,7 +319,9 @@ describe("list_messages", () => {
       function makeMultiCapClient(count: number) {
         const uids = Array.from({ length: count }, (_, i) => i + 1);
         const msgs = uids.map((uid) =>
-          makeMockMessage(uid, { date: new Date(`2024-01-${String(uid % 28 + 1).padStart(2, "0")}T00:00:00.000Z`) })
+          makeMockMessage(uid, {
+            date: new Date(`2024-01-${String((uid % 28) + 1).padStart(2, "0")}T00:00:00.000Z`),
+          })
         );
         return {
           getMailboxLock: vi.fn().mockResolvedValue({ release: vi.fn() }),
@@ -334,9 +338,9 @@ describe("list_messages", () => {
       const workClient = makeMultiCapClient(200);
 
       const manager = {
-        getClient: vi.fn().mockImplementation((id: string) =>
-          id === "gmail" ? gmailClient : workClient
-        ),
+        getClient: vi
+          .fn()
+          .mockImplementation((id: string) => (id === "gmail" ? gmailClient : workClient)),
         getAccountIds: vi.fn().mockReturnValue(["gmail", "work"]),
       } as unknown as import("../../src/connections/index.js").ConnectionManager;
 
@@ -428,10 +432,7 @@ describe("list_messages", () => {
 
       const manager = makeMultiAccountManager({ gmail: gmailClient, work: workClient });
 
-      const result = await handleListMessages(
-        { folder: "INBOX", unread_only: true },
-        manager
-      );
+      const result = await handleListMessages({ folder: "INBOX", unread_only: true }, manager);
 
       expect(result.isError).toBe(false);
       const response = JSON.parse(result.content[0].text);
@@ -441,9 +442,7 @@ describe("list_messages", () => {
     });
 
     it("one account fails — partial result with errors key, isError: false", async () => {
-      const gmailMessages = [
-        makeMockMessage(10, { date: new Date("2024-01-10T00:00:00.000Z") }),
-      ];
+      const gmailMessages = [makeMockMessage(10, { date: new Date("2024-01-10T00:00:00.000Z") })];
       const gmailClient = makeMultiClient(gmailMessages);
 
       const manager = makeMultiAccountManager({
@@ -500,6 +499,63 @@ describe("list_messages", () => {
       expect(response.results).toHaveLength(2);
       expect(new Date(response.results[0].date).getDate()).toBe(8);
       expect(new Date(response.results[1].date).getDate()).toBe(7);
+    });
+  });
+
+  describe("HDR-01: to and cc fields on list_messages response", () => {
+    it("message with recipients: to and cc arrays contain formatted strings", async () => {
+      const { mockManager, mockLock } = makeManagerWithClient({
+        search: vi.fn().mockResolvedValue([1]),
+        fetchAll: vi.fn().mockResolvedValue([
+          makeMockMessage(1, {
+            from: "alice@example.com",
+            fromName: "Alice Smith",
+            to: [{ address: "bob@example.com", name: "Bob Jones" }],
+            cc: [{ address: "carol@example.com" }],
+          }),
+        ]),
+      });
+
+      const result = await handleListMessages({ account: "work", folder: "INBOX" }, mockManager);
+
+      expect(result.isError).toBe(false);
+      const headers = JSON.parse(result.content[0].text);
+      expect(headers).toHaveLength(1);
+      expect(headers[0].to).toEqual(["Bob Jones <bob@example.com>"]);
+      expect(headers[0].cc).toEqual(["carol@example.com"]);
+      expect(headers[0].from).toBe("Alice Smith <alice@example.com>");
+      expect(mockLock.release.mock.calls.length).toBeGreaterThan(0);
+    });
+
+    it("message with no recipients: to and cc are empty arrays, not absent", async () => {
+      const { mockManager, mockLock } = makeManagerWithClient({
+        search: vi.fn().mockResolvedValue([2]),
+        fetchAll: vi.fn().mockResolvedValue([makeMockMessage(2)]),
+      });
+
+      const result = await handleListMessages({ account: "work", folder: "INBOX" }, mockManager);
+
+      expect(result.isError).toBe(false);
+      const headers = JSON.parse(result.content[0].text);
+      expect(headers[0]).toHaveProperty("to");
+      expect(headers[0]).toHaveProperty("cc");
+      expect(headers[0].to).toEqual([]);
+      expect(headers[0].cc).toEqual([]);
+      expect(mockLock.release.mock.calls.length).toBeGreaterThan(0);
+    });
+
+    it("from uses bare address when no display name is available", async () => {
+      const { mockManager, mockLock } = makeManagerWithClient({
+        search: vi.fn().mockResolvedValue([3]),
+        fetchAll: vi.fn().mockResolvedValue([makeMockMessage(3, { from: "sender@example.com" })]),
+      });
+
+      const result = await handleListMessages({ account: "work", folder: "INBOX" }, mockManager);
+
+      expect(result.isError).toBe(false);
+      const headers = JSON.parse(result.content[0].text);
+      expect(headers[0].from).toBe("sender@example.com");
+      expect(mockLock.release.mock.calls.length).toBeGreaterThan(0);
     });
   });
 });
