@@ -37,6 +37,8 @@ export interface MessageHeader {
   subject: string;
   date: string;
   unread: boolean;
+  to: string[];
+  cc: string[];
 }
 
 /**
