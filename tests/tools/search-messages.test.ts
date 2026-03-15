@@ -13,6 +13,8 @@ function makeMockClient(overrides: Partial<Record<string, unknown>> = {}): ImapF
         from: [{ address: "alice@example.com" }],
         subject: "Invoice #001",
         date: new Date("2024-03-01T10:00:00Z"),
+        to: [],
+        cc: [],
       },
       flags: new Set<string>(),
       internalDate: new Date("2024-03-01T10:00:00Z"),
@@ -150,6 +152,8 @@ describe("search_messages", () => {
         from: [{ address: `user${i}@example.com` }],
         subject: `Message ${i}`,
         date: new Date("2024-01-01"),
+        to: [],
+        cc: [],
       },
       flags: new Set<string>(),
       internalDate: new Date("2024-01-01"),
@@ -201,6 +205,8 @@ describe("search_messages", () => {
           from: [{ address: `user${i}@example.com` }],
           subject: `Message ${i}`,
           date: new Date("2024-01-01"),
+          to: [],
+          cc: [],
         },
         flags: new Set<string>(),
         internalDate: new Date("2024-01-01"),
@@ -216,10 +222,7 @@ describe("search_messages", () => {
       });
       const manager = makeManager(client);
 
-      const result = await handleSearchMessages(
-        { account: "personal", max_results: 300 },
-        manager
-      );
+      const result = await handleSearchMessages({ account: "personal", max_results: 300 }, manager);
 
       expect(result.isError).toBe(false);
       const parsed = JSON.parse(result.content[0].text) as unknown[];
@@ -234,6 +237,8 @@ describe("search_messages", () => {
           from: [{ address: `user${i}@example.com` }],
           subject: `Message ${i}`,
           date: new Date("2024-01-01"),
+          to: [],
+          cc: [],
         },
         flags: new Set<string>(),
         internalDate: new Date("2024-01-01"),
@@ -245,10 +250,7 @@ describe("search_messages", () => {
       });
       const manager = makeManager(client);
 
-      const result = await handleSearchMessages(
-        { account: "personal", max_results: 10 },
-        manager
-      );
+      const result = await handleSearchMessages({ account: "personal", max_results: 10 }, manager);
 
       expect(result.isError).toBe(false);
       const parsed = JSON.parse(result.content[0].text) as unknown[];
@@ -265,6 +267,8 @@ describe("search_messages", () => {
             from: [{ address: `user${uid}@example.com` }],
             subject: `Message ${uid}`,
             date: new Date("2024-01-01"),
+            to: [],
+            cc: [],
           },
           flags: new Set<string>(),
           internalDate: new Date("2024-01-01"),
@@ -287,7 +291,9 @@ describe("search_messages", () => {
       const result = await handleSearchMessages({ max_results: 300 }, manager);
 
       expect(result.isError).toBe(false);
-      const parsed = JSON.parse(result.content[0].text) as MultiAccountResult<MultiAccountSearchResultItem>;
+      const parsed = JSON.parse(
+        result.content[0].text
+      ) as MultiAccountResult<MultiAccountSearchResultItem>;
       expect(parsed.results.length).toBeLessThanOrEqual(200);
     });
   });
@@ -303,6 +309,8 @@ describe("search_messages", () => {
               from: [{ address: "alice@example.com" }],
               subject: "Older message",
               date: new Date("2024-01-01T09:00:00Z"),
+              to: [],
+              cc: [],
             },
             flags: new Set<string>(),
             internalDate: new Date("2024-01-01T09:00:00Z"),
@@ -318,6 +326,8 @@ describe("search_messages", () => {
               from: [{ address: "bob@example.com" }],
               subject: "Newer message",
               date: new Date("2024-06-15T12:00:00Z"),
+              to: [],
+              cc: [],
             },
             flags: new Set<string>(),
             internalDate: new Date("2024-06-15T12:00:00Z"),
@@ -330,7 +340,9 @@ describe("search_messages", () => {
       const result = await handleSearchMessages({}, manager);
 
       expect(result.isError).toBe(false);
-      const parsed = JSON.parse(result.content[0].text) as MultiAccountResult<MultiAccountSearchResultItem>;
+      const parsed = JSON.parse(
+        result.content[0].text
+      ) as MultiAccountResult<MultiAccountSearchResultItem>;
       expect(parsed).toHaveProperty("results");
       expect(parsed.results).toHaveLength(2);
       // sorted newest-first
@@ -353,6 +365,8 @@ describe("search_messages", () => {
               from: [{ address: "alice@example.com" }],
               subject: "Good message",
               date: new Date("2024-03-01T10:00:00Z"),
+              to: [],
+              cc: [],
             },
             flags: new Set<string>(),
             internalDate: new Date("2024-03-01T10:00:00Z"),
@@ -364,7 +378,9 @@ describe("search_messages", () => {
       const result = await handleSearchMessages({}, manager);
 
       expect(result.isError).toBe(false);
-      const parsed = JSON.parse(result.content[0].text) as MultiAccountResult<MultiAccountSearchResultItem>;
+      const parsed = JSON.parse(
+        result.content[0].text
+      ) as MultiAccountResult<MultiAccountSearchResultItem>;
       expect(parsed.results).toHaveLength(1);
       expect(parsed.results[0]).toHaveProperty("account", "acct_ok");
       expect(parsed.errors).toBeDefined();
@@ -390,6 +406,54 @@ describe("search_messages", () => {
       const parsed = JSON.parse(result.content[0].text) as unknown[];
       expect(Array.isArray(parsed)).toBe(true);
       expect(parsed.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("HDR-02: to and cc fields on search_messages response", () => {
+    it("message with recipients: to and cc arrays contain formatted strings", async () => {
+      const client = makeMockClient({
+        fetchAll: vi.fn().mockResolvedValue([
+          {
+            uid: 1,
+            envelope: {
+              from: [{ address: "alice@example.com", name: "Alice Smith" }],
+              subject: "Test",
+              to: [{ address: "bob@example.com", name: "Bob Jones" }],
+              cc: [{ address: "carol@example.com" }],
+            },
+            flags: new Set<string>(),
+            internalDate: new Date("2024-03-01T10:00:00Z"),
+          },
+        ]),
+      });
+      const manager = makeManager(client);
+
+      const result = await handleSearchMessages({ account: "personal" }, manager);
+
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as Array<{
+        to: string[];
+        cc: string[];
+        from: string;
+      }>;
+      expect(parsed[0].to).toEqual(["Bob Jones <bob@example.com>"]);
+      expect(parsed[0].cc).toEqual(["carol@example.com"]);
+      expect(parsed[0].from).toBe("Alice Smith <alice@example.com>");
+    });
+
+    it("message with no recipients: to and cc are empty arrays, not absent", async () => {
+      const client = makeMockClient();
+      const manager = makeManager(client);
+
+      const result = await handleSearchMessages({ account: "personal" }, manager);
+
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as Array<{ to: unknown; cc: unknown }>;
+      expect(parsed.length).toBeGreaterThan(0);
+      expect(parsed[0]).toHaveProperty("to");
+      expect(parsed[0]).toHaveProperty("cc");
+      expect(parsed[0].to).toEqual([]);
+      expect(parsed[0].cc).toEqual([]);
     });
   });
 });

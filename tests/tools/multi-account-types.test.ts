@@ -14,6 +14,8 @@ describe("MultiAccountMessageHeader", () => {
       subject: "Hello",
       date: "2024-01-01T00:00:00.000Z",
       unread: true,
+      to: [],
+      cc: [],
       account: "personal",
     };
     expect(header.account).toBe("personal");
@@ -30,6 +32,8 @@ describe("MultiAccountSearchResultItem", () => {
       subject: "Test",
       date: "2024-06-01T00:00:00.000Z",
       unread: false,
+      to: [],
+      cc: [],
       folder: "INBOX",
       account: "work",
     };
@@ -62,6 +66,8 @@ describe("MultiAccountResult", () => {
           subject: "Hi",
           date: "2024-01-01T00:00:00.000Z",
           unread: false,
+          to: [],
+          cc: [],
           account: "personal",
         },
       ],
