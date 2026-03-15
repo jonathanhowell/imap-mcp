@@ -2,7 +2,7 @@
 
 ## What This Is
 
-An MCP server that wraps IMAP email providers, giving AI agents structured access to email. Initially built for personal use (and household members), structured for eventual public release. Agents can read, search, monitor, and summarize emails — with sending support planned for a second stage.
+An MCP server that wraps IMAP email providers, giving AI agents structured, normalized access to email across multiple accounts. Read-only v0.1 shipped with 7 MCP tools covering folder navigation, paginated message listing, full message reads, header-only search, attachment inspection/download, and background new-mail detection. Sending/replying is planned for v0.2.
 
 ## Core Value
 
@@ -12,32 +12,35 @@ An agent can reliably read, search, and monitor email across multiple accounts s
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Agent can read emails from one or more configured IMAP accounts — v0.1.0
+- ✓ Agent can search emails by sender, subject, date, and read/unread status — v0.1.0
+- ✓ Server polls for new mail in the background and surfaces recent/unread to agents — v0.1.0
+- ✓ Agent can get a unified inbox view across all configured accounts — v0.1.0
+- ✓ Agent can query a specific account by name — v0.1.0
+- ✓ Multiple IMAP accounts configurable (not hardcoded credentials) — v0.1.0
+- ✓ Works with any MCP-compatible client (Claude Desktop, custom agents, etc.) — v0.1.0
 
 ### Active
 
-- [ ] Agent can read emails from one or more configured IMAP accounts
-- [ ] Agent can search emails by sender, subject, date, and content
-- [ ] Server polls for new mail in the background and surfaces recent/unread to agents
-- [ ] Agent can get a unified inbox view across all configured accounts
-- [ ] Agent can query a specific account by name
-- [ ] Multiple IMAP accounts configurable (not hardcoded credentials)
 - [ ] Agent can summarize email threads
-- [ ] Works with any MCP-compatible client (Claude Desktop, custom agents, etc.)
+- [ ] Agent can send/reply/forward emails
+- [ ] Agent can mark messages as read/unread
+- [ ] Agent can move/delete messages
 
-### Out of Scope (v1)
+### Out of Scope
 
-- Sending/replying/forwarding emails — planned for v2
 - Web UI or dashboard — agent interface only
 - Hardcoded credentials — must be configurable from day one
+- Proprietary email APIs (Gmail API, MS Graph) — IMAP-only for maximum compatibility
 
 ## Context
 
-- Standard IMAP protocol (RFC 3501) — compatible with Gmail, Outlook, Fastmail, and self-hosted mail servers
-- MCP (Model Context Protocol) is Anthropic's standard for giving agents access to external tools and resources
-- Household use case means multi-account is a real v1 requirement, not a stretch goal
-- Public release goal means code quality, documentation, and configuration UX matter early
-- Background polling will require some form of persistent server process or scheduled mechanism
+Shipped v0.1.0 with ~4,700 LOC TypeScript across 23 plans in 6 phases (4 days).
+Tech stack: Node.js ESM, TypeScript strict, imapflow, @modelcontextprotocol/sdk, Zod, Vitest.
+142 passing tests. gitleaks clean (111 commits audited). MIT licensed.
+
+Notable: Outlook/Microsoft is deprecating Basic Auth for IMAP — documented in README with warning.
+Background polling default is 3 min (configurable); header cache avoids IMAP round-trips on agent queries.
 
 ## Constraints
 
@@ -50,9 +53,14 @@ An agent can reliably read, search, and monitor email across multiple accounts s
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| IMAP over provider APIs | Works with any email provider, not just Gmail/Outlook | — Pending |
-| Multi-account from v1 | Household use requires it; retrofitting is painful | — Pending |
-| Phase 1: read-only | Safer starting point; sending has higher stakes | — Pending |
+| IMAP over provider APIs | Works with any email provider, not just Gmail/Outlook | ✓ Good — broad compat confirmed |
+| Multi-account from v1 | Household use requires it; retrofitting is painful | ✓ Good — fanOut pattern clean |
+| Phase 1: read-only | Safer starting point; sending has higher stakes | ✓ Good — solid foundation |
+| imapflow library | Active maintenance, TypeScript support | ✓ Good — reliable in tests |
+| `{account_id, uid}` data model | Globally unique message ref across accounts | ✓ Good — no collisions |
+| 200-result hard cap | Prevents context overflow in agent responses | ✓ Good — enforced server-side |
+| stderr-only logging | Prevents stdout contamination of MCP JSON-RPC | ✓ Good — no protocol corruption |
+| Exponential backoff reconnect | Handles transient drops without crashing | ✓ Good — isolated per-account |
 
 ---
-*Last updated: 2026-03-11 after initialization*
+*Last updated: 2026-03-15 after v0.1.0 milestone*
