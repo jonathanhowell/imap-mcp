@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Core Read Operations** - Mailbox navigation, paginated message listing, full message reads, basic search, attachment metadata (completed 2026-03-12)
 - [x] **Phase 4: Multi-Account Unified View** - Named account targeting, unified unread inbox, per-account error isolation (completed 2026-03-14)
 - [x] **Phase 5: Background Polling** - Configurable polling loop, in-memory header cache, new-mail-since query (completed 2026-03-14)
-- [ ] **Phase 6: Hardening and Release** - Response size verification, reconnect testing, credential audit, TLS enforcement, open-source readiness
+- [x] **Phase 6: Hardening and Release** - Response size verification, reconnect testing, credential audit, TLS enforcement, open-source readiness (completed 2026-03-15)
 
 ## Phase Details
 
@@ -136,4 +136,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Core Read Operations | 6/6 | Complete   | 2026-03-12 |
 | 4. Multi-Account Unified View | 3/3 | Complete   | 2026-03-14 |
 | 5. Background Polling | 4/4 | Complete   | 2026-03-14 |
-| 6. Hardening and Release | 3/4 | In Progress|  |
+| 6. Hardening and Release | 4/4 | Complete   | 2026-03-15 |

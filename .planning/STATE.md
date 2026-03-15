@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: planning
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-03-14T15:43:13.430Z"
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-03-15T20:57:27.614Z"
 last_activity: 2026-03-11 — Roadmap created
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 23
-  completed_plans: 22
+  completed_plans: 23
   percent: 0
 ---
 
@@ -72,6 +72,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06-hardening-and-release P01 | 2 | 2 tasks | 6 files |
 | Phase 06-hardening-and-release P02 | 1min | 2 tasks | 2 files |
 | Phase 06-hardening-and-release P03 | 2 | 2 tasks | 2 files |
+| Phase 06-hardening-and-release P04 | 10min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,7 @@ Recent decisions affecting current work:
 - [Phase 06-hardening-and-release]: Advisory exit 0 when gitleaks binary missing so hook does not block contributors without gitleaks installed
 - [Phase 06-hardening-and-release]: README tone is practical reference — no marketing copy; target is technical user running in 5 minutes
 - [Phase 06-hardening-and-release]: Outlook Basic Auth deprecation warning placed in both Provider Compatibility and Troubleshooting sections for maximum visibility
+- [Phase 06-hardening-and-release]: v0.1.0 annotated tag applied to version-bump commit after human checkpoint verified MCP Inspector (all 7 tools) and README
 
 ### Pending Todos
 
@@ -146,6 +148,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T15:43:13.428Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-03-15T20:57:27.611Z
+Stopped at: Completed 06-04-PLAN.md
 Resume file: None
