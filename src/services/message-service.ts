@@ -22,6 +22,11 @@ export interface ListMessagesOptions {
  * @param folder  - Mailbox path (e.g. 'INBOX', 'Work/Projects')
  * @param opts    - Pagination and filter options
  */
+function formatAddress(entry: { name?: string; address?: string }): string {
+  if (entry.name && entry.address) return `${entry.name} <${entry.address}>`;
+  return entry.address ?? "";
+}
+
 export async function listMessages(
   client: ImapFlow,
   folder: string,
@@ -56,13 +61,19 @@ export async function listMessages(
 
     return messages.map((msg) => ({
       uid: msg.uid,
-      from: msg.envelope?.from?.[0]?.address ?? "",
+      from: formatAddress(msg.envelope?.from?.[0] ?? {}),
       subject: msg.envelope?.subject ?? "",
       date:
         msg.internalDate instanceof Date
           ? msg.internalDate.toISOString()
           : String(msg.internalDate ?? ""),
       unread: !msg.flags?.has("\\Seen"),
+      to: (msg.envelope?.to ?? [])
+        .filter((e): e is { name?: string; address: string } => e.address !== undefined)
+        .map(formatAddress),
+      cc: (msg.envelope?.cc ?? [])
+        .filter((e): e is { name?: string; address: string } => e.address !== undefined)
+        .map(formatAddress),
     }));
   } finally {
     lock.release();
