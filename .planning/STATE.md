@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
 status: planning
-stopped_at: Completed 09-batch-read 09-02-PLAN.md
-last_updated: "2026-03-16T17:42:00Z"
+stopped_at: Completed 09-batch-read 09-03-PLAN.md
+last_updated: "2026-03-16T17:39:32.650Z"
 last_activity: 2026-03-15 — v0.2 roadmap created
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 7
   percent: 0
 ---
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08-account-context-and-tool-ergonomics P02 | 4 | 1 tasks | 2 files |
 | Phase 09-batch-read P01 | 5 | 1 tasks | 1 files |
 | Phase 09-batch-read P02 | 8 | 1 tasks | 2 files |
+| Phase 09-batch-read P03 | 3 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ Recent decisions affecting current work:
 - [Phase 09-batch-read]: Batch metadata uses client.fetch(uids.join(","), ..., { uid: true }) into Map<number, any> — one IMAP round-trip; body downloads remain sequential per-UID
 - [Phase 09-batch-read]: Hard cap guard placed before getClient() — no IMAP interaction for >50 UIDs
 - [Phase 09-batch-read]: Per-UID download errors produce { uid, error } entries with "download failed:" prefix enabling partial batch success
+- [Phase 09-batch-read]: read_messages switch case placed immediately after read_message case to preserve singular/plural adjacency
 
 ### Pending Todos
 
@@ -90,6 +92,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-16T17:42:00Z
-Stopped at: Completed 09-batch-read 09-02-PLAN.md
+Last session: 2026-03-16T17:39:32.648Z
+Stopped at: Completed 09-batch-read 09-03-PLAN.md
 Resume file: None
