@@ -56,7 +56,11 @@ Plans:
   2. A call to `list_accounts` returns the `email` address for each account
   3. A call to `list_messages` with no `folder` argument succeeds and returns messages from INBOX
   4. A call to `list_messages` with an explicit `folder` argument still works as before
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Enrich list_accounts with email and display_name (schema + ConnectionManager.getConfig + handler + tests)
+- [ ] 08-02-PLAN.md — Make list_messages folder optional with INBOX default (interface + handler + tests)
 
 ### Phase 9: Batch Read
 **Goal**: Agent can retrieve full bodies for multiple messages in a single tool call instead of looping over read_message
@@ -91,6 +95,6 @@ Plans:
 | 5. Background Polling | v0.1.0 | 4/4 | Complete | 2026-03-14 |
 | 6. Hardening and Release | v0.1.0 | 4/4 | Complete | 2026-03-15 |
 | 7. Header Enrichment | 2/2 | Complete   | 2026-03-15 | - |
-| 8. Account Context and Tool Ergonomics | v0.2 | 0/TBD | Not started | - |
+| 8. Account Context and Tool Ergonomics | v0.2 | 0/2 | Not started | - |
 | 9. Batch Read | v0.2 | 0/TBD | Not started | - |
 | 10. Search and Attachment UX | v0.2 | 0/TBD | Not started | - |
