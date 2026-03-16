@@ -87,7 +87,11 @@ Plans:
   2. Body search works across single-account and all-account (fan-out) modes
   3. A call to `download_attachment` with a `filename` argument (and no `part_id`) returns the correct attachment content
   4. When a filename matches multiple parts the first matching part is returned and no error is thrown
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Add body search parameter to search_messages (SRCH-05)
+- [ ] 10-02-PLAN.md — Add filename-based lookup to download_attachment (ATCH-01)
 
 ## Progress
 
@@ -102,4 +106,4 @@ Plans:
 | 7. Header Enrichment | 2/2 | Complete   | 2026-03-15 | - |
 | 8. Account Context and Tool Ergonomics | 2/2 | Complete   | 2026-03-16 | - |
 | 9. Batch Read | 3/3 | Complete   | 2026-03-16 | - |
-| 10. Search and Attachment UX | v0.2 | 0/TBD | Not started | - |
+| 10. Search and Attachment UX | v0.2 | 0/2 | Not started | - |
