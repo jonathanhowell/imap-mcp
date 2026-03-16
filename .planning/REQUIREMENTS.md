@@ -7,8 +7,8 @@
 
 ### Account Context
 
-- [ ] **ACTX-01**: `list_accounts` response includes `display_name` for each account (when configured)
-- [ ] **ACTX-02**: `list_accounts` response includes the email address for each account
+- [x] **ACTX-01**: `list_accounts` response includes `display_name` for each account (when configured)
+- [x] **ACTX-02**: `list_accounts` response includes the email address for each account
 
 ### Message Header Enrichment
 
@@ -54,8 +54,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ACTX-01 | Phase 8 | Pending |
-| ACTX-02 | Phase 8 | Pending |
+| ACTX-01 | Phase 8 | Complete |
+| ACTX-02 | Phase 8 | Complete |
 | HDR-01 | Phase 7 | Complete |
 | HDR-02 | Phase 7 | Complete |
 | BATCH-01 | Phase 9 | Pending |

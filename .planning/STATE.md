@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
 status: planning
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-16T07:09:05.965Z"
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-16T07:56:45.577Z"
 last_activity: 2026-03-15 — v0.2 roadmap created
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
   percent: 0
 ---
 
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 07-header-enrichment P01 | 6 | 3 tasks | 3 files |
 | Phase 07-header-enrichment P02 | 172 | 2 tasks | 3 files |
+| Phase 08-account-context-and-tool-ergonomics P01 | 2 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,9 @@ Recent decisions affecting current work:
 - [Phase 07-header-enrichment]: to and cc are required non-optional fields on MessageHeader to guarantee arrays in all responses
 - [Phase 07-header-enrichment]: Envelope mock helper extended with fromName/to/cc opts so existing tests need no structural changes
 - [Phase 07-header-enrichment]: to and cc added inline to every envelope mock in search-messages.test.ts to match updated service output shape
+- [Phase 08-account-context-and-tool-ergonomics]: email falls back to username when email not set in config so every account entry always has an email field
+- [Phase 08-account-context-and-tool-ergonomics]: display_name uses conditional spread so the key is absent from JSON when not configured, not null or undefined
+- [Phase 08-account-context-and-tool-ergonomics]: ConnectionManager stores a private configs Map populated alongside connections in constructor
 
 ### Pending Todos
 
@@ -77,6 +81,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-16T07:09:05.962Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-account-context-and-tool-ergonomics/08-CONTEXT.md
+Last session: 2026-03-16T07:56:45.575Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None
