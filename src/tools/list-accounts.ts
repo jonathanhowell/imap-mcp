@@ -4,7 +4,8 @@ import type { ToolResult } from "../types.js";
 
 export const LIST_ACCOUNTS_TOOL: Tool = {
   name: "list_accounts",
-  description: "List all configured IMAP accounts with their current connection status",
+  description:
+    "List all configured IMAP accounts with their current connection status, email address, and display name",
   inputSchema: { type: "object", properties: {} },
 };
 
@@ -12,18 +13,27 @@ export function handleListAccounts(manager: ConnectionManager): ToolResult {
   const accountIds = manager.getAccountIds();
   const accounts = accountIds.map((id) => {
     const status = manager.getStatus(id);
+    const cfg = manager.getConfig(id);
+    const email = cfg?.email ?? cfg?.username ?? "";
+
+    const baseEntry = {
+      account: id,
+      email,
+      ...(cfg?.display_name ? { display_name: cfg.display_name } : {}),
+    };
+
     if ("error" in status) {
-      return { account: id, status: "error", detail: status.error };
+      return { ...baseEntry, status: "error", detail: status.error };
     }
     switch (status.kind) {
       case "connected":
-        return { account: id, status: "connected" };
+        return { ...baseEntry, status: "connected" };
       case "connecting":
-        return { account: id, status: "connecting" };
+        return { ...baseEntry, status: "connecting" };
       case "reconnecting":
-        return { account: id, status: "reconnecting", attempt: status.attempt };
+        return { ...baseEntry, status: "reconnecting", attempt: status.attempt };
       case "failed":
-        return { account: id, status: "failed", detail: status.reason };
+        return { ...baseEntry, status: "failed", detail: status.reason };
     }
   });
   return {
