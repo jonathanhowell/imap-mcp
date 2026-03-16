@@ -12,6 +12,7 @@ export interface SearchMessagesParams {
   since?: string;
   before?: string;
   unread?: boolean;
+  body?: string;
   folder?: string;
   max_results?: number;
 }
@@ -48,6 +49,12 @@ export const SEARCH_MESSAGES_TOOL: Tool = {
         description:
           "Folder to search (default: INBOX). Pass 'all' to search all folders — may be slow on large mailboxes.",
       },
+      body: {
+        type: "string",
+        description:
+          "Filter by body text content (case-insensitive partial match, server-side). " +
+          "May be slower than header-only searches on large mailboxes.",
+      },
       max_results: {
         type: "number",
         description: "Maximum number of results to return (default 50)",
@@ -69,7 +76,7 @@ export async function handleSearchMessages(
   params: SearchMessagesParams,
   manager: ConnectionManager
 ): Promise<ToolResult> {
-  const { account, from, subject, since, before, unread, folder, max_results } = params;
+  const { account, from, subject, since, before, unread, body, folder, max_results } = params;
 
   const MAX_RESULTS = 200;
   const effectiveMax = Math.min(max_results ?? 50, MAX_RESULTS);
@@ -84,6 +91,7 @@ export async function handleSearchMessages(
         since,
         before,
         unread,
+        body,
         folder,
         maxResults: effectiveMax,
       })
@@ -122,6 +130,7 @@ export async function handleSearchMessages(
     since,
     before,
     unread,
+    body,
     folder,
     maxResults: effectiveMax,
   });
