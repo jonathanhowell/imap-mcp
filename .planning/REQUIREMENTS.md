@@ -23,7 +23,7 @@
 ### Search Enhancements
 
 - [ ] **SRCH-05**: Agent can search messages by body text content (partial match)
-- [ ] **SRCH-06**: `list_messages` `folder` parameter is optional, defaulting to INBOX when omitted
+- [x] **SRCH-06**: `list_messages` `folder` parameter is optional, defaulting to INBOX when omitted
 
 ### Attachment UX
 
@@ -61,7 +61,7 @@
 | BATCH-01 | Phase 9 | Pending |
 | BATCH-02 | Phase 9 | Pending |
 | SRCH-05 | Phase 10 | Pending |
-| SRCH-06 | Phase 8 | Pending |
+| SRCH-06 | Phase 8 | Complete |
 | ATCH-01 | Phase 10 | Pending |
 
 **Coverage:**
