@@ -101,5 +101,5 @@ Plans:
 | 6. Hardening and Release | v0.1.0 | 4/4 | Complete | 2026-03-15 |
 | 7. Header Enrichment | 2/2 | Complete   | 2026-03-15 | - |
 | 8. Account Context and Tool Ergonomics | 2/2 | Complete   | 2026-03-16 | - |
-| 9. Batch Read | v0.2 | 0/3 | Not started | - |
+| 9. Batch Read | 1/3 | In Progress|  | - |
 | 10. Search and Attachment UX | v0.2 | 0/TBD | Not started | - |

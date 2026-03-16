@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
 status: planning
-stopped_at: Phase 9 context gathered
-last_updated: "2026-03-16T12:16:35.388Z"
+stopped_at: Completed 09-batch-read 09-01-PLAN.md
+last_updated: "2026-03-16T17:33:20.096Z"
 last_activity: 2026-03-15 — v0.2 roadmap created
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 7
+  completed_plans: 5
   percent: 0
 ---
 
@@ -50,6 +50,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 07-header-enrichment P02 | 172 | 2 tasks | 3 files |
 | Phase 08-account-context-and-tool-ergonomics P01 | 2 | 2 tasks | 6 files |
 | Phase 08-account-context-and-tool-ergonomics P02 | 4 | 1 tasks | 2 files |
+| Phase 09-batch-read P01 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase 08-account-context-and-tool-ergonomics]: display_name uses conditional spread so the key is absent from JSON when not configured, not null or undefined
 - [Phase 08-account-context-and-tool-ergonomics]: ConnectionManager stores a private configs Map populated alongside connections in constructor
 - [Phase 08-account-context-and-tool-ergonomics]: folder ?? 'INBOX' applied as first statement in list_messages handler before branching so both fan-out and single-account paths share the same default
+- [Phase 09-batch-read]: Wave 0 scaffold uses it.todo stubs (not live assertions) — pre-commit hook runs full suite, so RED test file with broken import cannot be committed without implementation
+- [Phase 09-batch-read]: No top-level import of src/tools/read-messages.ts in Wave 0 — Plan 02 adds import when creating implementation
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-16T12:16:35.385Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-batch-read/09-CONTEXT.md
+Last session: 2026-03-16T17:33:20.094Z
+Stopped at: Completed 09-batch-read 09-01-PLAN.md
+Resume file: None

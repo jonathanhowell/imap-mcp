@@ -17,8 +17,8 @@
 
 ### Batch Operations
 
-- [ ] **BATCH-01**: Agent can call `read_messages` with a list of UIDs and receive full message bodies for all of them in a single response
-- [ ] **BATCH-02**: `read_messages` accepts the same `format` and `max_chars` options as `read_message`
+- [x] **BATCH-01**: Agent can call `read_messages` with a list of UIDs and receive full message bodies for all of them in a single response
+- [x] **BATCH-02**: `read_messages` accepts the same `format` and `max_chars` options as `read_message`
 
 ### Search Enhancements
 
@@ -58,8 +58,8 @@
 | ACTX-02 | Phase 8 | Complete |
 | HDR-01 | Phase 7 | Complete |
 | HDR-02 | Phase 7 | Complete |
-| BATCH-01 | Phase 9 | Pending |
-| BATCH-02 | Phase 9 | Pending |
+| BATCH-01 | Phase 9 | Complete |
+| BATCH-02 | Phase 9 | Complete |
 | SRCH-05 | Phase 10 | Pending |
 | SRCH-06 | Phase 8 | Complete |
 | ATCH-01 | Phase 10 | Pending |
