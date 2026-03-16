@@ -106,4 +106,4 @@ Plans:
 | 7. Header Enrichment | 2/2 | Complete   | 2026-03-15 | - |
 | 8. Account Context and Tool Ergonomics | 2/2 | Complete   | 2026-03-16 | - |
 | 9. Batch Read | 3/3 | Complete   | 2026-03-16 | - |
-| 10. Search and Attachment UX | v0.2 | 0/2 | Not started | - |
+| 10. Search and Attachment UX | 1/2 | In Progress|  | - |
