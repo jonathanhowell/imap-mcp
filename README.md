@@ -1,6 +1,6 @@
 # imap-mcp
 
-An MCP server that gives AI agents access to email over IMAP. Connect one or more email accounts and agents can read mailboxes, search messages by sender, subject, or date, download attachments, and monitor for new mail — all via the Model Context Protocol. Designed to work with Claude Desktop and any MCP-compatible client.
+An MCP server that gives AI agents access to email over IMAP. Connect one or more email accounts and agents can read mailboxes, search messages by sender, subject, date, or body text, download attachments, and monitor for new mail — all via the Model Context Protocol. Designed to work with Claude Desktop and any MCP-compatible client.
 
 ## Quick Start
 
@@ -120,7 +120,7 @@ All tools are available via MCP. `account` parameters accept the `name` field fr
 
 Returns all configured accounts. No parameters.
 
-**Response:** Array of `{ name, display_name, host }` objects.
+**Response:** Array of `{ account, email, display_name? }` objects.
 
 ---
 
@@ -138,16 +138,16 @@ Returns all configured accounts. No parameters.
 
 ### `list_messages`
 
-| Parameter    | Type              | Required | Description                                         |
-| ------------ | ----------------- | -------- | --------------------------------------------------- |
-| `folder`     | string            | yes      | Folder name (e.g. `INBOX`)                          |
-| `account`    | string            | no       | Account name. Omit to query all accounts.           |
-| `limit`      | number            | no       | Max messages to return (server cap: 200)            |
-| `offset`     | number            | no       | Pagination offset                                   |
-| `sort`       | `newest`\|`oldest`| no       | Sort order (default: `newest`)                      |
-| `unread_only`| boolean           | no       | Return only unread messages                         |
+| Parameter    | Type              | Required | Description                                                   |
+| ------------ | ----------------- | -------- | ------------------------------------------------------------- |
+| `account`    | string            | no       | Account name. Omit to query all accounts.                     |
+| `folder`     | string            | no       | Folder name (default: `INBOX`)                                |
+| `limit`      | number            | no       | Max messages to return (server cap: 200)                      |
+| `offset`     | number            | no       | Pagination offset                                             |
+| `sort`       | `newest`\|`oldest`| no       | Sort order (default: `newest`)                                |
+| `unread_only`| boolean           | no       | Return only unread messages                                   |
 
-**Response (single account):** Flat array of `MessageHeader[]`.
+**Response (single account):** Flat array of `MessageHeader[]` — each item includes `uid`, `from`, `to[]`, `cc[]`, `subject`, `date`, `flags`, and `folder`.
 
 **Response (all accounts):** `{ results: MultiAccountMessageHeader[], errors?: Record<string, string> }`. The `errors` key is present only when one or more accounts failed.
 
@@ -165,20 +165,37 @@ Returns all configured accounts. No parameters.
 
 ---
 
+### `read_messages`
+
+Fetch multiple messages in a single call. All UIDs must belong to the same account and folder.
+
+| Parameter   | Type                              | Required | Description                                                         |
+| ----------- | --------------------------------- | -------- | ------------------------------------------------------------------- |
+| `account`   | string                            | yes      | Account name                                                        |
+| `uids`      | number[]                          | yes      | List of message UIDs to fetch (max 50)                              |
+| `folder`    | string                            | no       | Folder containing the messages (default: `INBOX`)                  |
+| `format`    | `clean`\|`full`\|`truncated`      | no       | Body format (default: `clean`)                                      |
+| `max_chars` | number                            | no       | Max body characters when `format` is `truncated` (default: `2000`) |
+
+**Response:** Array of message objects in the same order as `uids`. Each item includes headers, body, and a `uid` field.
+
+---
+
 ### `search_messages`
 
-| Parameter    | Type    | Required | Description                                                       |
-| ------------ | ------- | -------- | ----------------------------------------------------------------- |
-| `account`    | string  | no       | Account name. Omit to search all accounts.                        |
-| `from`       | string  | no       | Filter by sender address or name                                  |
-| `subject`    | string  | no       | Filter by subject text                                            |
-| `since`      | string  | no       | ISO date string — messages on or after this date                  |
-| `before`     | string  | no       | ISO date string — messages before this date                       |
-| `unread`     | boolean | no       | `true` = unread only, `false` = read only                         |
-| `folder`     | string  | no       | Folder to search. Use `all` to search every folder sequentially.  |
-| `max_results`| number  | no       | Max results to return (server cap: 200)                           |
+| Parameter    | Type    | Required | Description                                                                            |
+| ------------ | ------- | -------- | -------------------------------------------------------------------------------------- |
+| `account`    | string  | no       | Account name. Omit to search all accounts.                                             |
+| `from`       | string  | no       | Filter by sender address or name                                                       |
+| `subject`    | string  | no       | Filter by subject text                                                                 |
+| `body`       | string  | no       | Filter by body text content (case-insensitive, server-side IMAP SEARCH BODY)           |
+| `since`      | string  | no       | ISO date string — messages on or after this date                                       |
+| `before`     | string  | no       | ISO date string — messages before this date                                            |
+| `unread`     | boolean | no       | `true` = unread only, `false` = read only                                              |
+| `folder`     | string  | no       | Folder to search (default: `INBOX`). Use `all` to search every folder sequentially.   |
+| `max_results`| number  | no       | Max results to return (server cap: 200)                                                |
 
-**Response (single account):** Flat array of `SearchResultItem[]`.
+**Response (single account):** Flat array of `SearchResultItem[]` — each item includes `uid`, `from`, `to[]`, `cc[]`, `subject`, `date`, `flags`, and `folder`.
 
 **Response (all accounts):** `{ results: MultiAccountSearchResultItem[], errors?: Record<string, string> }`.
 
@@ -188,11 +205,15 @@ Returns all configured accounts. No parameters.
 
 ### `download_attachment`
 
-| Parameter | Type   | Required | Description                          |
-| --------- | ------ | -------- | ------------------------------------ |
-| `account` | string | yes      | Account name                         |
-| `uid`     | number | yes      | Message UID                          |
-| `part`    | string | yes      | MIME part identifier (e.g. `2`, `2.1`) |
+| Parameter  | Type   | Required | Description                                                                    |
+| ---------- | ------ | -------- | ------------------------------------------------------------------------------ |
+| `account`  | string | yes      | Account name                                                                   |
+| `uid`      | number | yes      | Message UID                                                                    |
+| `part_id`  | string | no       | MIME part identifier (e.g. `2`, `2.1`). Faster when known.                    |
+| `filename` | string | no       | Attachment filename. Used to look up the part ID when `part_id` is not known. |
+| `folder`   | string | no       | Folder containing the message (default: `INBOX`)                              |
+
+At least one of `part_id` or `filename` must be provided. When both are given, `part_id` takes precedence. Filename matching is case-insensitive.
 
 **Response:** `{ filename, mimeType, size, data }` where `data` is base64-encoded.
 
@@ -212,7 +233,10 @@ Once connected to Claude Desktop, you can ask things like:
 
 - "Show me all unread emails from the last 24 hours across all my accounts"
 - "Search for emails from GitHub about pull requests in my work account from this week"
+- "Find any emails mentioning the invoice number INV-2024-042"
 - "Read the most recent email from alice@example.com and summarize it"
+- "Read all three emails in that thread and give me a summary"
+- "Download the PDF attachment from that email"
 
 ## Troubleshooting
 
