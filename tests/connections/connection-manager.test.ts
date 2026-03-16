@@ -161,3 +161,26 @@ describe("ConnectionManager account isolation", () => {
     await expect(manager.closeAll()).resolves.toBeUndefined();
   });
 });
+
+describe("ConnectionManager.getConfig()", () => {
+  it("returns AccountConfig for a known account", () => {
+    const config = makeTwoAccountConfig();
+    const manager = new ConnectionManager(config);
+
+    const result = manager.getConfig("personal");
+
+    expect(result).toBeDefined();
+    expect(result?.name).toBe("personal");
+    expect(result?.username).toBe("personal@example.com");
+    expect(result?.host).toBe("imap.personal.com");
+  });
+
+  it("returns undefined for an unknown account ID", () => {
+    const config = makeTwoAccountConfig();
+    const manager = new ConnectionManager(config);
+
+    const result = manager.getConfig("does-not-exist");
+
+    expect(result).toBeUndefined();
+  });
+});

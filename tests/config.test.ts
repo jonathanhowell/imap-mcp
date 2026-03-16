@@ -126,3 +126,23 @@ describe("port 993 enforced", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("email field on AccountSchema", () => {
+  it("accepts optional email field when provided", () => {
+    const result = AppConfigSchema.safeParse({
+      accounts: [{ ...validAccount, email: "me@example.com" }],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.accounts[0].email).toBe("me@example.com");
+    }
+  });
+
+  it("accepts account without email field (email is optional)", () => {
+    const result = AppConfigSchema.safeParse({ accounts: [validAccount] });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.accounts[0].email).toBeUndefined();
+    }
+  });
+});

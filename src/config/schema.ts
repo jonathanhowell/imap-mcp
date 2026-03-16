@@ -28,6 +28,7 @@ export const AccountSchema = z.object({
   username: z.string().min(1, "username is required"),
   password: envVarRefOrLiteral,
   display_name: z.string().optional(),
+  email: z.string().optional(),
 });
 
 export const AppConfigSchema = z.object({

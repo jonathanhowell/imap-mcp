@@ -1,16 +1,19 @@
 import type { ImapFlow } from "imapflow";
 import { logger } from "../logger.js";
-import type { AppConfig } from "../config/types.js";
+import type { AccountConfig, AppConfig } from "../config/types.js";
 import { AccountConnection } from "./account-connection.js";
 import type { AccountConnectionStatus } from "./account-connection.js";
 
 export class ConnectionManager {
   private readonly connections: Map<string, AccountConnection>;
+  private readonly configs: Map<string, AccountConfig>;
 
   constructor(config: AppConfig) {
     this.connections = new Map();
+    this.configs = new Map();
     for (const account of config.accounts) {
       this.connections.set(account.name, new AccountConnection(account.name, account));
+      this.configs.set(account.name, account);
     }
   }
 
@@ -81,6 +84,14 @@ export class ConnectionManager {
    */
   getAccountIds(): string[] {
     return Array.from(this.connections.keys());
+  }
+
+  /**
+   * Returns the AccountConfig for the named account, or undefined if the
+   * account is not configured. Used by list_accounts to read display_name and email.
+   */
+  getConfig(accountId: string): AccountConfig | undefined {
+    return this.configs.get(accountId);
   }
 
   /**
