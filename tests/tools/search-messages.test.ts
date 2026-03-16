@@ -409,6 +409,44 @@ describe("search_messages", () => {
     });
   });
 
+  describe("SRCH-05: body parameter for body text search", () => {
+    it("single-account: body param is passed as criteria.body to IMAP search", async () => {
+      const client = makeMockClient();
+      const manager = makeManager(client);
+
+      await handleSearchMessages({ account: "personal", body: "invoice" }, manager);
+
+      expect(client.search).toHaveBeenCalledWith(expect.objectContaining({ body: "invoice" }), {
+        uid: true,
+      });
+    });
+
+    it("single-account: omitting body does not include body key in criteria", async () => {
+      const client = makeMockClient();
+      const manager = makeManager(client);
+
+      await handleSearchMessages({ account: "personal", from: "alice@example.com" }, manager);
+
+      const searchCall = (client.search as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(searchCall).not.toHaveProperty("body");
+    });
+
+    it("multi-account: body param threads through fan-out to each account's client.search", async () => {
+      const clientA = makeMockClient();
+      const clientB = makeMockClient();
+      const manager = makeMultiManager({ acct_a: clientA, acct_b: clientB });
+
+      await handleSearchMessages({ body: "report" }, manager);
+
+      expect(clientA.search).toHaveBeenCalledWith(expect.objectContaining({ body: "report" }), {
+        uid: true,
+      });
+      expect(clientB.search).toHaveBeenCalledWith(expect.objectContaining({ body: "report" }), {
+        uid: true,
+      });
+    });
+  });
+
   describe("HDR-02: to and cc fields on search_messages response", () => {
     it("message with recipients: to and cc arrays contain formatted strings", async () => {
       const client = makeMockClient({

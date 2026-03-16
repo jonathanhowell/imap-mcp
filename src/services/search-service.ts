@@ -7,6 +7,7 @@ export interface SearchParams {
   since?: string;
   before?: string;
   unread?: boolean;
+  body?: string;
   folder?: string;
   maxResults?: number;
 }
@@ -25,7 +26,7 @@ export async function searchMessages(
   client: ImapFlow,
   params: SearchParams
 ): Promise<SearchResultItem[]> {
-  const { from, subject, since, before, unread, folder = "INBOX", maxResults = 50 } = params;
+  const { from, subject, since, before, unread, body, folder = "INBOX", maxResults = 50 } = params;
 
   // Build IMAP SearchObject — only include fields that are defined
   const criteria: Record<string, unknown> = {};
@@ -36,6 +37,7 @@ export async function searchMessages(
   if (unread === true) criteria.seen = false;
   else if (unread === false) criteria.seen = true;
   // unread=undefined → seen not included
+  if (body !== undefined) criteria.body = body;
 
   if (folder !== "all") {
     return await searchFolder(client, folder, criteria, maxResults);
