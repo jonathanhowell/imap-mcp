@@ -7,6 +7,7 @@ import { LIST_ACCOUNTS_TOOL, handleListAccounts } from "./tools/list-accounts.js
 import { LIST_FOLDERS_TOOL, handleListFolders } from "./tools/list-folders.js";
 import { LIST_MESSAGES_TOOL, handleListMessages } from "./tools/list-messages.js";
 import { READ_MESSAGE_TOOL, handleReadMessage } from "./tools/read-message.js";
+import { READ_MESSAGES_TOOL, handleReadMessages } from "./tools/read-messages.js";
 import { SEARCH_MESSAGES_TOOL, handleSearchMessages } from "./tools/search-messages.js";
 import { DOWNLOAD_ATTACHMENT_TOOL, handleDownloadAttachment } from "./tools/download-attachment.js";
 import { Poller } from "./polling/poller.js";
@@ -17,6 +18,7 @@ const TOOLS = [
   LIST_FOLDERS_TOOL,
   LIST_MESSAGES_TOOL,
   READ_MESSAGE_TOOL,
+  READ_MESSAGES_TOOL,
   SEARCH_MESSAGES_TOOL,
   DOWNLOAD_ATTACHMENT_TOOL,
   GET_NEW_MAIL_TOOL,
@@ -72,6 +74,11 @@ async function main(): Promise<void> {
       case "read_message":
         return handleReadMessage(
           params as unknown as Parameters<typeof handleReadMessage>[0],
+          manager
+        ) as AnyToolResult;
+      case "read_messages":
+        return handleReadMessages(
+          params as unknown as Parameters<typeof handleReadMessages>[0],
           manager
         ) as AnyToolResult;
       case "search_messages":
