@@ -71,7 +71,12 @@ Plans:
   2. `read_messages` accepts `format` and `max_chars` options with the same behavior as `read_message`
   3. When a UID in the list does not exist the response includes an error entry for that UID and continues returning the others
   4. The existing `read_message` (singular) tool is unaffected
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Write failing test scaffold for read_messages (Wave 0, TDD RED)
+- [ ] 09-02-PLAN.md — Implement src/tools/read-messages.ts (make tests GREEN)
+- [ ] 09-03-PLAN.md — Register read_messages in src/index.ts and verify full suite
 
 ### Phase 10: Search and Attachment UX
 **Goal**: Agent can search by message body text and download attachments by filename without needing to know part IDs
@@ -96,5 +101,5 @@ Plans:
 | 6. Hardening and Release | v0.1.0 | 4/4 | Complete | 2026-03-15 |
 | 7. Header Enrichment | 2/2 | Complete   | 2026-03-15 | - |
 | 8. Account Context and Tool Ergonomics | 2/2 | Complete   | 2026-03-16 | - |
-| 9. Batch Read | v0.2 | 0/TBD | Not started | - |
+| 9. Batch Read | v0.2 | 0/3 | Not started | - |
 | 10. Search and Attachment UX | v0.2 | 0/TBD | Not started | - |
