@@ -27,7 +27,7 @@
 
 ### Attachment UX
 
-- [ ] **ATCH-01**: Agent can download an attachment by `filename` instead of `part_id` when the exact part ID is unknown
+- [x] **ATCH-01**: Agent can download an attachment by `filename` instead of `part_id` when the exact part ID is unknown
 
 ## v0.3 Requirements (deferred)
 
@@ -62,7 +62,7 @@
 | BATCH-02 | Phase 9 | Complete |
 | SRCH-05 | Phase 10 | Complete |
 | SRCH-06 | Phase 8 | Complete |
-| ATCH-01 | Phase 10 | Pending |
+| ATCH-01 | Phase 10 | Complete |
 
 **Coverage:**
 - v0.2 requirements: 9 total

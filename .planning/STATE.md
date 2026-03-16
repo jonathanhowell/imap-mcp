@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
-status: planning
-stopped_at: Completed 10-search-and-attachment-ux/10-01-PLAN.md
-last_updated: "2026-03-16T20:25:33.144Z"
+status: in_progress
+stopped_at: Completed 10-search-and-attachment-ux/10-02-PLAN.md
+last_updated: "2026-03-16T20:25:52Z"
 last_activity: 2026-03-15 — v0.2 roadmap created
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 9
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 09-batch-read P02 | 8 | 1 tasks | 2 files |
 | Phase 09-batch-read P03 | 3 | 1 tasks | 1 files |
 | Phase 10-search-and-attachment-ux P01 | 3 | 2 tasks | 3 files |
+| Phase 10-search-and-attachment-ux P02 | 184 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 09-batch-read]: Per-UID download errors produce { uid, error } entries with "download failed:" prefix enabling partial batch success
 - [Phase 09-batch-read]: read_messages switch case placed immediately after read_message case to preserve singular/plural adjacency
 - [Phase 10-search-and-attachment-ux]: IMAP body search uses imapflow search() with { body: 'text' } criteria; body threaded through both fan-out and single-account paths in handleSearchMessages
+- [Phase 10-search-and-attachment-ux]: bodyStructure lock released in finally block before downloadAttachment acquires its own lock (nested lock pitfall avoided)
+- [Phase 10-search-and-attachment-ux]: part_id takes precedence over filename when both provided; runtime guard fires before getClient when neither provided
 
 ### Pending Todos
 
@@ -94,6 +97,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-16T20:25:33.141Z
-Stopped at: Completed 10-search-and-attachment-ux/10-01-PLAN.md
+Last session: 2026-03-16T20:25:52Z
+Stopped at: Completed 10-search-and-attachment-ux/10-02-PLAN.md
 Resume file: None

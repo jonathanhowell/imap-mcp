@@ -28,7 +28,7 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
 - [x] **Phase 7: Header Enrichment** - Add to/cc recipient fields to list_messages and search_messages responses (completed 2026-03-15)
 - [x] **Phase 8: Account Context and Tool Ergonomics** - Enrich list_accounts with display_name/email; make list_messages folder optional (completed 2026-03-16)
 - [x] **Phase 9: Batch Read** - New read_messages tool to fetch multiple full message bodies in one call (completed 2026-03-16)
-- [ ] **Phase 10: Search and Attachment UX** - Body text search in search_messages; download_attachment by filename
+- [x] **Phase 10: Search and Attachment UX** - Body text search in search_messages; download_attachment by filename (completed 2026-03-16)
 
 ## Phase Details
 
@@ -106,4 +106,4 @@ Plans:
 | 7. Header Enrichment | 2/2 | Complete   | 2026-03-15 | - |
 | 8. Account Context and Tool Ergonomics | 2/2 | Complete   | 2026-03-16 | - |
 | 9. Batch Read | 3/3 | Complete   | 2026-03-16 | - |
-| 10. Search and Attachment UX | 1/2 | In Progress|  | - |
+| 10. Search and Attachment UX | 2/2 | Complete   | 2026-03-16 | - |
