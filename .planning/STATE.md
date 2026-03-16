@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
 status: planning
-stopped_at: Completed 09-batch-read 09-01-PLAN.md
-last_updated: "2026-03-16T17:33:20.096Z"
+stopped_at: Completed 09-batch-read 09-02-PLAN.md
+last_updated: "2026-03-16T17:42:00Z"
 last_activity: 2026-03-15 — v0.2 roadmap created
 progress:
   total_phases: 4
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 08-account-context-and-tool-ergonomics P01 | 2 | 2 tasks | 6 files |
 | Phase 08-account-context-and-tool-ergonomics P02 | 4 | 1 tasks | 2 files |
 | Phase 09-batch-read P01 | 5 | 1 tasks | 1 files |
+| Phase 09-batch-read P02 | 8 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,9 @@ Recent decisions affecting current work:
 - [Phase 08-account-context-and-tool-ergonomics]: folder ?? 'INBOX' applied as first statement in list_messages handler before branching so both fan-out and single-account paths share the same default
 - [Phase 09-batch-read]: Wave 0 scaffold uses it.todo stubs (not live assertions) — pre-commit hook runs full suite, so RED test file with broken import cannot be committed without implementation
 - [Phase 09-batch-read]: No top-level import of src/tools/read-messages.ts in Wave 0 — Plan 02 adds import when creating implementation
+- [Phase 09-batch-read]: Batch metadata uses client.fetch(uids.join(","), ..., { uid: true }) into Map<number, any> — one IMAP round-trip; body downloads remain sequential per-UID
+- [Phase 09-batch-read]: Hard cap guard placed before getClient() — no IMAP interaction for >50 UIDs
+- [Phase 09-batch-read]: Per-UID download errors produce { uid, error } entries with "download failed:" prefix enabling partial batch success
 
 ### Pending Todos
 
@@ -86,6 +90,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-16T17:33:20.094Z
-Stopped at: Completed 09-batch-read 09-01-PLAN.md
+Last session: 2026-03-16T17:42:00Z
+Stopped at: Completed 09-batch-read 09-02-PLAN.md
 Resume file: None
