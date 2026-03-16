@@ -7,7 +7,7 @@ import { fanOutAccounts, safeTime } from "./multi-account.js";
 
 export interface ListMessagesParams {
   account?: string;
-  folder: string;
+  folder?: string;
   limit?: number;
   offset?: number;
   sort?: "newest" | "oldest";
@@ -16,7 +16,8 @@ export interface ListMessagesParams {
 
 export const LIST_MESSAGES_TOOL: Tool = {
   name: "list_messages",
-  description: "List messages in a folder with pagination and optional filtering",
+  description:
+    "List messages in a folder with pagination and optional filtering. Defaults to INBOX when folder is omitted.",
   inputSchema: {
     type: "object",
     properties: {
@@ -44,7 +45,7 @@ export const LIST_MESSAGES_TOOL: Tool = {
         description: "When true, returns only unread messages (default false)",
       },
     },
-    required: ["folder"],
+    required: [],
   },
 };
 
@@ -60,6 +61,7 @@ export async function handleListMessages(
   manager: ConnectionManager
 ): Promise<ToolResult> {
   const { account, folder, limit, offset, sort, unread_only } = params;
+  const effectiveFolder = folder ?? "INBOX";
 
   const MAX_RESULTS = 200;
   const cappedLimit = Math.min(limit ?? 50, MAX_RESULTS);
@@ -68,7 +70,11 @@ export async function handleListMessages(
     const accountIds = manager.getAccountIds();
     const perAccountLimit = cappedLimit + (offset ?? 0);
     const { results, errors } = await fanOutAccounts(accountIds, manager, (client) =>
-      listMessages(client, folder, { limit: perAccountLimit, sort, unreadOnly: unread_only })
+      listMessages(client, effectiveFolder, {
+        limit: perAccountLimit,
+        sort,
+        unreadOnly: unread_only,
+      })
     );
 
     if (results.length === 0 && Object.keys(errors).length === accountIds.length) {
@@ -100,7 +106,7 @@ export async function handleListMessages(
     };
   }
 
-  const headers = await listMessages(clientResult, folder, {
+  const headers = await listMessages(clientResult, effectiveFolder, {
     limit: cappedLimit,
     offset,
     sort,

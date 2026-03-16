@@ -502,6 +502,43 @@ describe("list_messages", () => {
     });
   });
 
+  describe("SRCH-06: folder parameter is optional, defaults to INBOX", () => {
+    it("passes INBOX to getMailboxLock when folder is omitted (single-account path)", async () => {
+      const { mockManager, mockClient } = makeManagerWithClient({
+        search: vi.fn().mockResolvedValue([]),
+        fetchAll: vi.fn().mockResolvedValue([]),
+      });
+      // No folder param — should default to INBOX
+      await handleListMessages({ account: "test" }, mockManager);
+      expect(mockClient.getMailboxLock).toHaveBeenCalledWith("INBOX", expect.anything());
+    });
+
+    it("respects explicit folder when provided (single-account path)", async () => {
+      const { mockManager, mockClient } = makeManagerWithClient({
+        search: vi.fn().mockResolvedValue([]),
+        fetchAll: vi.fn().mockResolvedValue([]),
+      });
+      await handleListMessages({ account: "test", folder: "Work/Projects" }, mockManager);
+      expect(mockClient.getMailboxLock).toHaveBeenCalledWith("Work/Projects", expect.anything());
+    });
+
+    it("passes INBOX to listMessages on fan-out path when folder is omitted", async () => {
+      const mockLock = { release: vi.fn() };
+      const mockClient = {
+        getMailboxLock: vi.fn().mockResolvedValue(mockLock),
+        search: vi.fn().mockResolvedValue([]),
+        fetchAll: vi.fn().mockResolvedValue([]),
+      };
+      const multiManager = {
+        getAccountIds: vi.fn().mockReturnValue(["acct1"]),
+        getClient: vi.fn().mockReturnValue(mockClient),
+      } as unknown as import("../../src/connections/index.js").ConnectionManager;
+      // No folder param — omit account to trigger fan-out
+      await handleListMessages({}, multiManager);
+      expect(mockClient.getMailboxLock).toHaveBeenCalledWith("INBOX", expect.anything());
+    });
+  });
+
   describe("HDR-01: to and cc fields on list_messages response", () => {
     it("message with recipients: to and cc arrays contain formatted strings", async () => {
       const { mockManager, mockLock } = makeManagerWithClient({
