@@ -94,3 +94,11 @@ None - no external service configuration required.
 ---
 *Phase: 08-account-context-and-tool-ergonomics*
 *Completed: 2026-03-16*
+
+## Self-Check: PASSED
+
+- FOUND: src/tools/list-messages.ts
+- FOUND: tests/tools/list-messages.test.ts
+- FOUND: .planning/phases/08-account-context-and-tool-ergonomics/08-02-SUMMARY.md
+- FOUND commit: 886e10c (feat)
+- FOUND commit: 2c9e397 (docs)

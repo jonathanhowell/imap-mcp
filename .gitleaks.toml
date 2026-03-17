@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "False positives"
+paths = [
+  '''.claude/gsd-file-manifest.json''',
+]
