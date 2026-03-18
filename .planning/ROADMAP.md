@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v0.1.0 IMAP MCP v0.1** — Phases 1–6 (shipped 2026-03-15)
-- 🚧 **v0.2 Agent UX** — Phases 7–11 (in progress)
+- ✅ **v0.2 Agent UX** — Phases 7–11 (complete 2026-03-18)
 
 ## Phases
 
@@ -21,7 +21,7 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
 
 </details>
 
-### 🚧 v0.2 Agent UX (In Progress)
+### ✅ v0.2 Agent UX (Complete 2026-03-18)
 
 **Milestone Goal:** Reduce agent round-trips and enrich tool responses with context that LLM personal assistants need to act without guessing.
 
@@ -43,8 +43,8 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
 **Plans**: 2 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — Implement flag_message tool (KFLAG-01) and PERMANENTFLAGS capability check (KFLAG-04)
-- [ ] 11-02-PLAN.md — Add exclude_keyword filter to search_messages (KFLAG-02) and get_new_mail (KFLAG-03)
+- [x] 11-01-PLAN.md — Implement flag_message tool (KFLAG-01) and PERMANENTFLAGS capability check (KFLAG-04)
+- [x] 11-02-PLAN.md — Add exclude_keyword filter to search_messages (KFLAG-02) and get_new_mail (KFLAG-03)
 
 ## Phase Details
 
@@ -60,8 +60,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Add to/cc to MessageHeader type and update service mapping closures
-- [ ] 07-02-PLAN.md — Update tests for new MessageHeader shape and add HDR-01/HDR-02 test cases
+- [x] 07-01-PLAN.md — Add to/cc to MessageHeader type and update service mapping closures
+- [x] 07-02-PLAN.md — Update tests for new MessageHeader shape and add HDR-01/HDR-02 test cases
 
 ### Phase 8: Account Context and Tool Ergonomics
 **Goal**: Agent gets display names and email addresses from list_accounts; folder parameter no longer required for list_messages
@@ -75,8 +75,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Enrich list_accounts with email and display_name (schema + ConnectionManager.getConfig + handler + tests)
-- [ ] 08-02-PLAN.md — Make list_messages folder optional with INBOX default (interface + handler + tests)
+- [x] 08-01-PLAN.md — Enrich list_accounts with email and display_name (schema + ConnectionManager.getConfig + handler + tests)
+- [x] 08-02-PLAN.md — Make list_messages folder optional with INBOX default (interface + handler + tests)
 
 ### Phase 9: Batch Read
 **Goal**: Agent can retrieve full bodies for multiple messages in a single tool call instead of looping over read_message
@@ -90,9 +90,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — Write failing test scaffold for read_messages (Wave 0, TDD RED)
-- [ ] 09-02-PLAN.md — Implement src/tools/read-messages.ts (make tests GREEN)
-- [ ] 09-03-PLAN.md — Register read_messages in src/index.ts and verify full suite
+- [x] 09-01-PLAN.md — Write failing test scaffold for read_messages (Wave 0, TDD RED)
+- [x] 09-02-PLAN.md — Implement src/tools/read-messages.ts (make tests GREEN)
+- [x] 09-03-PLAN.md — Register read_messages in src/index.ts and verify full suite
 
 ### Phase 10: Search and Attachment UX
 **Goal**: Agent can search by message body text and download attachments by filename without needing to know part IDs
@@ -106,8 +106,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — Add body search parameter to search_messages (SRCH-05)
-- [ ] 10-02-PLAN.md — Add filename-based lookup to download_attachment (ATCH-01)
+- [x] 10-01-PLAN.md — Add body search parameter to search_messages (SRCH-05)
+- [x] 10-02-PLAN.md — Add filename-based lookup to download_attachment (ATCH-01)
 
 ## Progress
 
@@ -119,8 +119,8 @@ Plans:
 | 4. Multi-Account Unified View | v0.1.0 | 3/3 | Complete | 2026-03-14 |
 | 5. Background Polling | v0.1.0 | 4/4 | Complete | 2026-03-14 |
 | 6. Hardening and Release | v0.1.0 | 4/4 | Complete | 2026-03-15 |
-| 7. Header Enrichment | 2/2 | Complete   | 2026-03-15 | - |
-| 8. Account Context and Tool Ergonomics | 2/2 | Complete   | 2026-03-16 | - |
-| 9. Batch Read | 3/3 | Complete   | 2026-03-16 | - |
-| 10. Search and Attachment UX | 2/2 | Complete    | 2026-03-16 | - |
-| 11. Keyword Flagging | 2/2 | Complete    | 2026-03-18 | - |
+| 7. Header Enrichment | v0.2 | 2/2 | Complete | 2026-03-15 |
+| 8. Account Context and Tool Ergonomics | v0.2 | 2/2 | Complete | 2026-03-16 |
+| 9. Batch Read | v0.2 | 3/3 | Complete | 2026-03-16 |
+| 10. Search and Attachment UX | v0.2 | 2/2 | Complete | 2026-03-16 |
+| 11. Keyword Flagging | v0.2 | 2/2 | Complete | 2026-03-18 |

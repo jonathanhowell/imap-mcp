@@ -21,6 +21,7 @@ decisions:
   - "criteria.body assignment placed after unread block to match field order"
   - "body added to both fan-out lambda and single-account call sites in handleSearchMessages"
   - "inputSchema description matches plan's locked text exactly"
+requirements_completed: [SRCH-05]
 metrics:
   duration: "~3 min"
   completed: "2026-03-16"

@@ -20,6 +20,7 @@ decisions:
   - "part_id takes precedence when both part_id and filename are provided — no bodyStructure fetch occurs"
   - "Added null guard for msgs[0].bodyStructure because ImapFlow types it as optional"
   - "Runtime guard fires before getClient() call — no IMAP interaction when neither param provided"
+requirements_completed: [ATCH-01]
 metrics:
   duration_seconds: 184
   completed_date: "2026-03-16"
