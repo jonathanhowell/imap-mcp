@@ -17,18 +17,18 @@ created: 2026-03-18
 
 | Property | Value |
 |----------|-------|
-| **Framework** | pytest 7.x |
-| **Config file** | `pytest.ini` / `pyproject.toml` |
-| **Quick run command** | `pytest tests/ -x -q` |
-| **Full suite command** | `pytest tests/ -v` |
+| **Framework** | Vitest |
+| **Config file** | `vitest.config.ts` / `package.json` |
+| **Quick run command** | `npm test -- --run` |
+| **Full suite command** | `npm test` |
 | **Estimated runtime** | ~15 seconds |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `pytest tests/ -x -q`
-- **After every plan wave:** Run `pytest tests/ -v`
+- **After every task commit:** Run `npm test -- --run`
+- **After every plan wave:** Run `npm test`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 30 seconds
 
@@ -38,12 +38,10 @@ created: 2026-03-18
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 11-01-01 | 01 | 0 | KFLAG-01 | unit stub | `pytest tests/test_flag_message.py -x -q` | ❌ W0 | ⬜ pending |
-| 11-01-02 | 01 | 1 | KFLAG-01 | unit | `pytest tests/test_flag_message.py -x -q` | ✅ | ⬜ pending |
-| 11-01-03 | 01 | 1 | KFLAG-04 | unit | `pytest tests/test_flag_message.py::test_permanentflags_warning -x -q` | ✅ | ⬜ pending |
-| 11-02-01 | 02 | 0 | KFLAG-02 | unit stub | `pytest tests/test_search_exclude_keyword.py -x -q` | ❌ W0 | ⬜ pending |
-| 11-02-02 | 02 | 1 | KFLAG-02 | unit | `pytest tests/test_search_exclude_keyword.py -x -q` | ✅ | ⬜ pending |
-| 11-02-03 | 02 | 1 | KFLAG-03 | unit | `pytest tests/test_get_new_mail_exclude.py -x -q` | ✅ | ⬜ pending |
+| 11-01-01 | 01 | 1 | KFLAG-01, KFLAG-04 | type-check | `npx tsc --noEmit src/types.ts src/tools/flag-message.ts` | ✅ after task | ⬜ pending |
+| 11-01-02 | 01 | 1 | KFLAG-01, KFLAG-04 | unit | `npm test -- tests/tools/flag-message.test.ts` | ✅ after task | ⬜ pending |
+| 11-02-01 | 02 | 2 | KFLAG-02 | unit | `npm test -- tests/tools/search-messages.test.ts` | ✅ after task | ⬜ pending |
+| 11-02-02 | 02 | 2 | KFLAG-03 | unit | `npm test` | ✅ after task | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,11 +49,7 @@ created: 2026-03-18
 
 ## Wave 0 Requirements
 
-- [ ] `tests/test_flag_message.py` — stubs for KFLAG-01 and KFLAG-04
-- [ ] `tests/test_search_exclude_keyword.py` — stubs for KFLAG-02
-- [ ] `tests/test_get_new_mail_exclude.py` — stubs for KFLAG-03
-
-*Existing pytest infrastructure covers the framework; only new test files needed.*
+Existing infrastructure covers all phase requirements — no Wave 0 needed. All tasks create their test files inline.
 
 ---
 
