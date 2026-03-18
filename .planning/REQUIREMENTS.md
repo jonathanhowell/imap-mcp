@@ -31,10 +31,10 @@
 
 ### Keyword Flagging
 
-- [ ] **KFLAG-01**: A `flag_message` tool sets a custom IMAP keyword (e.g. `ClaudeProcessed`) on a message identified by account and UID, using IMAP STORE `+FLAGS`
+- [x] **KFLAG-01**: A `flag_message` tool sets a custom IMAP keyword (e.g. `ClaudeProcessed`) on a message identified by account and UID, using IMAP STORE `+FLAGS`
 - [ ] **KFLAG-02**: `search_messages` accepts an optional `exclude_keyword` parameter; when set, messages that have that keyword are excluded from results
 - [ ] **KFLAG-03**: `get_new_mail` accepts an optional `exclude_keyword` parameter; when set, messages that have that keyword are excluded from the cache query result
-- [ ] **KFLAG-04**: When a mailbox is opened, the server's `PERMANENTFLAGS` response is checked; if `\*` is absent, a warning is logged indicating custom keywords may not persist
+- [x] **KFLAG-04**: When a mailbox is opened, the server's `PERMANENTFLAGS` response is checked; if `\*` is absent, a warning is logged indicating custom keywords may not persist
 
 ## v0.3 Requirements (deferred)
 
