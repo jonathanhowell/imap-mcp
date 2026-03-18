@@ -74,6 +74,7 @@ export async function listMessages(
       cc: (msg.envelope?.cc ?? [])
         .filter((e): e is { name?: string; address: string } => e.address !== undefined)
         .map(formatAddress),
+      keywords: [...(msg.flags ?? new Set<string>())].filter((f) => !f.startsWith("\\")),
     }));
   } finally {
     lock.release();

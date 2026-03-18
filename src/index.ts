@@ -97,7 +97,8 @@ async function main(): Promise<void> {
       case "flag_message":
         return handleFlagMessage(
           params as unknown as Parameters<typeof handleFlagMessage>[0],
-          manager
+          manager,
+          poller
         ) as AnyToolResult;
       case "get_new_mail":
         return handleGetNewMail(

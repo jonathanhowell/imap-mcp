@@ -1,5 +1,6 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { ConnectionManager } from "../connections/index.js";
+import type { Poller } from "../polling/poller.js";
 import type { ToolResult } from "../types.js";
 import { logger } from "../logger.js";
 
@@ -27,7 +28,8 @@ interface FlagMessageArgs {
 
 export async function handleFlagMessage(
   args: FlagMessageArgs,
-  manager: ConnectionManager
+  manager: ConnectionManager,
+  poller?: Poller
 ): Promise<ToolResult> {
   const { account, uid, keyword, folder = "INBOX" } = args;
 
@@ -47,6 +49,7 @@ export async function handleFlagMessage(
     }
     // KFLAG-01: set the keyword via additive STORE +FLAGS
     await client.messageFlagsAdd([uid], [keyword], { uid: true });
+    poller?.updateKeyword(account, uid, keyword);
     return {
       content: [{ type: "text", text: JSON.stringify({ success: true, account, uid, keyword }) }],
       isError: false,

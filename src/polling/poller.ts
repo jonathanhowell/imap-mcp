@@ -136,6 +136,22 @@ export class Poller {
     this.mergeIntoCache(accountId, headers);
   }
 
+  /**
+   * Immediately adds a keyword to a cached message's keywords array.
+   * Called by flag_message after a successful IMAP STORE so the cache reflects
+   * the new flag without waiting for the next poll cycle.
+   */
+  updateKeyword(accountId: string, uid: number, keyword: string): void {
+    const entries = this.cache.get(accountId);
+    if (!entries) return;
+    const msg = entries.find((m) => m.uid === uid);
+    if (!msg) return;
+    const keywords = msg.keywords ?? [];
+    if (!keywords.some((k) => k.toLowerCase() === keyword.toLowerCase())) {
+      msg.keywords = [...keywords, keyword];
+    }
+  }
+
   private mergeIntoCache(accountId: string, incoming: MultiAccountMessageHeader[]): void {
     const existing = this.cache.get(accountId) ?? [];
     const existingUids = new Set(existing.map((m) => m.uid));
