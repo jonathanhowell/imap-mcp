@@ -1,6 +1,7 @@
 # Phase 11: Keyword Flagging — Context
 
 **Gathered:** 2026-03-18
+**Updated:** 2026-03-18
 **Status:** Ready for planning
 
 <domain>
@@ -16,10 +17,12 @@ Unflagging/clearing keywords, listing messages by keyword, and Gmail label worka
 ## Implementation Decisions
 
 ### flag_message tool
-- New MCP tool `flag_message` with required parameters: `account` (string), `uid` (number), `keyword` (string)
+- New MCP tool `flag_message` with parameters: `account` (string, required), `uid` (number, required), `keyword` (string, required), `folder` (string, optional, default `"INBOX"`)
+- `folder` follows the same pattern as `download-attachment.ts` — optional, defaults to INBOX, allows flagging messages in any mailbox (Sent, Archive, etc.)
 - Uses IMAP `STORE +FLAGS` — additive only, does not remove existing flags
 - Canonical example keyword: `ClaudeProcessed` (no `\` prefix — custom keywords have no backslash per RFC 3501)
-- Returns success/error result consistent with existing tool pattern (`isError: true/false`, content array)
+- On success: returns `isError: false` with content text `"Flagged message {uid} in {account}/{folder} with keyword '{keyword}'"` — enough for agent to confirm what was flagged
+- On error: returns `isError: true` with message including account, uid, folder, and keyword for diagnosability
 - Tool registered in `src/index.ts` alongside existing tools
 
 ### exclude_keyword filter — search_messages
@@ -34,6 +37,8 @@ Unflagging/clearing keywords, listing messages by keyword, and Gmail label worka
 - Since `get_new_mail` is cache-only (Poller), filtering must be done in-process on cached entries
 - Requires: `MultiAccountMessageHeader` must store a `keywords` field (or full `flags` array) populated during polling
 - `Poller.query()` accepts `exclude_keyword` and filters cached entries where `flags` includes the keyword
+- **Case sensitivity:** In-memory cache filter MUST be case-insensitive (RFC 3501 §2.3.2 specifies keywords are case-insensitive). Use `.toLowerCase()` comparison on both sides when filtering cached keywords.
+- **Server-side SEARCH:** Leave case handling to imapflow/IMAP server — the SEARCH NOT KEYWORD criteria is already case-insensitive per RFC. No normalization needed before passing to imapflow.
 - Accepted limitation: cached flags may be slightly stale between poll cycles — this is acceptable for the use case
 
 ### PERMANENTFLAGS capability check
@@ -46,7 +51,7 @@ Unflagging/clearing keywords, listing messages by keyword, and Gmail label worka
 
 ### Error handling
 - `flag_message` returns `isError: true` if the IMAP STORE command fails (network error, invalid UID, etc.)
-- Error message includes account, UID, and keyword for diagnosability
+- Error message includes account, UID, folder, and keyword for diagnosability
 - If server rejects custom keyword (rare — most return OK even without \*), surface the error verbatim
 
 ### Known limitations (noted, not worked around)
