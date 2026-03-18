@@ -3,7 +3,7 @@
 ## Milestones
 
 - ✅ **v0.1.0 IMAP MCP v0.1** — Phases 1–6 (shipped 2026-03-15)
-- 🚧 **v0.2 Agent UX** — Phases 7–10 (in progress)
+- 🚧 **v0.2 Agent UX** — Phases 7–11 (in progress)
 
 ## Phases
 
@@ -29,6 +29,22 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
 - [x] **Phase 8: Account Context and Tool Ergonomics** - Enrich list_accounts with display_name/email; make list_messages folder optional (completed 2026-03-16)
 - [x] **Phase 9: Batch Read** - New read_messages tool to fetch multiple full message bodies in one call (completed 2026-03-16)
 - [x] **Phase 10: Search and Attachment UX** - Body text search in search_messages; download_attachment by filename (completed 2026-03-16)
+- [ ] **Phase 11: Keyword Flagging** - flag_message tool sets custom IMAP keywords; search_messages and get_new_mail support exclude_keyword filter; PERMANENTFLAGS capability check on connect
+
+### Phase 11: Keyword Flagging
+**Goal**: Agent can mark messages as processed using custom IMAP keywords so they are not surfaced again in future sessions
+**Depends on**: Phase 8
+**Requirements**: KFLAG-01, KFLAG-02, KFLAG-03, KFLAG-04
+**Success Criteria** (what must be TRUE):
+  1. A call to `flag_message` with `account`, `uid`, and `keyword` sets that keyword on the message via IMAP STORE +FLAGS
+  2. A call to `search_messages` with `exclude_keyword` omits messages that have that keyword set
+  3. A call to `get_new_mail` with `exclude_keyword` omits messages that have that keyword set from the cache
+  4. When a mailbox is opened on a server that does not advertise `\*` in PERMANENTFLAGS, a warning is logged (no hard failure)
+**Plans**: TBD
+
+Plans:
+- [ ] 11-01-PLAN.md — Implement flag_message tool (KFLAG-01) and PERMANENTFLAGS capability check (KFLAG-04)
+- [ ] 11-02-PLAN.md — Add exclude_keyword filter to search_messages (KFLAG-02) and get_new_mail (KFLAG-03)
 
 ## Phase Details
 
@@ -107,3 +123,4 @@ Plans:
 | 8. Account Context and Tool Ergonomics | 2/2 | Complete   | 2026-03-16 | - |
 | 9. Batch Read | 3/3 | Complete   | 2026-03-16 | - |
 | 10. Search and Attachment UX | 2/2 | Complete    | 2026-03-16 | - |
+| 11. Keyword Flagging | v0.2 | 0/2 | Not started | - |

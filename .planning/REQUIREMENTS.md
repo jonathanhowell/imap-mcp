@@ -29,6 +29,13 @@
 
 - [x] **ATCH-01**: Agent can download an attachment by `filename` instead of `part_id` when the exact part ID is unknown
 
+### Keyword Flagging
+
+- [ ] **KFLAG-01**: A `flag_message` tool sets a custom IMAP keyword (e.g. `ClaudeProcessed`) on a message identified by account and UID, using IMAP STORE `+FLAGS`
+- [ ] **KFLAG-02**: `search_messages` accepts an optional `exclude_keyword` parameter; when set, messages that have that keyword are excluded from results
+- [ ] **KFLAG-03**: `get_new_mail` accepts an optional `exclude_keyword` parameter; when set, messages that have that keyword are excluded from the cache query result
+- [ ] **KFLAG-04**: When a mailbox is opened, the server's `PERMANENTFLAGS` response is checked; if `\*` is absent, a warning is logged indicating custom keywords may not persist
+
 ## v0.3 Requirements (deferred)
 
 ### Write Operations
@@ -63,10 +70,14 @@
 | SRCH-05 | Phase 10 | Complete |
 | SRCH-06 | Phase 8 | Complete |
 | ATCH-01 | Phase 10 | Complete |
+| KFLAG-01 | Phase 11 | Not started |
+| KFLAG-02 | Phase 11 | Not started |
+| KFLAG-03 | Phase 11 | Not started |
+| KFLAG-04 | Phase 11 | Not started |
 
 **Coverage:**
-- v0.2 requirements: 9 total
-- Mapped to phases: 9
+- v0.2 requirements: 13 total
+- Mapped to phases: 13
 - Unmapped: 0 ✓
 
 ---
