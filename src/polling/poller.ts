@@ -1,10 +1,7 @@
 import { ConnectionManager } from "../connections/index.js";
 import { searchMessages } from "../services/search-service.js";
 import { logger } from "../logger.js";
-import type {
-  MultiAccountMessageHeader,
-  MultiAccountResult,
-} from "../types.js";
+import type { MultiAccountMessageHeader, MultiAccountResult } from "../types.js";
 
 /**
  * Poller manages background IMAP polling and an in-memory cache of recent messages.
@@ -51,10 +48,12 @@ export class Poller {
    * Query cached messages that arrived after `since`.
    * @param since ISO 8601 timestamp — return messages with internalDate after this time.
    * @param account Account name from config. Omit to query all accounts.
+   * @param excludeKeyword Exclude messages that have this custom IMAP keyword set (case-insensitive).
    */
   query(
     since: string,
-    account?: string
+    account?: string,
+    excludeKeyword?: string
   ): MultiAccountResult<MultiAccountMessageHeader> {
     const sinceTime = new Date(since).getTime() || 0;
     const accountIds = account ? [account] : this.manager.getAccountIds();
@@ -68,17 +67,17 @@ export class Poller {
         errors[id] = "account not found in cache";
       } else {
         const filtered = entries.filter(
-          (m) => (new Date(m.date).getTime() || 0) > sinceTime
+          (m) =>
+            (new Date(m.date).getTime() || 0) > sinceTime &&
+            (excludeKeyword === undefined ||
+              !(m.keywords ?? []).some((k) => k.toLowerCase() === excludeKeyword.toLowerCase()))
         );
         results.push(...filtered);
       }
     }
 
     // Sort newest-first
-    results.sort(
-      (a, b) =>
-        (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0)
-    );
+    results.sort((a, b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0));
 
     return Object.keys(errors).length > 0 ? { results, errors } : { results };
   }
@@ -86,10 +85,7 @@ export class Poller {
   private async runLoop(): Promise<void> {
     await this.poll();
     if (!this.stopped) {
-      globalThis.setTimeout(
-        () => void this.runLoop(),
-        this.intervalSeconds * 1000
-      );
+      globalThis.setTimeout(() => void this.runLoop(), this.intervalSeconds * 1000);
     }
   }
 
@@ -99,9 +95,7 @@ export class Poller {
       try {
         await this.pollAccount(accountId);
       } catch (err) {
-        logger.error(
-          `Poller: failed to poll account ${accountId}: ${String(err)}`
-        );
+        logger.error(`Poller: failed to poll account ${accountId}: ${String(err)}`);
       }
     }
     this.lastPollTime = new Date();
@@ -124,9 +118,7 @@ export class Poller {
       maxResults = 1000;
     } else {
       // Incremental: lastPollTime - 24h to handle IMAP SEARCH SINCE day-granularity
-      since = new Date(
-        this.lastPollTime.getTime() - 24 * 60 * 60 * 1000
-      ).toISOString();
+      since = new Date(this.lastPollTime.getTime() - 24 * 60 * 60 * 1000).toISOString();
       maxResults = 100;
     }
 
@@ -144,10 +136,7 @@ export class Poller {
     this.mergeIntoCache(accountId, headers);
   }
 
-  private mergeIntoCache(
-    accountId: string,
-    incoming: MultiAccountMessageHeader[]
-  ): void {
+  private mergeIntoCache(accountId: string, incoming: MultiAccountMessageHeader[]): void {
     const existing = this.cache.get(accountId) ?? [];
     const existingUids = new Set(existing.map((m) => m.uid));
     const deduplicated = incoming.filter((m) => !existingUids.has(m.uid));

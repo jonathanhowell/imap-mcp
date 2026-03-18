@@ -5,6 +5,7 @@ import type { Poller } from "../polling/poller.js";
 export interface GetNewMailParams {
   since: string;
   account?: string;
+  exclude_keyword?: string;
 }
 
 export const GET_NEW_MAIL_TOOL: Tool = {
@@ -24,6 +25,12 @@ export const GET_NEW_MAIL_TOOL: Tool = {
       account: {
         type: "string",
         description: "Account name from config. Omit to query all accounts.",
+      },
+      exclude_keyword: {
+        type: "string",
+        description:
+          "Exclude messages that have this custom IMAP keyword set (e.g. 'ClaudeProcessed'). " +
+          "Filters cached results in-memory.",
       },
     },
     required: ["since"],
@@ -52,7 +59,7 @@ export async function handleGetNewMail(
     };
   }
 
-  const result = poller.query(params.since, params.account);
+  const result = poller.query(params.since, params.account, params.exclude_keyword);
   return {
     isError: false,
     content: [{ type: "text", text: JSON.stringify(result) }],

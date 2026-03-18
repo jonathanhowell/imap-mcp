@@ -39,7 +39,11 @@ describe("handleGetNewMail — cold cache", () => {
 describe("handleGetNewMail — cache ready, query delegation", () => {
   function makeMockPoller(overrides: {
     isCacheReady?: () => boolean;
-    query?: (since: string, account?: string) => ReturnType<Poller["query"]>;
+    query?: (
+      since: string,
+      account?: string,
+      excludeKeyword?: string
+    ) => ReturnType<Poller["query"]>;
   }) {
     return {
       isCacheReady: vi.fn(overrides.isCacheReady ?? (() => true)),
@@ -69,13 +73,13 @@ describe("handleGetNewMail — cache ready, query delegation", () => {
   it("passes account param through to poller.query when provided", async () => {
     const poller = makeMockPoller({});
     await handleGetNewMail({ since: "2024-01-01T00:00:00Z", account: "work" }, poller);
-    expect(poller.query).toHaveBeenCalledWith("2024-01-01T00:00:00Z", "work");
+    expect(poller.query).toHaveBeenCalledWith("2024-01-01T00:00:00Z", "work", undefined);
   });
 
   it("passes undefined as account to poller.query when account is omitted", async () => {
     const poller = makeMockPoller({});
     await handleGetNewMail({ since: "2024-01-01T00:00:00Z" }, poller);
-    expect(poller.query).toHaveBeenCalledWith("2024-01-01T00:00:00Z", undefined);
+    expect(poller.query).toHaveBeenCalledWith("2024-01-01T00:00:00Z", undefined, undefined);
   });
 
   it("returns isError false with JSON body when query returns partial errors", async () => {
@@ -84,5 +88,17 @@ describe("handleGetNewMail — cache ready, query delegation", () => {
     const result = await handleGetNewMail({ since: "2024-01-01T00:00:00Z" }, poller);
     expect(result.isError).toBe(false);
     expect(result.content).toEqual([{ type: "text", text: JSON.stringify(queryResult) }]);
+  });
+
+  it("passes exclude_keyword to poller.query()", async () => {
+    const poller = makeMockPoller({});
+    await handleGetNewMail({ since: "2024-01-01T00:00:00Z", exclude_keyword: "Done" }, poller);
+    expect(poller.query).toHaveBeenCalledWith("2024-01-01T00:00:00Z", undefined, "Done");
+  });
+
+  it("does not pass excludeKeyword when omitted", async () => {
+    const poller = makeMockPoller({});
+    await handleGetNewMail({ since: "2024-01-01T00:00:00Z" }, poller);
+    expect(poller.query).toHaveBeenCalledWith("2024-01-01T00:00:00Z", undefined, undefined);
   });
 });

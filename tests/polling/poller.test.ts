@@ -291,4 +291,115 @@ describe("Poller", () => {
     poller.stop();
     expect(globalThis.setTimeout).toHaveBeenCalledWith(expect.any(Function), 300 * 1000);
   });
+
+  describe("query with excludeKeyword (KFLAG-03)", () => {
+    it("excludes messages with matching keyword from results", () => {
+      const manager = makeMockManager(["acct1"]);
+      const poller = new Poller(manager);
+
+      const sinceDate = new Date(0).toISOString();
+      const entries = [
+        {
+          uid: 1,
+          from: "a@b.com",
+          subject: "processed",
+          date: "2024-01-01T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: "acct1",
+          keywords: ["ClaudeProcessed"],
+        },
+        {
+          uid: 2,
+          from: "c@d.com",
+          subject: "no keywords",
+          date: "2024-01-02T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: "acct1",
+          keywords: [],
+        },
+        {
+          uid: 3,
+          from: "e@f.com",
+          subject: "undefined keywords",
+          date: "2024-01-03T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: "acct1",
+          keywords: undefined,
+        },
+      ];
+
+      // Directly populate the private cache
+      (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
+      (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
+
+      const result = poller.query(sinceDate, undefined, "ClaudeProcessed");
+      const uids = result.results.map((m) => m.uid);
+      expect(uids).not.toContain(1);
+      expect(uids).toContain(2);
+      expect(uids).toContain(3);
+    });
+
+    it("keyword comparison is case-insensitive", () => {
+      const manager = makeMockManager(["acct1"]);
+      const poller = new Poller(manager);
+
+      const sinceDate = new Date(0).toISOString();
+      const entries = [
+        {
+          uid: 1,
+          from: "a@b.com",
+          subject: "lowercase keyword",
+          date: "2024-01-01T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: "acct1",
+          keywords: ["claudeprocessed"],
+        },
+      ];
+
+      (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
+      (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
+
+      const result = poller.query(sinceDate, undefined, "ClaudeProcessed");
+      expect(result.results).toHaveLength(0);
+    });
+
+    it("returns all entries when excludeKeyword is undefined", () => {
+      const manager = makeMockManager(["acct1"]);
+      const poller = new Poller(manager);
+
+      const sinceDate = new Date(0).toISOString();
+      const entries = [
+        {
+          uid: 1,
+          from: "a@b.com",
+          subject: "has keyword",
+          date: "2024-01-01T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: "acct1",
+          keywords: ["ClaudeProcessed"],
+        },
+        {
+          uid: 2,
+          from: "c@d.com",
+          subject: "no keyword",
+          date: "2024-01-02T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: "acct1",
+          keywords: [],
+        },
+      ];
+
+      (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
+      (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
+
+      const result = poller.query(sinceDate);
+      expect(result.results).toHaveLength(2);
+    });
+  });
 });
