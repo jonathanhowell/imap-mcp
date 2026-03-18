@@ -40,7 +40,7 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
   2. A call to `search_messages` with `exclude_keyword` omits messages that have that keyword set
   3. A call to `get_new_mail` with `exclude_keyword` omits messages that have that keyword set from the cache
   4. When a mailbox is opened on a server that does not advertise `\*` in PERMANENTFLAGS, a warning is logged (no hard failure)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 11-01-PLAN.md — Implement flag_message tool (KFLAG-01) and PERMANENTFLAGS capability check (KFLAG-04)
