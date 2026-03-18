@@ -39,6 +39,7 @@ export interface MessageHeader {
   unread: boolean;
   to: string[];
   cc: string[];
+  keywords?: string[]; // Custom IMAP keywords set on the message
 }
 
 /**
