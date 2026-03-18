@@ -15,6 +15,7 @@ export interface SearchMessagesParams {
   body?: string;
   folder?: string;
   max_results?: number;
+  exclude_keyword?: string;
 }
 
 export const SEARCH_MESSAGES_TOOL: Tool = {
@@ -59,6 +60,12 @@ export const SEARCH_MESSAGES_TOOL: Tool = {
         type: "number",
         description: "Maximum number of results to return (default 50)",
       },
+      exclude_keyword: {
+        type: "string",
+        description:
+          "Exclude messages that have this custom IMAP keyword set (e.g. 'ClaudeProcessed'). " +
+          "Uses server-side IMAP SEARCH NOT KEYWORD filtering.",
+      },
     },
     required: [],
   },
@@ -76,7 +83,18 @@ export async function handleSearchMessages(
   params: SearchMessagesParams,
   manager: ConnectionManager
 ): Promise<ToolResult> {
-  const { account, from, subject, since, before, unread, body, folder, max_results } = params;
+  const {
+    account,
+    from,
+    subject,
+    since,
+    before,
+    unread,
+    body,
+    folder,
+    max_results,
+    exclude_keyword,
+  } = params;
 
   const MAX_RESULTS = 200;
   const effectiveMax = Math.min(max_results ?? 50, MAX_RESULTS);
@@ -94,6 +112,7 @@ export async function handleSearchMessages(
         body,
         folder,
         maxResults: effectiveMax,
+        excludeKeyword: exclude_keyword,
       })
     );
 
@@ -133,6 +152,7 @@ export async function handleSearchMessages(
     body,
     folder,
     maxResults: effectiveMax,
+    excludeKeyword: exclude_keyword,
   });
 
   return {

@@ -10,6 +10,7 @@ export interface SearchParams {
   body?: string;
   folder?: string;
   maxResults?: number;
+  excludeKeyword?: string;
 }
 
 /**
@@ -26,7 +27,17 @@ export async function searchMessages(
   client: ImapFlow,
   params: SearchParams
 ): Promise<SearchResultItem[]> {
-  const { from, subject, since, before, unread, body, folder = "INBOX", maxResults = 50 } = params;
+  const {
+    from,
+    subject,
+    since,
+    before,
+    unread,
+    body,
+    folder = "INBOX",
+    maxResults = 50,
+    excludeKeyword,
+  } = params;
 
   // Build IMAP SearchObject — only include fields that are defined
   const criteria: Record<string, unknown> = {};
@@ -38,6 +49,7 @@ export async function searchMessages(
   else if (unread === false) criteria.seen = true;
   // unread=undefined → seen not included
   if (body !== undefined) criteria.body = body;
+  if (excludeKeyword !== undefined) criteria.unKeyword = excludeKeyword;
 
   if (folder !== "all") {
     return await searchFolder(client, folder, criteria, maxResults);
@@ -98,6 +110,7 @@ async function searchFolder(
       cc: (msg.envelope?.cc ?? [])
         .filter((e): e is { name?: string; address: string } => e.address !== undefined)
         .map(formatAddress),
+      keywords: [...(msg.flags ?? new Set<string>())].filter((f: string) => !f.startsWith("\\")),
     }));
   } finally {
     lock.release();

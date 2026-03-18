@@ -447,6 +447,51 @@ describe("search_messages", () => {
     });
   });
 
+  describe("exclude_keyword filtering (KFLAG-02)", () => {
+    it("passes unKeyword criteria when exclude_keyword is set", async () => {
+      const client = makeMockClient();
+      const manager = makeManager(client);
+
+      const result = await handleSearchMessages(
+        { account: "test", exclude_keyword: "ClaudeProcessed" },
+        manager
+      );
+
+      const mockSearch = client.search as ReturnType<typeof vi.fn>;
+      expect(mockSearch).toHaveBeenCalledWith(
+        expect.objectContaining({ unKeyword: "ClaudeProcessed" }),
+        { uid: true }
+      );
+      expect(result.isError).toBe(false);
+    });
+
+    it("does not include unKeyword in criteria when exclude_keyword is omitted", async () => {
+      const client = makeMockClient();
+      const manager = makeManager(client);
+
+      await handleSearchMessages({ account: "test" }, manager);
+
+      const mockSearch = client.search as ReturnType<typeof vi.fn>;
+      const searchCriteria = mockSearch.mock.calls[0][0] as Record<string, unknown>;
+      expect(searchCriteria).not.toHaveProperty("unKeyword");
+    });
+
+    it("passes excludeKeyword in fan-out mode", async () => {
+      const client = makeMockClient();
+      const manager: ConnectionManager = {
+        getAccountIds: vi.fn().mockReturnValue(["acct1"]),
+        getClient: vi.fn().mockReturnValue(client),
+      } as unknown as ConnectionManager;
+
+      await handleSearchMessages({ exclude_keyword: "Processed" }, manager);
+
+      const mockSearch = client.search as ReturnType<typeof vi.fn>;
+      expect(mockSearch).toHaveBeenCalledWith(expect.objectContaining({ unKeyword: "Processed" }), {
+        uid: true,
+      });
+    });
+  });
+
   describe("HDR-02: to and cc fields on search_messages response", () => {
     it("message with recipients: to and cc arrays contain formatted strings", async () => {
       const client = makeMockClient({
