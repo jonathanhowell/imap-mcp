@@ -29,7 +29,7 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
 - [x] **Phase 8: Account Context and Tool Ergonomics** - Enrich list_accounts with display_name/email; make list_messages folder optional (completed 2026-03-16)
 - [x] **Phase 9: Batch Read** - New read_messages tool to fetch multiple full message bodies in one call (completed 2026-03-16)
 - [x] **Phase 10: Search and Attachment UX** - Body text search in search_messages; download_attachment by filename (completed 2026-03-16)
-- [ ] **Phase 11: Keyword Flagging** - flag_message tool sets custom IMAP keywords; search_messages and get_new_mail support exclude_keyword filter; PERMANENTFLAGS capability check on connect
+- [x] **Phase 11: Keyword Flagging** - flag_message tool sets custom IMAP keywords; search_messages and get_new_mail support exclude_keyword filter; PERMANENTFLAGS capability check on connect (completed 2026-03-18)
 
 ### Phase 11: Keyword Flagging
 **Goal**: Agent can mark messages as processed using custom IMAP keywords so they are not surfaced again in future sessions
@@ -123,4 +123,4 @@ Plans:
 | 8. Account Context and Tool Ergonomics | 2/2 | Complete   | 2026-03-16 | - |
 | 9. Batch Read | 3/3 | Complete   | 2026-03-16 | - |
 | 10. Search and Attachment UX | 2/2 | Complete    | 2026-03-16 | - |
-| 11. Keyword Flagging | 1/2 | In Progress|  | - |
+| 11. Keyword Flagging | 2/2 | Complete   | 2026-03-18 | - |

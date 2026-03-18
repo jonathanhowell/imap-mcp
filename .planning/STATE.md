@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
 status: planning
-stopped_at: Completed 11-keyword-flagging 11-01-PLAN.md
-last_updated: "2026-03-18T12:08:41.679Z"
+stopped_at: Completed 11-keyword-flagging 11-02-PLAN.md
+last_updated: "2026-03-18T12:15:03.173Z"
 last_activity: 2026-03-15 — v0.2 roadmap created
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 0
 ---
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 10-search-and-attachment-ux P01 | 3 | 2 tasks | 3 files |
 | Phase 10-search-and-attachment-ux P02 | 184 | 2 tasks | 2 files |
 | Phase 11-keyword-flagging P01 | 8 | 2 tasks | 4 files |
+| Phase 11-keyword-flagging P02 | 4 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Recent decisions affecting current work:
 - [Phase 10-search-and-attachment-ux]: bodyStructure lock released in finally block before downloadAttachment acquires its own lock (nested lock pitfall avoided)
 - [Phase 10-search-and-attachment-ux]: part_id takes precedence over filename when both provided; runtime guard fires before getClient when neither provided
 - [Phase 11-keyword-flagging]: messageFlagsAdd([uid], [keyword], { uid: true }) — single UID wrapped in array; PERMANENTFLAGS check uses client.mailbox guard after lock; warning-only on PERMANENTFLAGS absence per KFLAG-04
+- [Phase 11-keyword-flagging]: unKeyword field (not criteria.not) used for IMAP NOT KEYWORD — confirmed in imapflow SearchObject type
+- [Phase 11-keyword-flagging]: Case-insensitive keyword comparison in poller.query() via .toLowerCase() per IMAP server normalization risk
+- [Phase 11-keyword-flagging]: Keywords populated in searchFolder by filtering msg.flags Set for non-backslash-prefixed entries
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-18T12:08:41.677Z
-Stopped at: Completed 11-keyword-flagging 11-01-PLAN.md
+Last session: 2026-03-18T12:15:03.170Z
+Stopped at: Completed 11-keyword-flagging 11-02-PLAN.md
 Resume file: None
