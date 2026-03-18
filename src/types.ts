@@ -69,6 +69,7 @@ export interface MessageBody {
   date: string;
   body: string;
   attachments: AttachmentMeta[];
+  keywords: string[]; // Custom IMAP keywords set on the message (e.g. ClaudeProcessed)
 }
 
 /**

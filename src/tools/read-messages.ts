@@ -85,7 +85,7 @@ export async function handleReadMessages(
     const fetchedMeta = new Map<number, any>();
     for await (const msg of client.fetch(
       uids.join(","),
-      { uid: true, envelope: true, bodyStructure: true },
+      { uid: true, envelope: true, flags: true, bodyStructure: true },
       { uid: true }
     )) {
       if (msg.uid !== undefined) {
@@ -138,7 +138,15 @@ export async function handleReadMessages(
       const subject = envelope.subject ?? "";
       const date = envelope.date ? new Date(envelope.date).toISOString() : "";
 
-      results.push({ uid, from, subject, date, body: bodyText, attachments });
+      results.push({
+        uid,
+        from,
+        subject,
+        date,
+        body: bodyText,
+        attachments,
+        keywords: [...(meta.flags ?? new Set<string>())].filter((f) => !f.startsWith("\\")),
+      });
     }
 
     return {

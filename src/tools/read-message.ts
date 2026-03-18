@@ -111,6 +111,7 @@ export async function handleReadMessage(
       date,
       body: bodyText,
       attachments,
+      keywords: [...(meta.flags ?? new Set<string>())].filter((f) => !f.startsWith("\\")),
     };
 
     return {

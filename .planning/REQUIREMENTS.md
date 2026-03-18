@@ -35,6 +35,7 @@
 - [x] **KFLAG-02**: `search_messages` accepts an optional `exclude_keyword` parameter; when set, messages that have that keyword are excluded from results
 - [x] **KFLAG-03**: `get_new_mail` accepts an optional `exclude_keyword` parameter; when set, messages that have that keyword are excluded from the cache query result
 - [x] **KFLAG-04**: When a mailbox is opened, the server's `PERMANENTFLAGS` response is checked; if `\*` is absent, a warning is logged indicating custom keywords may not persist
+- [x] **KFLAG-05**: All tools that return message metadata (`list_messages`, `search_messages`, `get_new_mail`, `read_message`, `read_messages`) include a `keywords` array of custom IMAP keywords set on the message
 
 ## v0.3 Requirements (deferred)
 
@@ -70,14 +71,15 @@
 | SRCH-05 | Phase 10 | Complete |
 | SRCH-06 | Phase 8 | Complete |
 | ATCH-01 | Phase 10 | Complete |
-| KFLAG-01 | Phase 11 | Not started |
-| KFLAG-02 | Phase 11 | Not started |
-| KFLAG-03 | Phase 11 | Not started |
-| KFLAG-04 | Phase 11 | Not started |
+| KFLAG-01 | Phase 11 | Complete |
+| KFLAG-02 | Phase 11 | Complete |
+| KFLAG-03 | Phase 11 | Complete |
+| KFLAG-04 | Phase 11 | Complete |
+| KFLAG-05 | Hotfix | Complete |
 
 **Coverage:**
-- v0.2 requirements: 13 total
-- Mapped to phases: 13
+- v0.2 requirements: 14 total
+- Mapped to phases: 14
 - Unmapped: 0 ✓
 
 ---
