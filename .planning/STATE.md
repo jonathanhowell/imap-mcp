@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
-status: complete
-stopped_at: Completed 11-keyword-flagging 11-02-PLAN.md
-last_updated: "2026-03-18T13:10:00.000Z"
+status: completed
+stopped_at: Phase 11.1 context gathered
+last_updated: "2026-03-19T13:54:29.629Z"
 last_activity: 2026-03-18 — v0.2 milestone complete, all 5 phases executed and verified
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
   total_plans: 11
   completed_plans: 11
@@ -93,6 +93,10 @@ Recent decisions affecting current work:
 - [Phase 11-keyword-flagging]: Case-insensitive keyword comparison in poller.query() via .toLowerCase() per IMAP server normalization risk
 - [Phase 11-keyword-flagging]: Keywords populated in searchFolder by filtering msg.flags Set for non-backslash-prefixed entries
 
+### Roadmap Evolution
+
+- Phase 11.1 inserted after Phase 11: unflag_message tool (URGENT)
+
 ### Pending Todos
 
 None yet.
@@ -103,6 +107,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-18T12:15:03.170Z
-Stopped at: Completed 11-keyword-flagging 11-02-PLAN.md
-Resume file: None
+Last session: 2026-03-19T13:54:29.627Z
+Stopped at: Phase 11.1 context gathered
+Resume file: .planning/phases/11.1-unflag-message-tool/11.1-CONTEXT.md
