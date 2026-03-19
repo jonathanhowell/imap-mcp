@@ -32,8 +32,8 @@
 ### Keyword Flagging
 
 - [x] **KFLAG-01**: A `flag_message` tool sets a custom IMAP keyword (e.g. `ClaudeProcessed`) on a message identified by account and UID, using IMAP STORE `+FLAGS`
-- [x] **KFLAG-02**: `search_messages` accepts an optional `exclude_keyword` parameter; when set, messages that have that keyword are excluded from results
-- [x] **KFLAG-03**: `get_new_mail` accepts an optional `exclude_keyword` parameter; when set, messages that have that keyword are excluded from the cache query result
+- [x] **KFLAG-02**: `search_messages` accepts an optional `exclude_keywords` parameter (array of strings); messages that have any of those keywords are excluded from results. First keyword filtered server-side via IMAP SEARCH NOT KEYWORD; additional keywords filtered in memory. Also accepts `include_keywords` (array) to return only messages matching at least one keyword (OR semantics).
+- [x] **KFLAG-03**: `get_new_mail` accepts an optional `exclude_keywords` parameter (array of strings); messages that have any of those keywords are excluded from the cache query result
 - [x] **KFLAG-04**: When a mailbox is opened, the server's `PERMANENTFLAGS` response is checked; if `\*` is absent, a warning is logged indicating custom keywords may not persist
 - [x] **KFLAG-05**: All tools that return message metadata (`list_messages`, `search_messages`, `get_new_mail`, `read_message`, `read_messages`) include a `keywords` array of custom IMAP keywords set on the message
 
@@ -84,4 +84,4 @@
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 — traceability filled after v0.2 roadmap creation*
+*Last updated: 2026-03-18 — KFLAG-02/03 updated to reflect post-v0.2 hotfix: exclude_keyword → exclude_keywords (array), include_keywords added*
