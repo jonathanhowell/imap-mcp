@@ -29,7 +29,7 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
 - [x] **Phase 8: Account Context and Tool Ergonomics** - Enrich list_accounts with display_name/email; make list_messages folder optional (completed 2026-03-16)
 - [x] **Phase 9: Batch Read** - New read_messages tool to fetch multiple full message bodies in one call (completed 2026-03-16)
 - [x] **Phase 10: Search and Attachment UX** - Body text search in search_messages; download_attachment by filename (completed 2026-03-16)
-- [x] **Phase 11: Keyword Flagging** - flag_message tool sets custom IMAP keywords; search_messages and get_new_mail support exclude_keyword filter; PERMANENTFLAGS capability check on connect (completed 2026-03-18)
+- [x] **Phase 11: Keyword Flagging** - flag_message tool sets custom IMAP keywords; search_messages and get_new_mail support exclude_keywords (array) and search_messages adds include_keywords (array); PERMANENTFLAGS capability check on connect (completed 2026-03-18; hotfix 2026-03-18)
 
 ### Phase 11: Keyword Flagging
 **Goal**: Agent can mark messages as processed using custom IMAP keywords so they are not surfaced again in future sessions
@@ -37,16 +37,31 @@ Full details: `.planning/milestones/v0.1.0-ROADMAP.md`
 **Requirements**: KFLAG-01, KFLAG-02, KFLAG-03, KFLAG-04
 **Success Criteria** (what must be TRUE):
   1. A call to `flag_message` with `account`, `uid`, and `keyword` sets that keyword on the message via IMAP STORE +FLAGS
-  2. A call to `search_messages` with `exclude_keyword` omits messages that have that keyword set
-  3. A call to `get_new_mail` with `exclude_keyword` omits messages that have that keyword set from the cache
+  2. A call to `search_messages` with `exclude_keywords` (array) omits messages that have any of those keywords set; `include_keywords` (array) returns only messages matching at least one keyword
+  3. A call to `get_new_mail` with `exclude_keywords` (array) omits messages that have any of those keywords set from the cache
   4. When a mailbox is opened on a server that does not advertise `\*` in PERMANENTFLAGS, a warning is logged (no hard failure)
 **Plans**: 2 plans
 
 Plans:
 - [x] 11-01-PLAN.md — Implement flag_message tool (KFLAG-01) and PERMANENTFLAGS capability check (KFLAG-04)
-- [x] 11-02-PLAN.md — Add exclude_keyword filter to search_messages (KFLAG-02) and get_new_mail (KFLAG-03)
+- [x] 11-02-PLAN.md — Add exclude_keywords/include_keywords to search_messages (KFLAG-02) and exclude_keywords to get_new_mail (KFLAG-03)
 
 ## Phase Details
+
+### Phase 11.1: unflag_message tool (INSERTED)
+
+**Goal:** Agent can remove a custom IMAP keyword from a message via `unflag_message`, the direct counterpart to `flag_message`
+**Requirements**: UNFLAG-01
+**Depends on:** Phase 11
+**Success Criteria** (what must be TRUE):
+  1. A call to `unflag_message` with `account`, `uid`, and `keyword` removes that keyword from the message via IMAP STORE -FLAGS
+  2. Removing a keyword that is not present on the message returns success (idempotent)
+  3. The poller cache reflects the keyword removal immediately without waiting for the next poll cycle
+  4. When a mailbox does not advertise `\*` in PERMANENTFLAGS, a warning is logged (no hard failure)
+**Plans:** 1 plan
+
+Plans:
+- [ ] 11.1-01-PLAN.md — Implement unflag_message tool, Poller.removeKeyword, registration, and tests
 
 ### Phase 7: Header Enrichment
 **Goal**: Agent receives to/cc recipient data in every message listing and search result without extra calls
