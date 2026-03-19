@@ -11,6 +11,7 @@ import { READ_MESSAGES_TOOL, handleReadMessages } from "./tools/read-messages.js
 import { SEARCH_MESSAGES_TOOL, handleSearchMessages } from "./tools/search-messages.js";
 import { DOWNLOAD_ATTACHMENT_TOOL, handleDownloadAttachment } from "./tools/download-attachment.js";
 import { FLAG_MESSAGE_TOOL, handleFlagMessage } from "./tools/flag-message.js";
+import { UNFLAG_MESSAGE_TOOL, handleUnflagMessage } from "./tools/unflag-message.js";
 import { Poller } from "./polling/poller.js";
 import { GET_NEW_MAIL_TOOL, handleGetNewMail } from "./tools/get-new-mail.js";
 
@@ -23,6 +24,7 @@ const TOOLS = [
   SEARCH_MESSAGES_TOOL,
   DOWNLOAD_ATTACHMENT_TOOL,
   FLAG_MESSAGE_TOOL,
+  UNFLAG_MESSAGE_TOOL,
   GET_NEW_MAIL_TOOL,
 ];
 
@@ -97,6 +99,12 @@ async function main(): Promise<void> {
       case "flag_message":
         return handleFlagMessage(
           params as unknown as Parameters<typeof handleFlagMessage>[0],
+          manager,
+          poller
+        ) as AnyToolResult;
+      case "unflag_message":
+        return handleUnflagMessage(
+          params as unknown as Parameters<typeof handleUnflagMessage>[0],
           manager,
           poller
         ) as AnyToolResult;
