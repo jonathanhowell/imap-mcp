@@ -292,7 +292,7 @@ describe("Poller", () => {
     expect(globalThis.setTimeout).toHaveBeenCalledWith(expect.any(Function), 300 * 1000);
   });
 
-  describe("query with excludeKeyword (KFLAG-03)", () => {
+  describe("query with excludeKeywords (KFLAG-03)", () => {
     it("excludes messages with matching keyword from results", () => {
       const manager = makeMockManager(["acct1"]);
       const poller = new Poller(manager);
@@ -335,7 +335,7 @@ describe("Poller", () => {
       (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
       (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
 
-      const result = poller.query(sinceDate, undefined, "ClaudeProcessed");
+      const result = poller.query(sinceDate, undefined, ["ClaudeProcessed"]);
       const uids = result.results.map((m) => m.uid);
       expect(uids).not.toContain(1);
       expect(uids).toContain(2);
@@ -363,11 +363,11 @@ describe("Poller", () => {
       (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
       (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
 
-      const result = poller.query(sinceDate, undefined, "ClaudeProcessed");
+      const result = poller.query(sinceDate, undefined, ["ClaudeProcessed"]);
       expect(result.results).toHaveLength(0);
     });
 
-    it("returns all entries when excludeKeyword is undefined", () => {
+    it("returns all entries when excludeKeywords is undefined", () => {
       const manager = makeMockManager(["acct1"]);
       const poller = new Poller(manager);
 
@@ -400,6 +400,125 @@ describe("Poller", () => {
 
       const result = poller.query(sinceDate);
       expect(result.results).toHaveLength(2);
+    });
+
+    it("excludes messages matching any keyword in the array (multi-keyword)", () => {
+      const manager = makeMockManager(["acct1"]);
+      const poller = new Poller(manager);
+
+      const sinceDate = new Date(0).toISOString();
+      const entries = [
+        {
+          uid: 1,
+          from: "a@b.com",
+          subject: "processed",
+          date: "2024-01-01T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: "acct1",
+          keywords: ["ClaudeProcessed"],
+        },
+        {
+          uid: 2,
+          from: "b@c.com",
+          subject: "replied",
+          date: "2024-01-02T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: "acct1",
+          keywords: ["ClaudeReplied"],
+        },
+        {
+          uid: 3,
+          from: "c@d.com",
+          subject: "clean",
+          date: "2024-01-03T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: "acct1",
+          keywords: [],
+        },
+      ];
+
+      (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
+      (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
+
+      const result = poller.query(sinceDate, undefined, ["ClaudeProcessed", "ClaudeReplied"]);
+      const uids = result.results.map((m) => m.uid);
+      expect(uids).not.toContain(1);
+      expect(uids).not.toContain(2);
+      expect(uids).toContain(3);
+    });
+  });
+
+  describe("removeKeyword", () => {
+    const accountId = "acct1";
+
+    it("removes keyword case-insensitively from cached message keywords array", () => {
+      const manager = makeMockManager([accountId]);
+      const poller = new Poller(manager);
+
+      const entries = [
+        {
+          uid: 42,
+          from: "a@b.com",
+          subject: "test",
+          date: "2024-01-01T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: accountId,
+          keywords: ["ClaudeProcessed", "Other"],
+        },
+      ];
+
+      (poller as unknown as Record<string, unknown>)["cache"].set(accountId, entries);
+
+      poller.removeKeyword(accountId, 42, "claudeprocessed");
+
+      const cached = (poller as unknown as Record<string, unknown>)["cache"] as Map<
+        string,
+        typeof entries
+      >;
+      const msg = cached.get(accountId)?.find((m) => m.uid === 42);
+      expect(msg?.keywords).toEqual(["Other"]);
+    });
+
+    it("is no-op when accountId not in cache", () => {
+      const manager = makeMockManager([accountId]);
+      const poller = new Poller(manager);
+
+      // No entries set in cache — should not throw
+      expect(() => poller.removeKeyword("nonexistent", 42, "kw")).not.toThrow();
+    });
+
+    it("is no-op when uid not found in cache entries", () => {
+      const manager = makeMockManager([accountId]);
+      const poller = new Poller(manager);
+
+      const entries = [
+        {
+          uid: 99,
+          from: "a@b.com",
+          subject: "other",
+          date: "2024-01-01T00:00:00Z",
+          unread: false,
+          folder: "INBOX",
+          account: accountId,
+          keywords: ["SomeKeyword"],
+        },
+      ];
+
+      (poller as unknown as Record<string, unknown>)["cache"].set(accountId, entries);
+
+      // uid 42 doesn't exist — uid 99 entry should be unchanged
+      poller.removeKeyword(accountId, 42, "kw");
+
+      const cached = (poller as unknown as Record<string, unknown>)["cache"] as Map<
+        string,
+        typeof entries
+      >;
+      const msg = cached.get(accountId)?.find((m) => m.uid === 99);
+      expect(msg?.keywords).toEqual(["SomeKeyword"]);
     });
   });
 });

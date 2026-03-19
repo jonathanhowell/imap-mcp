@@ -48,12 +48,12 @@ export class Poller {
    * Query cached messages that arrived after `since`.
    * @param since ISO 8601 timestamp — return messages with internalDate after this time.
    * @param account Account name from config. Omit to query all accounts.
-   * @param excludeKeyword Exclude messages that have this custom IMAP keyword set (case-insensitive).
+   * @param excludeKeywords Exclude messages that have any of these custom IMAP keywords set (case-insensitive).
    */
   query(
     since: string,
     account?: string,
-    excludeKeyword?: string
+    excludeKeywords?: string[]
   ): MultiAccountResult<MultiAccountMessageHeader> {
     const sinceTime = new Date(since).getTime() || 0;
     const accountIds = account ? [account] : this.manager.getAccountIds();
@@ -69,8 +69,11 @@ export class Poller {
         const filtered = entries.filter(
           (m) =>
             (new Date(m.date).getTime() || 0) > sinceTime &&
-            (excludeKeyword === undefined ||
-              !(m.keywords ?? []).some((k) => k.toLowerCase() === excludeKeyword.toLowerCase()))
+            (excludeKeywords === undefined ||
+              excludeKeywords.length === 0 ||
+              !(m.keywords ?? []).some((mk) =>
+                excludeKeywords.some((ek) => mk.toLowerCase() === ek.toLowerCase())
+              ))
         );
         results.push(...filtered);
       }
@@ -150,6 +153,19 @@ export class Poller {
     if (!keywords.some((k) => k.toLowerCase() === keyword.toLowerCase())) {
       msg.keywords = [...keywords, keyword];
     }
+  }
+
+  /**
+   * Immediately removes a keyword from a cached message's keywords array.
+   * Called by unflag_message after a successful IMAP STORE so the cache reflects
+   * the removal without waiting for the next poll cycle.
+   */
+  removeKeyword(accountId: string, uid: number, keyword: string): void {
+    const entries = this.cache.get(accountId);
+    if (!entries) return;
+    const msg = entries.find((m) => m.uid === uid);
+    if (!msg) return;
+    msg.keywords = (msg.keywords ?? []).filter((k) => k.toLowerCase() !== keyword.toLowerCase());
   }
 
   private mergeIntoCache(accountId: string, incoming: MultiAccountMessageHeader[]): void {
