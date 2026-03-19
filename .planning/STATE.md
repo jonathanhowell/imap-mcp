@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.2
 milestone_name: Agent UX
 status: completed
-stopped_at: Phase 11.1 context gathered
-last_updated: "2026-03-19T13:54:29.629Z"
+stopped_at: Completed 11.1-unflag-message-tool/11.1-01-PLAN.md
+last_updated: "2026-03-19T14:27:54.051Z"
 last_activity: 2026-03-18 — v0.2 milestone complete, all 5 phases executed and verified
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 11
-  completed_plans: 11
+  completed_phases: 6
+  total_plans: 12
+  completed_plans: 12
   percent: 100
 ---
 
@@ -57,6 +57,7 @@ Progress: [██████████] 100%
 | Phase 10-search-and-attachment-ux P02 | 184 | 2 tasks | 2 files |
 | Phase 11-keyword-flagging P01 | 8 | 2 tasks | 4 files |
 | Phase 11-keyword-flagging P02 | 4 | 2 tasks | 7 files |
+| Phase 11.1-unflag-message-tool P01 | 3 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting current work:
 - [Phase 11-keyword-flagging]: unKeyword field (not criteria.not) used for IMAP NOT KEYWORD — confirmed in imapflow SearchObject type
 - [Phase 11-keyword-flagging]: Case-insensitive keyword comparison in poller.query() via .toLowerCase() per IMAP server normalization risk
 - [Phase 11-keyword-flagging]: Keywords populated in searchFolder by filtering msg.flags Set for non-backslash-prefixed entries
+- [Phase 11.1-unflag-message-tool]: messageFlagsRemove([uid], [keyword], { uid: true }) mirrors messageFlagsAdd from flag_message for consistent IMAP API usage
+- [Phase 11.1-unflag-message-tool]: removeKeyword uses .filter() for case-insensitive removal; idempotent by nature when keyword absent
 
 ### Roadmap Evolution
 
@@ -107,6 +110,6 @@ None identified. All v0.2 changes are additive (new fields, new tool, new parame
 
 ## Session Continuity
 
-Last session: 2026-03-19T13:54:29.627Z
-Stopped at: Phase 11.1 context gathered
-Resume file: .planning/phases/11.1-unflag-message-tool/11.1-CONTEXT.md
+Last session: 2026-03-19T14:27:54.049Z
+Stopped at: Completed 11.1-unflag-message-tool/11.1-01-PLAN.md
+Resume file: None

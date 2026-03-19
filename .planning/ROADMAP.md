@@ -58,7 +58,7 @@ Plans:
   2. Removing a keyword that is not present on the message returns success (idempotent)
   3. The poller cache reflects the keyword removal immediately without waiting for the next poll cycle
   4. When a mailbox does not advertise `\*` in PERMANENTFLAGS, a warning is logged (no hard failure)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 11.1-01-PLAN.md — Implement unflag_message tool, Poller.removeKeyword, registration, and tests
