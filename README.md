@@ -1,6 +1,16 @@
 # imap-mcp
 
-An MCP server that gives AI agents access to email over IMAP. Connect one or more email accounts and agents can read mailboxes, search messages by sender, subject, date, or body text, download attachments, and monitor for new mail — all via the Model Context Protocol. Designed to work with Claude Desktop and any MCP-compatible client.
+An MCP server that gives AI agents access to email over IMAP, designed for agents that need to read and reason about email without making changes to it.
+
+## Philosophy
+
+**Read-first, intentionally constrained.** imap-mcp is built for agentic workflows where the agent needs to understand a user's email — triage, summarise, search, monitor — but should not be able to send, delete, or move messages. The server is currently read-only, with one deliberate exception: agents can set and clear custom IMAP keywords (flags) on messages. This lets an agent mark messages it has processed, acted on, or flagged for follow-up, without touching the messages themselves.
+
+**Standard IMAP first.** The server targets standard IMAP servers. Gmail is well-supported for reading, but keyword flagging does not yet work on Gmail — Gmail maps IMAP keywords to labels, which requires special handling. Gmail flagging support is next on the roadmap. Outlook/Microsoft 365 requires OAuth2, which is not currently implemented, so Microsoft accounts are not supported.
+
+**Multi-inbox, unified view.** Connect as many accounts as you need. All tools accept an optional `account` parameter — omit it to query across all configured accounts and get a combined, sorted result.
+
+Connect one or more email accounts and agents can read mailboxes, search messages by sender, subject, date, or body text, download attachments, and monitor for new mail — all via the Model Context Protocol. Designed to work with Claude Desktop and any MCP-compatible client.
 
 ## Quick Start
 
@@ -183,19 +193,21 @@ Fetch multiple messages in a single call. All UIDs must belong to the same accou
 
 ### `search_messages`
 
-| Parameter    | Type    | Required | Description                                                                            |
-| ------------ | ------- | -------- | -------------------------------------------------------------------------------------- |
-| `account`    | string  | no       | Account name. Omit to search all accounts.                                             |
-| `from`       | string  | no       | Filter by sender address or name                                                       |
-| `subject`    | string  | no       | Filter by subject text                                                                 |
-| `body`       | string  | no       | Filter by body text content (case-insensitive, server-side IMAP SEARCH BODY)           |
-| `since`      | string  | no       | ISO date string — messages on or after this date                                       |
-| `before`     | string  | no       | ISO date string — messages before this date                                            |
-| `unread`     | boolean | no       | `true` = unread only, `false` = read only                                              |
-| `folder`     | string  | no       | Folder to search (default: `INBOX`). Use `all` to search every folder sequentially.   |
-| `max_results`| number  | no       | Max results to return (server cap: 200)                                                |
+| Parameter          | Type     | Required | Description                                                                          |
+| ------------------ | -------- | -------- | ------------------------------------------------------------------------------------ |
+| `account`          | string   | no       | Account name. Omit to search all accounts.                                           |
+| `from`             | string   | no       | Filter by sender address or name                                                     |
+| `subject`          | string   | no       | Filter by subject text                                                               |
+| `body`             | string   | no       | Filter by body text content (case-insensitive, server-side IMAP SEARCH BODY)         |
+| `since`            | string   | no       | ISO date string — messages on or after this date                                     |
+| `before`           | string   | no       | ISO date string — messages before this date                                          |
+| `unread`           | boolean  | no       | `true` = unread only, `false` = read only                                            |
+| `folder`           | string   | no       | Folder to search (default: `INBOX`). Use `all` to search every folder sequentially. |
+| `max_results`      | number   | no       | Max results to return (server cap: 200)                                              |
+| `exclude_keywords` | string[] | no       | Exclude messages that have **any** of these custom IMAP keywords set (e.g. `["ClaudeProcessed", "ClaudeReplied"]`). First keyword filtered server-side; additional keywords filtered in memory. |
+| `include_keywords` | string[] | no       | Return only messages that have **at least one** of these custom IMAP keywords set (OR semantics). Single keyword uses server-side KEYWORD filter; multiple uses IMAP OR. |
 
-**Response (single account):** Flat array of `SearchResultItem[]` — each item includes `uid`, `from`, `to[]`, `cc[]`, `subject`, `date`, `flags`, and `folder`.
+**Response (single account):** Flat array of `SearchResultItem[]` — each item includes `uid`, `from`, `to[]`, `cc[]`, `subject`, `date`, `unread`, `folder`, and `keywords[]`.
 
 **Response (all accounts):** `{ results: MultiAccountSearchResultItem[], errors?: Record<string, string> }`.
 
@@ -221,11 +233,13 @@ At least one of `part_id` or `filename` must be provided. When both are given, `
 
 ### `get_new_mail`
 
-| Parameter | Type   | Required | Description                                                                         |
-| --------- | ------ | -------- | ----------------------------------------------------------------------------------- |
-| `since`   | string | no       | ISO timestamp. Returns messages cached since this time. Omit for all cached unread. |
+| Parameter          | Type     | Required | Description                                                                                  |
+| ------------------ | -------- | -------- | -------------------------------------------------------------------------------------------- |
+| `since`            | string   | yes      | ISO 8601 timestamp — return messages with `internalDate` after this time                     |
+| `account`          | string   | no       | Account name. Omit to query all accounts.                                                    |
+| `exclude_keywords` | string[] | no       | Exclude messages that have **any** of these custom IMAP keywords set (e.g. `["ClaudeProcessed"]`). Filters cached results in memory. |
 
-**Response:** `{ messages: CachedHeader[], polled_at: string }`. The server polls in the background at the configured interval; this tool reads from the cache, not live IMAP.
+**Response:** `{ results: MultiAccountMessageHeader[], errors?: Record<string, string> }`. The server polls in the background at the configured interval; this tool reads from the cache, not live IMAP. Each result includes `uid`, `from`, `subject`, `date`, `unread`, `folder`, `account`, and `keywords[]`.
 
 ## Example Agent Prompts
 
