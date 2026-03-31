@@ -50,7 +50,16 @@ export function parseBodyStructure(root: MessageStructureObject): ParsedBodyStru
       const isText = mainType === "text";
       const isMultipart = mainType === "multipart";
 
-      if (!isAttachment && isText && subtype === "plain" && textPartId === null) {
+      if (!isAttachment && isText && subtype === "calendar") {
+        const filename =
+          node.dispositionParameters?.filename ?? node.parameters?.["name"] ?? "invite.ics";
+        attachments.push({
+          part_id: part,
+          filename,
+          size: node.size ?? 0,
+          mime_type: node.type,
+        });
+      } else if (!isAttachment && isText && subtype === "plain" && textPartId === null) {
         textPartId = part;
       } else if (!isAttachment && isText && subtype === "html" && htmlPartId === null) {
         htmlPartId = part;
