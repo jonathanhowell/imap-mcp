@@ -171,7 +171,7 @@ Returns all configured accounts. No parameters.
 | `uid`     | number            | yes      | Message UID                                                     |
 | `format`  | `clean`\|`full`   | no       | `clean` strips reply chains (default). `full` returns raw body. |
 
-**Response:** Full message with headers and body.
+**Response:** Full message with headers, body, and `attachments[]` metadata. Inline `text/calendar` parts (calendar invites) are automatically surfaced as attachments with a default filename of `invite.ics`, even when they lack an explicit attachment disposition.
 
 ---
 
@@ -187,7 +187,7 @@ Fetch multiple messages in a single call. All UIDs must belong to the same accou
 | `format`    | `clean`\|`full`\|`truncated`      | no       | Body format (default: `clean`)                                      |
 | `max_chars` | number                            | no       | Max body characters when `format` is `truncated` (default: `2000`) |
 
-**Response:** Array of message objects in the same order as `uids`. Each item includes headers, body, and a `uid` field.
+**Response:** Array of message objects in the same order as `uids`. Each item includes headers, body, `attachments[]` metadata, and a `uid` field.
 
 ---
 
@@ -229,6 +229,8 @@ At least one of `part_id` or `filename` must be provided. When both are given, `
 
 **Response:** `{ filename, mimeType, size, data }` where `data` is base64-encoded.
 
+**Calendar invites:** Inline `text/calendar` parts are surfaced as attachments (typically named `invite.ics`). Use `download_attachment` with the `part_id` from the message's `attachments[]` to retrieve the ICS data.
+
 ---
 
 ### `get_new_mail`
@@ -251,6 +253,7 @@ Once connected to Claude Desktop, you can ask things like:
 - "Read the most recent email from alice@example.com and summarize it"
 - "Read all three emails in that thread and give me a summary"
 - "Download the PDF attachment from that email"
+- "Check if that email has a calendar invite and tell me the event details"
 
 ## Troubleshooting
 
