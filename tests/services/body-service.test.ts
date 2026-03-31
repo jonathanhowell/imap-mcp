@@ -130,6 +130,77 @@ describe("body-service", () => {
     expect(result.attachments[0].filename).toBe("attachment");
   });
 
+  // text/calendar inline part tests
+
+  it("inline text/calendar (no disposition) appears in attachments with default filename invite.ics", () => {
+    const root: MessageStructureObject = {
+      part: "1",
+      type: "text/calendar",
+      size: 500,
+    };
+    const result = parseBodyStructure(root);
+    expect(result.attachments).toHaveLength(1);
+    expect(result.attachments[0].part_id).toBe("1");
+    expect(result.attachments[0].filename).toBe("invite.ics");
+    expect(result.attachments[0].mime_type).toBe("text/calendar");
+    expect(result.attachments[0].size).toBe(500);
+    expect(result.textPartId).toBeNull();
+  });
+
+  it("inline text/calendar with dispositionParameters.filename uses that filename", () => {
+    const root: MessageStructureObject = {
+      part: "2",
+      type: "text/calendar",
+      dispositionParameters: { filename: "meeting.ics" },
+      size: 300,
+    };
+    const result = parseBodyStructure(root);
+    expect(result.attachments).toHaveLength(1);
+    expect(result.attachments[0].filename).toBe("meeting.ics");
+  });
+
+  it("inline text/calendar with parameters.name uses that as fallback filename", () => {
+    const root: MessageStructureObject = {
+      part: "3",
+      type: "text/calendar",
+      parameters: { name: "event.ics" },
+      size: 200,
+    };
+    const result = parseBodyStructure(root);
+    expect(result.attachments).toHaveLength(1);
+    expect(result.attachments[0].filename).toBe("event.ics");
+  });
+
+  it("multipart/mixed with text/plain + text/calendar produces textPartId for plain and calendar in attachments", () => {
+    // Typical Google Calendar structure
+    const root: MessageStructureObject = {
+      type: "multipart/mixed",
+      childNodes: [
+        { part: "1", type: "text/plain", size: 100 },
+        { part: "2", type: "text/calendar", size: 400 },
+      ],
+    };
+    const result = parseBodyStructure(root);
+    expect(result.textPartId).toBe("1");
+    expect(result.attachments).toHaveLength(1);
+    expect(result.attachments[0].part_id).toBe("2");
+    expect(result.attachments[0].filename).toBe("invite.ics");
+    expect(result.attachments[0].mime_type).toBe("text/calendar");
+  });
+
+  it("explicit attachment disposition text/calendar still appears in attachments", () => {
+    const root: MessageStructureObject = {
+      part: "1",
+      type: "text/calendar",
+      disposition: "attachment",
+      dispositionParameters: { filename: "calendar.ics" },
+      size: 250,
+    };
+    const result = parseBodyStructure(root);
+    expect(result.attachments).toHaveLength(1);
+    expect(result.attachments[0].filename).toBe("calendar.ics");
+  });
+
   // extractBody tests
 
   it("READ-03: HTML body converted to plain text", () => {
