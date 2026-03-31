@@ -447,13 +447,13 @@ describe("search_messages", () => {
     });
   });
 
-  describe("exclude_keyword filtering (KFLAG-02)", () => {
-    it("passes unKeyword criteria when exclude_keyword is set", async () => {
+  describe("exclude_keywords filtering (KFLAG-02)", () => {
+    it("passes first keyword as unKeyword criteria when exclude_keywords is set", async () => {
       const client = makeMockClient();
       const manager = makeManager(client);
 
       const result = await handleSearchMessages(
-        { account: "test", exclude_keyword: "ClaudeProcessed" },
+        { account: "test", exclude_keywords: ["ClaudeProcessed"] },
         manager
       );
 
@@ -465,7 +465,7 @@ describe("search_messages", () => {
       expect(result.isError).toBe(false);
     });
 
-    it("does not include unKeyword in criteria when exclude_keyword is omitted", async () => {
+    it("does not include unKeyword in criteria when exclude_keywords is omitted", async () => {
       const client = makeMockClient();
       const manager = makeManager(client);
 
@@ -476,19 +476,145 @@ describe("search_messages", () => {
       expect(searchCriteria).not.toHaveProperty("unKeyword");
     });
 
-    it("passes excludeKeyword in fan-out mode", async () => {
+    it("passes first exclude keyword in fan-out mode", async () => {
       const client = makeMockClient();
       const manager: ConnectionManager = {
         getAccountIds: vi.fn().mockReturnValue(["acct1"]),
         getClient: vi.fn().mockReturnValue(client),
       } as unknown as ConnectionManager;
 
-      await handleSearchMessages({ exclude_keyword: "Processed" }, manager);
+      await handleSearchMessages({ exclude_keywords: ["Processed"] }, manager);
 
       const mockSearch = client.search as ReturnType<typeof vi.fn>;
       expect(mockSearch).toHaveBeenCalledWith(expect.objectContaining({ unKeyword: "Processed" }), {
         uid: true,
       });
+    });
+
+    it("post-filters additional exclude_keywords beyond the first", async () => {
+      // Server filters ClaudeProcessed (first keyword via unKeyword) — returns only uids 2, 3
+      // Post-filter should then remove uid 2 (ClaudeReplied), leaving only uid 3
+      const mockMessages = [
+        {
+          uid: 2,
+          envelope: { from: [{ address: "b@c.com" }], subject: "Replied", to: [], cc: [] },
+          flags: new Set<string>(["ClaudeReplied"]),
+          internalDate: new Date("2024-01-02"),
+        },
+        {
+          uid: 3,
+          envelope: { from: [{ address: "c@d.com" }], subject: "Clean", to: [], cc: [] },
+          flags: new Set<string>(),
+          internalDate: new Date("2024-01-03"),
+        },
+      ];
+      const client = makeMockClient({
+        // Simulate server-side unKeyword filtering: uid 1 (ClaudeProcessed) already excluded
+        search: vi.fn().mockResolvedValue([2, 3]),
+        fetchAll: vi.fn().mockResolvedValue(mockMessages),
+      });
+      const manager = makeManager(client);
+
+      const result = await handleSearchMessages(
+        { account: "test", exclude_keywords: ["ClaudeProcessed", "ClaudeReplied"] },
+        manager
+      );
+
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as Array<{ uid: number }>;
+      const uids = parsed.map((m) => m.uid);
+      expect(uids).not.toContain(2);
+      expect(uids).toContain(3);
+    });
+  });
+
+  describe("include_keywords filtering (KFLAG-02)", () => {
+    it("passes single include keyword as criteria.keyword", async () => {
+      const client = makeMockClient();
+      const manager = makeManager(client);
+
+      await handleSearchMessages(
+        { account: "test", include_keywords: ["ClaudeNeedsFollowup"] },
+        manager
+      );
+
+      const mockSearch = client.search as ReturnType<typeof vi.fn>;
+      expect(mockSearch).toHaveBeenCalledWith(
+        expect.objectContaining({ keyword: "ClaudeNeedsFollowup" }),
+        { uid: true }
+      );
+    });
+
+    it("passes multiple include keywords as criteria.or array", async () => {
+      const client = makeMockClient();
+      const manager = makeManager(client);
+
+      await handleSearchMessages(
+        { account: "test", include_keywords: ["ClaudeNeedsFollowup", "ClaudeDeferred"] },
+        manager
+      );
+
+      const mockSearch = client.search as ReturnType<typeof vi.fn>;
+      const searchCriteria = mockSearch.mock.calls[0][0] as Record<string, unknown>;
+      expect(searchCriteria).toHaveProperty("or");
+      expect(searchCriteria.or).toEqual([
+        { keyword: "ClaudeNeedsFollowup" },
+        { keyword: "ClaudeDeferred" },
+      ]);
+    });
+
+    it("does not include keyword or or in criteria when include_keywords is omitted", async () => {
+      const client = makeMockClient();
+      const manager = makeManager(client);
+
+      await handleSearchMessages({ account: "test" }, manager);
+
+      const mockSearch = client.search as ReturnType<typeof vi.fn>;
+      const searchCriteria = mockSearch.mock.calls[0][0] as Record<string, unknown>;
+      expect(searchCriteria).not.toHaveProperty("keyword");
+      expect(searchCriteria).not.toHaveProperty("or");
+    });
+
+    it("post-filters results to only messages matching at least one include keyword (in-memory gate)", async () => {
+      // Server may ignore criteria.keyword/or — in-memory filter is authoritative
+      const mockMessages = [
+        {
+          uid: 1,
+          envelope: { from: [{ address: "a@b.com" }], subject: "Tagged followup", to: [], cc: [] },
+          flags: new Set<string>(["ClaudeNeedsFollowup"]),
+          internalDate: new Date("2024-01-01"),
+        },
+        {
+          uid: 2,
+          envelope: { from: [{ address: "b@c.com" }], subject: "Tagged deferred", to: [], cc: [] },
+          flags: new Set<string>(["ClaudeDeferred"]),
+          internalDate: new Date("2024-01-02"),
+        },
+        {
+          uid: 3,
+          envelope: { from: [{ address: "c@d.com" }], subject: "No keyword", to: [], cc: [] },
+          flags: new Set<string>(),
+          internalDate: new Date("2024-01-03"),
+        },
+      ];
+      // Server returns all 3 (as if it ignored criteria.or)
+      const client = makeMockClient({
+        search: vi.fn().mockResolvedValue([1, 2, 3]),
+        fetchAll: vi.fn().mockResolvedValue(mockMessages),
+      });
+      const manager = makeManager(client);
+
+      const result = await handleSearchMessages(
+        { account: "test", include_keywords: ["ClaudeNeedsFollowup", "ClaudeDeferred"] },
+        manager
+      );
+
+      expect(result.isError).toBe(false);
+      const parsed = JSON.parse(result.content[0].text) as Array<{ uid: number }>;
+      const uids = parsed.map((m) => m.uid);
+      expect(uids).toContain(1);
+      expect(uids).toContain(2);
+      expect(uids).not.toContain(3);
     });
   });
 

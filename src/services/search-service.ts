@@ -10,7 +10,8 @@ export interface SearchParams {
   body?: string;
   folder?: string;
   maxResults?: number;
-  excludeKeyword?: string;
+  excludeKeywords?: string[];
+  includeKeywords?: string[];
 }
 
 /**
@@ -36,7 +37,8 @@ export async function searchMessages(
     body,
     folder = "INBOX",
     maxResults = 50,
-    excludeKeyword,
+    excludeKeywords,
+    includeKeywords,
   } = params;
 
   // Build IMAP SearchObject — only include fields that are defined
@@ -49,10 +51,39 @@ export async function searchMessages(
   else if (unread === false) criteria.seen = true;
   // unread=undefined → seen not included
   if (body !== undefined) criteria.body = body;
-  if (excludeKeyword !== undefined) criteria.unKeyword = excludeKeyword;
+  // exclude: first keyword server-side, rest post-filtered
+  if (excludeKeywords?.length) criteria.unKeyword = excludeKeywords[0];
+  // include: single keyword or OR array
+  if (includeKeywords?.length === 1) criteria.keyword = includeKeywords[0];
+  else if (includeKeywords && includeKeywords.length > 1)
+    criteria.or = includeKeywords.map((k) => ({ keyword: k }));
+
+  const remainingExcludes = excludeKeywords?.slice(1) ?? [];
+
+  const applyPostFilters = (messages: SearchResultItem[]): SearchResultItem[] => {
+    if (remainingExcludes.length > 0) {
+      messages = messages.filter(
+        (m) =>
+          !remainingExcludes.some((k) =>
+            (m.keywords ?? []).some((mk) => mk.toLowerCase() === k.toLowerCase())
+          )
+      );
+    }
+    // include_keywords: in-memory filter — criteria.keyword/or is a hint only;
+    // not all servers support OR search and imapflow may not expose it on SearchObject.
+    if (includeKeywords?.length) {
+      messages = messages.filter((m) =>
+        includeKeywords.some((k) =>
+          (m.keywords ?? []).some((mk) => mk.toLowerCase() === k.toLowerCase())
+        )
+      );
+    }
+    return messages;
+  };
 
   if (folder !== "all") {
-    return await searchFolder(client, folder, criteria, maxResults);
+    const messages = await searchFolder(client, folder, criteria, maxResults);
+    return applyPostFilters(messages);
   }
 
   // Multi-folder mode: iterate all folders sequentially
@@ -70,7 +101,7 @@ export async function searchMessages(
     }
   }
 
-  return results;
+  return applyPostFilters(results);
 }
 
 function formatAddress(entry: { name?: string; address?: string }): string {

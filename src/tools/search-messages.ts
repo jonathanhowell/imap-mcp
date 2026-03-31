@@ -15,7 +15,8 @@ export interface SearchMessagesParams {
   body?: string;
   folder?: string;
   max_results?: number;
-  exclude_keyword?: string;
+  exclude_keywords?: string[];
+  include_keywords?: string[];
 }
 
 export const SEARCH_MESSAGES_TOOL: Tool = {
@@ -60,11 +61,19 @@ export const SEARCH_MESSAGES_TOOL: Tool = {
         type: "number",
         description: "Maximum number of results to return (default 50)",
       },
-      exclude_keyword: {
-        type: "string",
+      exclude_keywords: {
+        type: "array",
+        items: { type: "string" },
         description:
-          "Exclude messages that have this custom IMAP keyword set (e.g. 'ClaudeProcessed'). " +
-          "Uses server-side IMAP SEARCH NOT KEYWORD filtering.",
+          "Exclude messages that have any of these custom IMAP keywords set (e.g. ['ClaudeProcessed', 'ClaudeReplied']). " +
+          "First keyword filtered server-side; remainder filtered in memory.",
+      },
+      include_keywords: {
+        type: "array",
+        items: { type: "string" },
+        description:
+          "Return only messages that have at least one of these custom IMAP keywords set (OR semantics). " +
+          "Uses server-side IMAP KEYWORD filtering.",
       },
     },
     required: [],
@@ -93,7 +102,8 @@ export async function handleSearchMessages(
     body,
     folder,
     max_results,
-    exclude_keyword,
+    exclude_keywords,
+    include_keywords,
   } = params;
 
   const MAX_RESULTS = 200;
@@ -112,7 +122,8 @@ export async function handleSearchMessages(
         body,
         folder,
         maxResults: effectiveMax,
-        excludeKeyword: exclude_keyword,
+        excludeKeywords: exclude_keywords,
+        includeKeywords: include_keywords,
       })
     );
 
@@ -152,7 +163,8 @@ export async function handleSearchMessages(
     body,
     folder,
     maxResults: effectiveMax,
-    excludeKeyword: exclude_keyword,
+    excludeKeywords: exclude_keywords,
+    includeKeywords: include_keywords,
   });
 
   return {

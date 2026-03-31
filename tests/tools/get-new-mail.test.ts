@@ -42,7 +42,7 @@ describe("handleGetNewMail — cache ready, query delegation", () => {
     query?: (
       since: string,
       account?: string,
-      excludeKeyword?: string
+      excludeKeywords?: string[]
     ) => ReturnType<Poller["query"]>;
   }) {
     return {
@@ -90,10 +90,16 @@ describe("handleGetNewMail — cache ready, query delegation", () => {
     expect(result.content).toEqual([{ type: "text", text: JSON.stringify(queryResult) }]);
   });
 
-  it("passes exclude_keyword to poller.query()", async () => {
+  it("passes exclude_keywords to poller.query()", async () => {
     const poller = makeMockPoller({});
-    await handleGetNewMail({ since: "2024-01-01T00:00:00Z", exclude_keyword: "Done" }, poller);
-    expect(poller.query).toHaveBeenCalledWith("2024-01-01T00:00:00Z", undefined, "Done");
+    await handleGetNewMail(
+      { since: "2024-01-01T00:00:00Z", exclude_keywords: ["Done", "Replied"] },
+      poller
+    );
+    expect(poller.query).toHaveBeenCalledWith("2024-01-01T00:00:00Z", undefined, [
+      "Done",
+      "Replied",
+    ]);
   });
 
   it("does not pass excludeKeyword when omitted", async () => {
