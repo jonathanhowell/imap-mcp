@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 Phase: 11 of 11 (Keyword Flagging — complete)
 Plan: 2 of 2 in current phase
 Status: All phases complete, milestone audit passed
-Last activity: 2026-03-18 — v0.2 milestone complete, all 5 phases executed and verified
+Last activity: 2026-03-31 - Completed quick task 260331-fus: Surface inline text/calendar MIME parts as attachments
 
 Progress: [██████████] 100%
 
@@ -107,6 +107,12 @@ None yet.
 ### Blockers/Concerns
 
 None identified. All v0.2 changes are additive (new fields, new tool, new parameters) — no breaking changes to existing tool contracts.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260331-fus | Surface inline text/calendar MIME parts as attachments | 2026-03-31 | 45e9b45 | [260331-fus-surface-inline-text-calendar-mime-parts-](./quick/260331-fus-surface-inline-text-calendar-mime-parts-/) |
 
 ## Session Continuity
 
