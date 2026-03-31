@@ -9,10 +9,11 @@ requires:
   - phase: 11-01
     provides: "MessageHeader.keywords field, flag_message tool"
 provides:
-  - "exclude_keyword parameter on search_messages (server-side IMAP NOT KEYWORD filtering)"
-  - "exclude_keyword parameter on get_new_mail (in-memory cache filter, case-insensitive)"
+  - "exclude_keywords (array) parameter on search_messages — first keyword server-side IMAP NOT KEYWORD, rest post-filtered in memory"
+  - "include_keywords (array) parameter on search_messages — single → criteria.keyword, multiple → criteria.or (OR semantics)"
+  - "exclude_keywords (array) parameter on get_new_mail (in-memory cache filter, any-of case-insensitive)"
   - "keywords field populated from IMAP flags in searchFolder (non-system flags)"
-  - "Poller.query() third parameter excludeKeyword with case-insensitive comparison"
+  - "Poller.query() third parameter excludeKeywords (array) with any-of case-insensitive comparison"
 affects:
   - "agents using search_messages or get_new_mail for deduplication workflows"
 
@@ -67,10 +68,11 @@ completed: 2026-03-18
 
 ## Accomplishments
 
-- search_messages accepts exclude_keyword and applies server-side IMAP SEARCH unKeyword (NOT KEYWORD) filtering
-- get_new_mail accepts exclude_keyword and applies case-insensitive in-memory filter on poller cache
+- search_messages accepts exclude_keywords (array) — first keyword server-side via IMAP SEARCH NOT KEYWORD, remaining post-filtered in memory
+- search_messages accepts include_keywords (array) — single keyword uses criteria.keyword, multiple uses criteria.or (OR semantics, server-side)
+- get_new_mail accepts exclude_keywords (array) and applies any-of case-insensitive in-memory filter on poller cache
 - Poller cache now stores custom keywords (non-backslash-prefixed flags) from searchFolder results
-- 8 new test cases across search, get_new_mail, and poller test files; full suite 197/197 green
+- 13 new test cases across search, get_new_mail, and poller test files; full suite 202/202 green (post-hotfix)
 
 ## Task Commits
 
@@ -81,13 +83,13 @@ Each task was committed atomically:
 
 ## Files Created/Modified
 
-- `src/services/search-service.ts` - Added excludeKeyword to SearchParams, applied criteria.unKeyword, added keywords field to searchFolder return mapping
-- `src/tools/search-messages.ts` - Added exclude_keyword to SearchMessagesParams, inputSchema, and both searchMessages call sites
-- `src/tools/get-new-mail.ts` - Added exclude_keyword to GetNewMailParams, inputSchema, and poller.query() call
-- `src/polling/poller.ts` - Added excludeKeyword third parameter to query() with case-insensitive filter
-- `tests/tools/search-messages.test.ts` - Added 3 KFLAG-02 tests for unKeyword criteria behavior
-- `tests/tools/get-new-mail.test.ts` - Added 2 KFLAG-03 tests asserting poller.query third argument
-- `tests/polling/poller.test.ts` - Added 3 KFLAG-03 tests: keyword exclusion, case-insensitivity, undefined passthrough
+- `src/services/search-service.ts` - Added excludeKeywords (array) and includeKeywords (array) to SearchParams; criteria building with server-side first-keyword and memory post-filter for remainder; include uses criteria.keyword or criteria.or
+- `src/tools/search-messages.ts` - Added exclude_keywords (array) and include_keywords (array) to SearchMessagesParams, inputSchema, and both searchMessages call sites
+- `src/tools/get-new-mail.ts` - Added exclude_keywords (array) to GetNewMailParams, inputSchema, and poller.query() call
+- `src/polling/poller.ts` - Added excludeKeywords (array) third parameter to query() with any-of case-insensitive filter
+- `tests/tools/search-messages.test.ts` - Added 4 KFLAG-02 exclude tests (including multi-keyword post-filter) and 3 include_keywords tests
+- `tests/tools/get-new-mail.test.ts` - Updated to pass array to poller.query(); updated KFLAG-03 test
+- `tests/polling/poller.test.ts` - Updated KFLAG-03 tests to use arrays; added multi-keyword any-of test
 
 ## Decisions Made
 
