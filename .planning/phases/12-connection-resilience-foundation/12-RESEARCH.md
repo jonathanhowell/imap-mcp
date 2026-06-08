@@ -767,22 +767,25 @@ it("emits close twice in 0ms — only one reconnect loop runs", async () => {
 
 **If this table is empty:** N/A — six assumptions are flagged for the planner and user-discussion to confirm. A3 in particular merits a confirm with the user before implementation begins.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **D-14 throttle sequence interpretation (A3 above)**
    - What we know: CONTEXT.md says "powers-of-two doubling after the first 3" and gives example sequence "1, 2, 3, 5, 10, 20, 40, 80, 160, 320, …"
    - What's unclear: Whether 4 is intentionally excluded or whether the sequence should be "1, 2, 3, 4, 8, 16, 32, 64, 128, …"
    - Recommendation: Take the CONTEXT.md sequence at face value (5 then doubling) — implement `shouldLogAttempt` exactly as written. Add a unit test that captures the expected sequence so a planner intent change is detectable.
+   - **RESOLVED:** Take CONTEXT.md text at face value — sequence `1, 2, 3, 5, 10, 20, 40, 80, 160, 320, …` (skip 4, then double from 5). Implemented in Plan 03 Task 1 via `shouldLogAttempt(attempt)`.
 
 2. **Initial-connect path classification (CONN-01 + CONN-03 interaction)**
    - What we know: The existing `connect()` method calls `runReconnectLoop()` on failure. If the initial-connect error is fatal (wrong password from config), the loop will classify it on attempt 1 and transition to `suspended` — correct behavior.
    - What's unclear: Whether `connect()` should classify the initial error BEFORE calling `runReconnectLoop()` and transition directly to `suspended` without scheduling a `sleep(backoffDelayMs(1))` first.
    - Recommendation: Skip the initial sleep for fatal initial-connect errors. Worth 1 second on startup. Implementation: in `connect()`'s catch block, call `classifyConnectionError(err)` before delegating to `runReconnectLoop`; if fatal, transition to `suspended` directly. Document and unit-test.
+   - **RESOLVED:** Yes — classify error in `connect()` BEFORE entering `runReconnectLoop`, so the first backoff sleep is skipped on credentials/TLS failures. Implemented in Plan 03 Task 1 `connect()`.
 
 3. **`humanReason(err)` helper shape**
    - What we know: Specifics in CONTEXT.md note the suspended-state error log should be self-explanatory ("Authentication failed — fix credentials" / "TLS certificate invalid — check cert chain").
    - What's unclear: Whether this is a one-liner with a 4-arm switch on classifier verdict + error shape, or a more general formatter.
    - Recommendation: Simple `humanReason(err: unknown): string` helper in `error-classifier.ts` alongside the classifier — 5 lines max, 4 cases: AuthenticationFailure → "Authentication failed — fix credentials"; `tlsFailed === true` → "TLS certificate invalid — check cert chain"; RFC 5530 code → `"Server rejected connection (${code})"`; fallback → original `err.message`. Co-locating with the classifier keeps fatal-handling logic in one file.
+   - **RESOLVED:** 4-arm switch over `classifyConnectionError(err)` returning stock strings; never echoes `err.message`. Implemented in Plan 02 Task 1 alongside `classifyConnectionError`.
 
 ## Environment Availability
 
