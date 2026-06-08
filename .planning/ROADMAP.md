@@ -56,7 +56,11 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
   3. Calling `list_accounts` during a reconnect shows `status: "reconnecting"` with a `last_error` reason; `status: "suspended"` accounts display a human-readable reason explaining what is fatal
   4. Two simultaneous `close` events on the same account do not spawn two concurrent reconnect loops — only one loop runs at a time
   5. A server running three or more accounts with staggered connection drops does not accumulate EventEmitter `MaxListenersExceededWarning` messages across restart cycles
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 12-01-PLAN.md — Wave 0 failing-test scaffolds for CONN-01..CONN-07 (5 test files)
+- [ ] 12-02-PLAN.md — Build `src/connections/error-classifier.ts` pure-function module (CONN-01)
+- [ ] 12-03-PLAN.md — Refactor `AccountConnection`: 4-state union, unbounded jittered retry, fatal fast-path, TCP keepalive, race guard, listener cleanup, throttled logging (CONN-02..CONN-06)
+- [ ] 12-04-PLAN.md — Wire consumers: `connection-manager` switch update, `poller` skip guard (CONN-07), `unhandledRejection` handler, `imapflow ^1.3.7` bump
 
 ### Phase 13: Health Surface + Cache Improvements
 **Goal**: Agents can observe the freshness of cached mail data per account and understand account health in enough detail to explain failures to users
