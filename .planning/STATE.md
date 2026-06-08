@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
-status: defining_requirements
+status: ready_to_plan
 stopped_at: null
-last_updated: "2026-06-08T15:00:00.000Z"
+last_updated: "2026-06-08T15:30:00.000Z"
 last_activity: 2026-06-08
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,15 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** An agent can reliably read, search, monitor, and tag email across multiple accounts — with the context it needs to act without guessing or re-fetching.
-**Current focus:** v0.3 Reliability & Cache Rethink — defining requirements.
+**Current focus:** v0.3 Reliability & Cache Rethink — Phase 12 ready to plan.
 
 ## Current Position
 
 Milestone: **v0.3 Reliability & Cache Rethink**
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-06-08 — Milestone v0.3 started
+Phase: 12 of 14 (Connection Resilience Foundation)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-06-08 — Roadmap created; Phase 12 is next
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Velocity Reference
 
@@ -42,14 +44,14 @@ Last activity: 2026-06-08 — Milestone v0.3 started
 
 ## Accumulated Context
 
-### Decisions
+### Decisions (v0.3)
 
-Full log in `.planning/PROJECT.md` Key Decisions table. Carried into v0.3:
+Full log in `.planning/PROJECT.md` Key Decisions table. Key v0.3 decisions:
 
-- `formatAddress` helper is the canonical `Name <addr>` formatter — apply to any new tool returning sender/recipient data
-- `{account_id, uid}` data model is the globally unique message reference
-- Custom IMAP keywords (e.g. `ClaudeProcessed`) are the agent-tagging mechanism — server-side `NOT KEYWORD` filtering + in-memory fallback for additional terms
-- Hard caps on batch tools enforced BEFORE IMAP interaction (fail-fast)
+- **State machine**: 5 named states — `connecting | connected | reconnecting | suspended | failed`. `suspended` is the fatal/non-retryable state (not `failed` with a boolean). `failed` reserved for edge cases like explicit operator stop.
+- **Cache architecture**: Option A — keep and improve the polling cache. No IMAP IDLE adoption in v0.3 (dual-connection redesign is its own future milestone).
+- **`reconnect_account` tool**: Ships in v0.3 as Phase 14 — standalone phase, thin wrapper on Phase 12 state machine.
+- Carried from v0.2: `formatAddress` is canonical `Name <addr>` formatter; `{account_id, uid}` is globally unique message ref.
 
 ### Blockers/Concerns
 
@@ -57,21 +59,15 @@ None.
 
 ### Tech Debt (carried from v0.2)
 
-- `read_messages` and pre-existing `read_message` build `from` as a bare address instead of using `formatAddress` — visible inconsistency vs `list_messages`/`search_messages`
-- All 5 v0.2 phase VALIDATION.md files remain in `draft` (`nyquist_compliant: false`) — VERIFICATION.md scores 100%, so coverage is real; backfill with `/gsd:validate-phase` if Nyquist tracking is needed in v0.3
+- `read_messages` / `read_message` build `from` as bare address instead of `formatAddress` — one-line fix per tool, not in v0.3 scope unless a touching phase picks it up
+- All 5 v0.2 VALIDATION.md files remain `draft` — VERIFICATION.md confirms 100% coverage; backfill with `/gsd:validate-phase` if Nyquist tracking needed
 
 ### Pending Todos
 
 None.
 
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260331-fus | Surface inline text/calendar MIME parts as attachments | 2026-03-31 | 45e9b45 | [260331-fus-surface-inline-text-calendar-mime-parts-](./quick/260331-fus-surface-inline-text-calendar-mime-parts-/) |
-
 ## Session Continuity
 
 Last session: 2026-06-08
-Stopped at: Milestone v0.2 archived
+Stopped at: Roadmap created for v0.3 (Phases 12–14); ready to plan Phase 12
 Resume file: None

@@ -77,21 +77,21 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONN-01 | — | Pending |
-| CONN-02 | — | Pending |
-| CONN-03 | — | Pending |
-| CONN-04 | — | Pending |
-| CONN-05 | — | Pending |
-| CONN-06 | — | Pending |
-| CONN-07 | — | Pending |
-| HEALTH-01 | — | Pending |
-| HEALTH-02 | — | Pending |
-| HEALTH-03 | — | Pending |
-| CACHE-01 | — | Pending |
-| CACHE-02 | — | Pending |
-| CACHE-03 | — | Pending |
-| RECONN-01 | — | Pending |
-| RECONN-02 | — | Pending |
-| RECONN-03 | — | Pending |
+| CONN-01 | Phase 12 | Pending |
+| CONN-02 | Phase 12 | Pending |
+| CONN-03 | Phase 12 | Pending |
+| CONN-04 | Phase 12 | Pending |
+| CONN-05 | Phase 12 | Pending |
+| CONN-06 | Phase 12 | Pending |
+| CONN-07 | Phase 12 | Pending |
+| HEALTH-01 | Phase 13 | Pending |
+| HEALTH-02 | Phase 13 | Pending |
+| HEALTH-03 | Phase 13 | Pending |
+| CACHE-01 | Phase 13 | Pending |
+| CACHE-02 | Phase 13 | Pending |
+| CACHE-03 | Phase 13 | Pending |
+| RECONN-01 | Phase 14 | Pending |
+| RECONN-02 | Phase 14 | Pending |
+| RECONN-03 | Phase 14 | Pending |
 
-*Phase column populated by roadmapper.*
+*Phase column populated by roadmapper — 2026-06-08.*
