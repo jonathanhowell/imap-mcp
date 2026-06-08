@@ -1,12 +1,18 @@
 # IMAP MCP Server
 
+## Current State
+
+**Shipped:** v0.2 Agent UX (2026-06-08)
+
+Production-ready MCP server wrapping IMAP email providers. Agents get structured, normalized access across multiple accounts with the context they need to act without extra round-trips. v0.2 added rich message metadata (to/cc, display names, custom keywords), batch reads, body search, and a keyword-tagging system for tracking which messages an agent has already processed.
+
 ## What This Is
 
-An MCP server that wraps IMAP email providers, giving AI agents structured, normalized access to email across multiple accounts. Read-only v0.1 shipped with 7 MCP tools covering folder navigation, paginated message listing, full message reads, header-only search, attachment inspection/download, and background new-mail detection. Sending/replying is planned for v0.2.
+An MCP server that wraps IMAP email providers, giving AI agents structured access to email across multiple accounts. Twelve MCP tools cover folder navigation, paginated message listing, batch and single-message reads, header + body search, attachment inspection/download (by `part_id` or `filename`), background new-mail detection, and custom-keyword tagging (set/clear/filter) so agents can mark messages as processed. Read-mostly with limited write surface (custom IMAP keywords only); inline `text/calendar` MIME parts surface as downloadable attachments. Sending, replies, and message moves remain planned for v0.3+.
 
 ## Core Value
 
-An agent can reliably read, search, and monitor email across multiple accounts so important messages are never missed.
+An agent can reliably read, search, monitor, and tag email across multiple accounts — with the context it needs to act without guessing or re-fetching.
 
 ## Requirements
 
@@ -19,28 +25,35 @@ An agent can reliably read, search, and monitor email across multiple accounts s
 - ✓ Agent can query a specific account by name — v0.1.0
 - ✓ Multiple IMAP accounts configurable (not hardcoded credentials) — v0.1.0
 - ✓ Works with any MCP-compatible client (Claude Desktop, custom agents, etc.) — v0.1.0
+- ✓ Agent receives rich message metadata (to/cc arrays, account display name/email, custom keywords) without extra calls — v0.2
+- ✓ Agent can batch-fetch multiple full message bodies in one call (up to 50 UIDs) — v0.2
+- ✓ Agent can search messages by body text content (server-side IMAP BODY) — v0.2
+- ✓ Agent can tag messages with custom IMAP keywords to track processing state, with set/clear/filter — v0.2
+- ✓ Agent can download attachments by filename without first calling `read_message` for part IDs — v0.2
+- ✓ `list_messages.folder` defaults to INBOX, eliminating boilerplate from inbox calls — v0.2
 
 ### Active
 
-- [ ] Agent can summarize email threads
-- [ ] Agent can send/reply/forward emails
-- [ ] Agent can mark messages as read/unread
-- [ ] Agent can move/delete messages
+- [ ] Agent can mark messages as read/unread (standard `\Seen` flag)
+- [ ] Agent can send / reply / forward emails (SMTP integration)
+- [ ] Agent can move messages between folders
+- [ ] Agent can delete or archive messages
+- [ ] `get_new_mail` exposes cache metadata (last_polled, cache_age_seconds)
+- [ ] Agent can summarize email threads (requires THREAD-extension handling)
 
 ### Out of Scope
 
 - Web UI or dashboard — agent interface only
-- Hardcoded credentials — must be configurable from day one
+- Hardcoded credentials — must remain externally configurable
 - Proprietary email APIs (Gmail API, MS Graph) — IMAP-only for maximum compatibility
+- Thread / conversation grouping — requires IMAP THREAD extension, not universally supported
 
 ## Context
 
-Shipped v0.1.0 with ~4,700 LOC TypeScript across 23 plans in 6 phases (4 days).
-Tech stack: Node.js ESM, TypeScript strict, imapflow, @modelcontextprotocol/sdk, Zod, Vitest.
-142 passing tests. gitleaks clean (111 commits audited). MIT licensed.
-
-Notable: Outlook/Microsoft is deprecating Basic Auth for IMAP — documented in README with warning.
-Background polling default is 3 min (configurable); header cache avoids IMAP round-trips on agent queries.
+Shipped v0.2 adds ~2,700 LOC of TypeScript on top of v0.1's ~4,700 (totals ≈7,400 in `src/`) across 12 plans in 6 phases over 17 days.
+Tech stack: Node.js ESM, TypeScript strict, `imapflow`, `@modelcontextprotocol/sdk`, Zod, Vitest.
+Twelve MCP tools (was seven in v0.1). Test suite green; v0.2 added ~7 new keyword tests plus full coverage for batch reads, body search, and filename attachments.
+Outlook/Microsoft Basic Auth deprecation still relevant — documented in README. Background polling default 3 min (configurable); poller cache now stores per-message custom IMAP keywords so server-side `NOT KEYWORD` filtering and in-memory fallback both work against fresh state.
 
 ## Constraints
 
@@ -56,23 +69,46 @@ Background polling default is 3 min (configurable); header cache avoids IMAP rou
 | IMAP over provider APIs | Works with any email provider, not just Gmail/Outlook | ✓ Good — broad compat confirmed |
 | Multi-account from v1 | Household use requires it; retrofitting is painful | ✓ Good — fanOut pattern clean |
 | Phase 1: read-only | Safer starting point; sending has higher stakes | ✓ Good — solid foundation |
-| imapflow library | Active maintenance, TypeScript support | ✓ Good — reliable in tests |
+| `imapflow` library | Active maintenance, TypeScript support | ✓ Good — reliable in v0.1 and v0.2 |
 | `{account_id, uid}` data model | Globally unique message ref across accounts | ✓ Good — no collisions |
 | 200-result hard cap | Prevents context overflow in agent responses | ✓ Good — enforced server-side |
 | stderr-only logging | Prevents stdout contamination of MCP JSON-RPC | ✓ Good — no protocol corruption |
 | Exponential backoff reconnect | Handles transient drops without crashing | ✓ Good — isolated per-account |
+| `formatAddress(name, addr)` helper for `Name <addr>` rendering | Consistent display across `list_messages`/`search_messages` for senders with display names | ✓ Good — applied in Phase 7; ⚠ Revisit: not yet applied to `read_message`/`read_messages` (tech debt) |
+| `read_messages` as new tool, not a replacement for `read_message` | Singular call stays simple for one-off reads; batch tool covers multi-UID workflow | ✓ Good — both ship side by side |
+| Batch read: one metadata fetch + per-UID body downloads, hard cap 50 UIDs | Single round-trip for headers keeps latency low; cap prevents pathological requests | ✓ Good — partial-success error entries handle missing UIDs |
+| Body search uses imapflow native `{ body: "text" }` (server-side) | Avoids client-side body scanning over potentially huge mailboxes | ✓ Good — performant on test accounts |
+| Custom IMAP keywords (e.g. `ClaudeProcessed`) for "agent has handled this" | Persists across sessions on the IMAP server itself — no local state required | ✓ Good — supported by Gmail, Fastmail, dovecot |
+| `PERMANENTFLAGS \*` warning (no hard fail) when server rejects custom keywords | Users on legacy servers (some Exchange) still get the tool; warning prevents silent loss | ✓ Good — KFLAG-04 satisfied |
+| Server-side `NOT KEYWORD` for first exclusion + in-memory filter for additional exclusions/inclusions | IMAP search only supports one NOT KEYWORD per query; in-memory fallback keeps array semantics | ✓ Good — array params in `exclude_keywords`/`include_keywords` |
+| Case-insensitive keyword comparison in poller cache | Some IMAP servers normalize keyword case; agent-facing API should be tolerant | ✓ Good — Phase 11 |
+| Poller cache stores per-message custom keywords (filtered from flags Set, excluding `\`-prefixed system flags) | Allows `get_new_mail` to filter by keyword without re-fetching | ✓ Good — Phase 11; `Poller.removeKeyword` keeps cache fresh for `unflag_message` (Phase 11.1) |
+| `download_attachment(filename)` releases the `bodyStructure` lock before nested call | Avoids the nested-lock pitfall in imapflow's mailbox lock model | ✓ Good — Phase 10 |
+| `exclude_keyword` (singular) → `exclude_keywords` (array) hotfix mid-milestone, plus new `include_keywords` | Real-world agent use surfaced need for multi-keyword filtering with OR semantics | ✓ Good — applied as in-place hotfix before milestone ship |
 
-## Current Milestone: v0.2 Agent UX
+## Tech Debt (carried into v0.3)
 
-**Goal:** Reduce agent round-trips and enrich tool responses with context that LLM personal assistants need to act without guessing.
+- `read_messages` and pre-existing `read_message` (singular) construct `from` as a bare address rather than via the shared `formatAddress` helper — inconsistent shape vs `list_messages`/`search_messages` for senders with display names. Fix is one-line per tool.
+- All 5 v0.2 phase VALIDATION.md files remain in `draft` status with `nyquist_compliant: false` and `wave_0_complete: false` — sign-off checklist never completed even though VERIFICATION.md scores are 100% across the board. Backfill with `/gsd:validate-phase` per phase if Nyquist tracking is needed for v0.3.
 
-**Target features:**
-- `list_accounts` returns `display_name` and email address
-- New `read_messages` batch tool (multiple UIDs → full bodies in one call)
-- Body text search in `search_messages`
-- `to`/`cc` fields in `list_messages` and `search_messages` responses
-- `download_attachment` accepts `filename` as alternative to `part_id`
-- `list_messages` `folder` parameter optional (defaults to INBOX)
+## Next Milestone Goals
+
+v0.3 is unplanned. Likely candidates (deferred from v0.2 REQUIREMENTS or surfaced during v0.2):
+
+- Write operations (`\Seen` toggle, move, delete) — major surface, high stakes
+- `get_new_mail` cache metadata for agents that need freshness signals
+- Address inconsistency tech debt above (`from` formatting in `read_message[s]`)
+
+Run `/gsd:new-milestone` to scope.
+
+<details>
+<summary>Archived: v0.1.0 launch context</summary>
+
+Shipped v0.1.0 with ~4,700 LOC TypeScript across 23 plans in 6 phases (4 days). Initial scope: 7 read-only MCP tools (folder list/select, paginated messages, full read, header search, attachment inspect/download, background new-mail). 142 passing tests at ship. gitleaks clean (111 commits audited). MIT licensed.
+
+Outlook/Microsoft began deprecating Basic Auth for IMAP — documented in README. Background polling default 3 min (configurable); header cache avoids IMAP round-trips on agent queries.
+
+</details>
 
 ---
-*Last updated: 2026-03-15 after v0.1.0 milestone*
+*Last updated: 2026-06-08 after v0.2 milestone*
