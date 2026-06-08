@@ -3,8 +3,25 @@
 ## Current State
 
 **Shipped:** v0.2 Agent UX (2026-06-08)
+**Active:** v0.3 Reliability & Cache Rethink (started 2026-06-08)
 
 Production-ready MCP server wrapping IMAP email providers. Agents get structured, normalized access across multiple accounts with the context they need to act without extra round-trips. v0.2 added rich message metadata (to/cc, display names, custom keywords), batch reads, body search, and a keyword-tagging system for tracking which messages an agent has already processed.
+
+## Current Milestone: v0.3 Reliability & Cache Rethink
+
+**Goal:** Make IMAP accounts self-heal from transient failures and reconsider whether the polling/cache architecture is the right pattern for "what's new" queries.
+
+**Target features:**
+- Account auto-recovery from network drops without server restart (unbounded backoff retry)
+- Transient vs fatal failure classification (auth/permanent stays failed; network/server drops keep retrying)
+- Per-account health exposed to agents (status + last-error reason, queryable)
+- Cache architecture rethink — research-driven decision on what `get_new_mail` and the poller cache should be (keep / replace / hybrid)
+
+**Key context:**
+- Focused milestone — no write ops, no SMTP, no thread summarization (deferred)
+- The network-drop bug (accounts permanently fail after laptop sleep / Wi-Fi change) is treated as a symptom of a broader resilience gap, not a one-off fix
+- Cache direction stays open until domain research surfaces the right pattern
+- Phase numbering continues from v0.2 (next phase = **Phase 12**)
 
 ## What This Is
 
@@ -34,11 +51,17 @@ An agent can reliably read, search, monitor, and tag email across multiple accou
 
 ### Active
 
+**v0.3 milestone scope:**
+- [ ] Accounts auto-recover from transient network failures without server restart
+- [ ] Server distinguishes transient vs fatal account failures (auth/permanent vs network/server)
+- [ ] Agents can query per-account health (connection status + last-error reason)
+- [ ] `get_new_mail` and poller cache architecture rethought based on domain research
+
+**Deferred to later milestones:**
 - [ ] Agent can mark messages as read/unread (standard `\Seen` flag)
 - [ ] Agent can send / reply / forward emails (SMTP integration)
 - [ ] Agent can move messages between folders
 - [ ] Agent can delete or archive messages
-- [ ] `get_new_mail` exposes cache metadata (last_polled, cache_age_seconds)
 - [ ] Agent can summarize email threads (requires THREAD-extension handling)
 
 ### Out of Scope
@@ -91,15 +114,31 @@ Outlook/Microsoft Basic Auth deprecation still relevant — documented in README
 - `read_messages` and pre-existing `read_message` (singular) construct `from` as a bare address rather than via the shared `formatAddress` helper — inconsistent shape vs `list_messages`/`search_messages` for senders with display names. Fix is one-line per tool.
 - All 5 v0.2 phase VALIDATION.md files remain in `draft` status with `nyquist_compliant: false` and `wave_0_complete: false` — sign-off checklist never completed even though VERIFICATION.md scores are 100% across the board. Backfill with `/gsd:validate-phase` per phase if Nyquist tracking is needed for v0.3.
 
-## Next Milestone Goals
+## Future Milestones
 
-v0.3 is unplanned. Likely candidates (deferred from v0.2 REQUIREMENTS or surfaced during v0.2):
+After v0.3, likely candidates (deferred from v0.2 or v0.3 scoping):
 
 - Write operations (`\Seen` toggle, move, delete) — major surface, high stakes
-- `get_new_mail` cache metadata for agents that need freshness signals
-- Address inconsistency tech debt above (`from` formatting in `read_message[s]`)
+- SMTP send / reply / forward
+- Thread / conversation summarization
+- Address `from` formatting tech debt (`read_message[s]`) if not folded into a v0.3 phase
 
-Run `/gsd:new-milestone` to scope.
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
 
 <details>
 <summary>Archived: v0.1.0 launch context</summary>
@@ -111,4 +150,4 @@ Outlook/Microsoft began deprecating Basic Auth for IMAP — documented in README
 </details>
 
 ---
-*Last updated: 2026-06-08 after v0.2 milestone*
+*Last updated: 2026-06-08 — v0.3 milestone started*

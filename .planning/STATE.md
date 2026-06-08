@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
-status: between_milestones
+milestone: v0.3
+milestone_name: Reliability & Cache Rethink
+status: defining_requirements
 stopped_at: null
-last_updated: "2026-06-08T14:30:00.000Z"
+last_updated: "2026-06-08T15:00:00.000Z"
 last_activity: 2026-06-08
 progress:
   total_phases: 0
@@ -21,11 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** An agent can reliably read, search, monitor, and tag email across multiple accounts — with the context it needs to act without guessing or re-fetching.
-**Current focus:** v0.2 shipped — planning next milestone (run `/gsd:new-milestone`).
+**Current focus:** v0.3 Reliability & Cache Rethink — defining requirements.
 
 ## Current Position
 
-No active milestone. Last shipped: **v0.2 Agent UX** on 2026-06-08.
+Milestone: **v0.3 Reliability & Cache Rethink**
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-08 — Milestone v0.3 started
 
 ## Velocity Reference
 
