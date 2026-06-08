@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
-status: ready_to_plan
-stopped_at: null
-last_updated: "2026-06-08T15:30:00.000Z"
-last_activity: 2026-06-08
+status: planning
+stopped_at: Phase 12 context gathered
+last_updated: "2026-06-08T22:19:34.686Z"
+last_activity: 2026-06-08 — Roadmap created; Phase 12 is next
 progress:
   total_phases: 3
   completed_phases: 0
@@ -68,6 +68,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-06-08
-Stopped at: Roadmap created for v0.3 (Phases 12–14); ready to plan Phase 12
-Resume file: None
+Last session: 2026-06-08T22:19:34.683Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-connection-resilience-foundation/12-CONTEXT.md
