@@ -521,4 +521,116 @@ describe("Poller", () => {
       expect(msg?.keywords).toEqual(["SomeKeyword"]);
     });
   });
+
+  // --------------------------------------------------------------------------
+  // Phase 12 Wave 0 — CONN-07 / D-15 poller skip behavior.
+  // Red because pollAccount() currently calls getClient() unconditionally and
+  // throws when status is non-connected. Plan 03 (state machine) + Plan 04
+  // (poller skip-on-non-connected guard) turn these green.
+  // --------------------------------------------------------------------------
+
+  describe("CONN-07 / D-15 poller skip behavior", () => {
+    /**
+     * Build a manager mock whose getStatus() returns the supplied status per
+     * accountId. Used to drive Poller's skip-on-non-connected logic.
+     */
+    function makeStatusAwareManager(
+      statuses: Record<
+        string,
+        { kind: string; client?: unknown; attempt?: number; nextRetryAt?: Date; lastError?: string }
+      >
+    ): ConnectionManager {
+      return {
+        getAccountIds: vi.fn().mockReturnValue(Object.keys(statuses)),
+        // getStatus must exist on the manager for the planned skip guard to consult.
+        getStatus: vi.fn().mockImplementation((id: string) => statuses[id]),
+        // getClient returns the client on connected accounts; for non-connected
+        // accounts it returns a structured error (current shape).
+        getClient: vi.fn().mockImplementation((id: string) => {
+          const status = statuses[id];
+          if (status.kind === "connected") return status.client ?? { mailbox: "INBOX" };
+          return { error: `account "${id}" is ${status.kind}` };
+        }),
+      } as unknown as ConnectionManager;
+    }
+
+    it("skips non-connected accounts: no IMAP call when status is reconnecting/suspended/connecting", async () => {
+      const mockClient = { mailbox: "INBOX" };
+      const manager = makeStatusAwareManager({
+        reconnectingAcct: {
+          kind: "reconnecting",
+          attempt: 3,
+          nextRetryAt: new Date(),
+          lastError: "ECONNRESET",
+        },
+        connectedAcct: { kind: "connected", client: mockClient },
+      });
+
+      const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => undefined);
+      const errorSpy = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+
+      const poller = new Poller(manager, 60);
+      await runOnePoll(poller);
+
+      // Only the connected account triggered an IMAP search.
+      expect(mockSearchMessages).toHaveBeenCalledTimes(1);
+
+      // Exactly one debug log per skipped account per poll cycle, mentioning
+      // the skipped accountId.
+      const reconnectingDebugCalls = debugSpy.mock.calls.filter((args) =>
+        String(args[0] ?? "").includes("reconnectingAcct")
+      );
+      expect(reconnectingDebugCalls.length).toBe(1);
+
+      // The skipped account must NOT generate an error log (current behavior
+      // throws → logger.error fires).
+      const reconnectingErrorCalls = errorSpy.mock.calls.filter((args) =>
+        String(args[0] ?? "").includes("reconnectingAcct")
+      );
+      expect(reconnectingErrorCalls.length).toBe(0);
+    });
+
+    it("skip is not sticky — skipped accounts are re-checked on the next poll cycle", async () => {
+      const mockClient = { mailbox: "INBOX" };
+      // Mutable status map so we can flip the skipped account to "connected"
+      // between cycles.
+      const statuses: Record<
+        string,
+        { kind: string; client?: unknown; attempt?: number; nextRetryAt?: Date; lastError?: string }
+      > = {
+        flakyAcct: {
+          kind: "reconnecting",
+          attempt: 3,
+          nextRetryAt: new Date(),
+          lastError: "ECONNRESET",
+        },
+      };
+      const manager = makeStatusAwareManager(statuses);
+
+      const debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => undefined);
+
+      const poller = new Poller(manager, 60);
+      // Cycle 1 — flakyAcct is reconnecting → skipped, debug logged once.
+      await runOnePoll(poller);
+
+      const debugCallsCycle1 = debugSpy.mock.calls.filter((args) =>
+        String(args[0] ?? "").includes("flakyAcct")
+      ).length;
+      expect(debugCallsCycle1).toBe(1);
+
+      // Flip to connected for cycle 2.
+      statuses.flakyAcct = { kind: "connected", client: mockClient };
+      debugSpy.mockClear();
+      mockSearchMessages.mockClear();
+
+      await runOnePoll(poller);
+
+      // Cycle 2 — flakyAcct is now connected → polled, no skip log.
+      expect(mockSearchMessages).toHaveBeenCalledTimes(1);
+      const debugCallsCycle2 = debugSpy.mock.calls.filter((args) =>
+        String(args[0] ?? "").includes("flakyAcct")
+      ).length;
+      expect(debugCallsCycle2).toBe(0);
+    });
+  });
 });

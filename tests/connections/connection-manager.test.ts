@@ -184,3 +184,49 @@ describe("ConnectionManager.getConfig()", () => {
     expect(result).toBeUndefined();
   });
 });
+
+// ----------------------------------------------------------------------------
+// Phase 12 Wave 0 — CONN-03 / D-01 suspended-state scaffold.
+// Red because (a) the AccountConnectionStatus union has no `suspended` variant
+// yet and (b) getClient()'s switch has no `suspended` case. Plan 03 (state
+// machine) + Plan 04 (consumer updates) turn this green.
+// ----------------------------------------------------------------------------
+
+describe("ConnectionManager suspended state (CONN-03 / D-01)", () => {
+  it("getClient returns structured error string when account is suspended", async () => {
+    // Force a fatal initial-connect failure that Plan 03 will classify as
+    // AUTHENTICATIONFAILED → transition to suspended (no further retries).
+    vi.mocked(ImapFlow).mockImplementation(function () {
+      const emitter = new EventEmitter();
+      return Object.assign(emitter, {
+        connect: vi.fn().mockRejectedValue(
+          Object.assign(new Error("auth failed"), {
+            serverResponseCode: "AUTHENTICATIONFAILED",
+          })
+        ),
+        logout: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn(),
+        usable: false,
+      });
+    });
+
+    vi.useFakeTimers();
+
+    const config = { accounts: [makeTwoAccountConfig().accounts[0]] };
+    const manager = new ConnectionManager(config);
+
+    const connectPromise = manager.connectAll();
+    // Drain any reconnect timers — pre-Plan-03 the bounded loop expires after
+    // ~120s of fake time; post-Plan-03 the fatal fast-path lands immediately.
+    await vi.runAllTimersAsync();
+    await connectPromise;
+
+    vi.useRealTimers();
+
+    const result = manager.getClient("personal");
+    expect("error" in result).toBe(true);
+    if ("error" in result) {
+      expect(result.error).toMatch(/suspended/i);
+    }
+  }, 30_000);
+});
