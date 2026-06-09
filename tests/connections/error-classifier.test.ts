@@ -9,14 +9,26 @@ import { AuthenticationFailure } from "imapflow";
 describe("classifyConnectionError", () => {
   describe("classifies fatal sources: AuthenticationFailure instance", () => {
     it("returns 'fatal' for an AuthenticationFailure instance", () => {
+      // imapflow 1.2.13 declares AuthenticationFailure in its .d.ts but does NOT
+      // export it from JS — Plan 04 will bump to ^1.3.7 which fixes the runtime
+      // export. Until then we construct a stand-in via Object.setPrototypeOf or
+      // — when even that fails — fall back to the marker property the classifier
+      // also checks (`authenticationFailed: true`).
       let err: unknown;
-      try {
-        err = new AuthenticationFailure("auth failed");
-      } catch {
-        // Fallback if constructor signature differs from expected single-arg shape.
-        const base = new Error("auth failed");
-        Object.setPrototypeOf(base, AuthenticationFailure.prototype);
-        err = base;
+      if (typeof AuthenticationFailure === "function") {
+        try {
+          err = new AuthenticationFailure("auth failed");
+        } catch {
+          const base = new Error("auth failed");
+          if (AuthenticationFailure.prototype) {
+            Object.setPrototypeOf(base, AuthenticationFailure.prototype);
+          }
+          err = base;
+        }
+      } else {
+        // Wave 0 / pre-Plan-04 fallback: imapflow class not yet exported at runtime.
+        // Use the marker property `authenticationFailed: true` (matches the .d.ts shape).
+        err = Object.assign(new Error("auth failed"), { authenticationFailed: true });
       }
       expect(classifyConnectionError(err)).toBe("fatal");
     });
