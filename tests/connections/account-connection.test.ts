@@ -24,7 +24,14 @@ vi.mock("imapflow", () => {
   const MockImapFlow = vi.fn(function () {
     return makeMockClient();
   });
-  return { ImapFlow: MockImapFlow };
+  // The error-classifier imports `AuthenticationFailure` and probes it via
+  // `typeof AuthenticationFailure === "function"`. Vitest's strict module mock
+  // throws if any property NOT listed here is accessed at runtime, so we must
+  // declare it explicitly. A stub class is sufficient — the classifier just
+  // needs the `typeof === "function"` guard to evaluate, and the tests in this
+  // file never construct an AuthenticationFailure instance.
+  class MockAuthenticationFailure extends Error {}
+  return { ImapFlow: MockImapFlow, AuthenticationFailure: MockAuthenticationFailure };
 });
 
 import { AccountConnection } from "../../src/connections/account-connection.js";
@@ -105,80 +112,19 @@ describe("AccountConnection state machine", () => {
     expect(MockImapFlow.mock.calls.length).toBeGreaterThan(callCountAfterConnect);
   });
 
-  it("backoff delay increases exponentially (attempt 1=1000ms, attempt 2=2000ms, attempt 3=4000ms)", async () => {
-    const { ImapFlow } = await import("imapflow");
-    const MockImapFlow = vi.mocked(ImapFlow);
+  // NOTE: The pre-Plan-03 "backoff delay increases exponentially (attempt
+  // 1=1000ms, attempt 2=2000ms, attempt 3=4000ms)" test was DELETED here as
+  // part of Plan 12-03. D-09 introduces full jitter (`Math.floor(Math.random() *
+  // capped)`), so deterministic 1000/2000/4000 delays are no longer the
+  // contract. Coverage of the exponential cap progression now lives in the
+  // Wave 0 scaffold "full-jitter backoff produces values in [0, capped) range
+  // with mocked Math.random" (the cap doubles 1000 → 2000 → … → 120_000).
 
-    // Make connect always fail
-    MockImapFlow.mockImplementation(function () {
-      return makeMockClient({
-        connect: () => Promise.reject(new Error("connection refused")),
-        usable: false,
-      });
-    });
-
-    const conn = new AccountConnection("test-account", makeAccountConfig());
-    // Start connect but don't await — it will enter reconnect loop
-    const connectPromise = conn.connect();
-
-    // Wait for the initial connect failure and loop to start sleeping 1000ms
-    await flushMicrotasks(10);
-    const statusAt0 = conn.getStatus();
-    expect(statusAt0.kind).toBe("reconnecting");
-    if (statusAt0.kind === "reconnecting") {
-      expect(statusAt0.attempt).toBe(1);
-    }
-
-    // Advance 1000ms — sleep(1000ms) fires, attempt 1 connect runs and fails,
-    // loop sets status to reconnecting attempt 2 and sleeps 2000ms
-    await vi.advanceTimersByTimeAsync(1000);
-    await flushMicrotasks(10);
-    const statusAt1 = conn.getStatus();
-    expect(statusAt1.kind).toBe("reconnecting");
-    if (statusAt1.kind === "reconnecting") {
-      expect(statusAt1.attempt).toBe(2);
-    }
-
-    // Advance 2000ms — sleep(2000ms) fires, attempt 2 connect runs and fails,
-    // loop sets status to reconnecting attempt 3 and sleeps 4000ms
-    await vi.advanceTimersByTimeAsync(2000);
-    await flushMicrotasks(10);
-    const statusAt2 = conn.getStatus();
-    expect(statusAt2.kind).toBe("reconnecting");
-    if (statusAt2.kind === "reconnecting") {
-      expect(statusAt2.attempt).toBe(3);
-    }
-
-    // Advance remaining time to exhaust all attempts so connectPromise resolves
-    await vi.runAllTimersAsync();
-    await flushMicrotasks(20);
-    await connectPromise;
-  });
-
-  it("after BACKOFF_MAX_ATTEMPTS reconnect failures, transitions to 'failed' state", async () => {
-    const { ImapFlow } = await import("imapflow");
-    const MockImapFlow = vi.mocked(ImapFlow);
-
-    MockImapFlow.mockImplementation(function () {
-      return makeMockClient({
-        connect: () => Promise.reject(new Error("connection refused")),
-        usable: false,
-      });
-    });
-
-    const conn = new AccountConnection("test-account", makeAccountConfig());
-    const connectPromise = conn.connect();
-
-    // Run all timers repeatedly until stable — exhausts all 10 backoff delays
-    await vi.runAllTimersAsync();
-    await flushMicrotasks(20);
-    // Some async chains need additional timer+microtask passes
-    await vi.runAllTimersAsync();
-    await flushMicrotasks(20);
-    await connectPromise;
-
-    expect(conn.getStatus().kind).toBe("failed");
-  }, 30_000);
+  // NOTE: The pre-Plan-03 "after BACKOFF_MAX_ATTEMPTS reconnect failures,
+  // transitions to 'failed' state" test was DELETED here as part of Plan 12-03.
+  // D-01 removes the `failed` variant entirely; D-08 makes transient retry
+  // unbounded. The Wave 0 scaffold `unbounded transient retry survives 15
+  // consecutive transient failures and eventually connects` replaces it.
 
   it("gracefulClose() calls logout() when client is usable", async () => {
     const { ImapFlow } = await import("imapflow");
@@ -327,8 +273,10 @@ describe("AccountConnection state machine", () => {
     // (Range check: a non-jittered impl would have set 2000 exactly, so 1998 ≠ 2000.)
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1998);
 
-    // Drain remaining timers so the test exits cleanly.
-    await vi.runAllTimersAsync();
+    // Drain cleanly — D-08 makes the reconnect loop UNBOUNDED, so
+    // `vi.runAllTimersAsync()` would hang here. gracefulClose() aborts the
+    // sleep via AbortController and lets the connect() promise settle.
+    await conn.gracefulClose();
     await flushMicrotasks(20);
     await connectPromise.catch(() => undefined);
   }, 30_000);
