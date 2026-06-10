@@ -391,13 +391,14 @@ describe("AccountConnection state machine", () => {
           : () => Promise.resolve(),
         usable: !isFailure,
       });
-      const removeAllListenersSpy = vi.fn((event?: string | symbol) => {
+      const removeAllListenersSpy = vi.fn((_event?: string | symbol) => {
         // Delegate to real EventEmitter removeAllListeners so tests stay sane.
-        return (client as unknown as { _eventsCount: number }) as never;
+        return client as unknown as { _eventsCount: number } as never;
       });
       // Overwrite EventEmitter's removeAllListeners with the spy.
-      (client as unknown as { removeAllListeners: typeof removeAllListenersSpy }).removeAllListeners =
-        removeAllListenersSpy;
+      (
+        client as unknown as { removeAllListeners: typeof removeAllListenersSpy }
+      ).removeAllListeners = removeAllListenersSpy;
       builtClients.push({ removeAllListeners: removeAllListenersSpy });
       return client;
     });
