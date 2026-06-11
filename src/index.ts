@@ -14,6 +14,7 @@ import { FLAG_MESSAGE_TOOL, handleFlagMessage } from "./tools/flag-message.js";
 import { UNFLAG_MESSAGE_TOOL, handleUnflagMessage } from "./tools/unflag-message.js";
 import { Poller } from "./polling/poller.js";
 import { GET_NEW_MAIL_TOOL, handleGetNewMail } from "./tools/get-new-mail.js";
+import { installUnhandledRejectionHandler } from "./process-handlers.js";
 
 const TOOLS = [
   LIST_ACCOUNTS_TOOL,
@@ -29,6 +30,12 @@ const TOOLS = [
 ];
 
 async function main(): Promise<void> {
+  // D-12 / Plan 12-04: install the unhandledRejection safety net BEFORE any
+  // other async work so an early rejection during loadConfig() or
+  // manager.connectAll() is caught. The handler logs at error and does NOT
+  // exit — a single reconnect-loop bug must not crash the MCP server.
+  installUnhandledRejectionHandler();
+
   // loadConfig() exits process with code 1 on any config error.
   // It never throws — no try/catch needed here.
   const config = await loadConfig();
