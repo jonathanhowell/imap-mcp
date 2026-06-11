@@ -15,6 +15,11 @@ export class Poller {
   private lastPollTime: Date | null = null;
   private stopped = false;
 
+  // D-15 / CONN-07: per-cycle tracking — at most one `debug` log per skipped
+  // account per poll cycle. Cleared at the start of every `poll()` so the
+  // skip is not sticky (skipped accounts are re-evaluated next cycle).
+  private skipLoggedThisCycle = new Set<string>();
+
   constructor(
     private readonly manager: ConnectionManager,
     private readonly intervalSeconds: number = 300
@@ -93,6 +98,11 @@ export class Poller {
   }
 
   private async poll(): Promise<void> {
+    // D-15: reset the per-cycle skip tracker so each new cycle re-evaluates
+    // every account (skip is NOT sticky — a recovered reconnect must be
+    // polled the very next cycle).
+    this.skipLoggedThisCycle.clear();
+
     const accountIds = this.manager.getAccountIds();
     for (const accountId of accountIds) {
       try {
@@ -105,9 +115,29 @@ export class Poller {
   }
 
   private async pollAccount(accountId: string): Promise<void> {
+    // D-15 / CONN-07: skip non-connected accounts silently. Consult the
+    // manager's `getStatus()` BEFORE any IMAP call so non-connected accounts
+    // (connecting / reconnecting / suspended) never hit the network. One
+    // `debug` log per skipped account per poll cycle, then quiet `return`
+    // (no throw — the outer `try/catch` in `poll()` is for legitimate
+    // mid-fetch errors, not expected skip states).
+    const status = this.manager.getStatus(accountId);
+    if ("error" in status || status.kind !== "connected") {
+      if (!this.skipLoggedThisCycle.has(accountId)) {
+        const reason = "error" in status ? status.error : `status: ${status.kind}`;
+        logger.debug(`Poller: skipping ${accountId} (${reason})`);
+        this.skipLoggedThisCycle.add(accountId);
+      }
+      return;
+    }
+
     const result = this.manager.getClient(accountId);
     if ("error" in result) {
-      throw new Error(`getClient error for ${accountId}: ${result.error}`);
+      // Belt-and-suspenders: status said connected but getClient disagrees
+      // (race between getStatus and getClient — e.g., a `close` event landed
+      // between the two calls). Quietly skip — the next poll cycle re-checks.
+      logger.debug(`Poller: skipping ${accountId} (getClient race: ${result.error})`);
+      return;
     }
 
     const client = result;

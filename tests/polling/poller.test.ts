@@ -70,6 +70,12 @@ const mockSearchMessages = vi.mocked(searchMessages);
 function makeMockManager(accountIds: string[] = ["acct1"]): ConnectionManager {
   return {
     getAccountIds: vi.fn().mockReturnValue(accountIds),
+    // Plan 12-04: the poller now consults `getStatus()` BEFORE `getClient()`
+    // (D-15 / CONN-07 skip guard). Default every account to `connected` so
+    // the pre-Wave-0 tests below — which exercise normal poll behavior with
+    // an always-available fake client — continue to fall through to
+    // `getClient()` and the IMAP search path.
+    getStatus: vi.fn().mockReturnValue({ kind: "connected", client: { mailbox: "INBOX" } }),
     getClient: vi.fn().mockReturnValue({ mailbox: "INBOX" }), // fake ImapFlow-like object
   } as unknown as ConnectionManager;
 }
