@@ -17,7 +17,7 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 - [ ] **CONN-04**: TCP keepalive is enabled on IMAP sockets so half-open connections (laptop sleep, Wi-Fi switch) surface as errors within a bounded window.
 - [ ] **CONN-05**: At most one reconnect loop runs per account at a time — concurrent `close` events cannot spawn duplicate loops.
 - [ ] **CONN-06**: `ImapFlow` event listeners are removed before each reconnect — no handler leaks across the connection lifetime.
-- [ ] **CONN-07**: Background poller skips accounts not in `connected` state — no IMAP calls during reconnect or while suspended.
+- [x] **CONN-07**: Background poller skips accounts not in `connected` state — no IMAP calls during reconnect or while suspended.
 
 ### Account Health Surface
 
@@ -83,7 +83,7 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 | CONN-04 | Phase 12 | Pending |
 | CONN-05 | Phase 12 | Pending |
 | CONN-06 | Phase 12 | Pending |
-| CONN-07 | Phase 12 | Pending |
+| CONN-07 | Phase 12 | Done (Plan 12-04, commit 2077988) |
 | HEALTH-01 | Phase 13 | Pending |
 | HEALTH-02 | Phase 13 | Pending |
 | HEALTH-03 | Phase 13 | Pending |
