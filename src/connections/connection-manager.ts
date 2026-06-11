@@ -59,8 +59,11 @@ export class ConnectionManager {
         return {
           error: `account "${accountId}" is unavailable (reconnecting, attempt ${status.attempt})`,
         };
-      case "failed":
-        return { error: `account "${accountId}" failed permanently: ${status.reason}` };
+      case "suspended":
+        // D-01 / Plan 12-04: `failed` is gone; `suspended` is the fatal terminal state.
+        // `status.reason` is a stock string from humanReason() — never raw err.message
+        // (T-12-09 / V5 ASVS — credentials safety contract).
+        return { error: `account "${accountId}" is suspended: ${status.reason}` };
       case "connecting":
         return { error: `account "${accountId}" is connecting` };
     }

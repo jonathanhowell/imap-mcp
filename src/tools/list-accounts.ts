@@ -32,8 +32,14 @@ export function handleListAccounts(manager: ConnectionManager): ToolResult {
         return { ...baseEntry, status: "connecting" };
       case "reconnecting":
         return { ...baseEntry, status: "reconnecting", attempt: status.attempt };
-      case "failed":
-        return { ...baseEntry, status: "failed", detail: status.reason };
+      case "suspended":
+        // D-01 / Plan 12-04: `failed` is gone; `suspended` is the fatal terminal state
+        // populated by classifyConnectionError(err) === "fatal". `status.reason` is a
+        // stock string from humanReason() — never raw err.message (T-12-09 / V5 ASVS).
+        // Phase 13 (HEALTH-03) will replace `status: "suspended"` here with a richer
+        // health-surface object; for Phase 12 the existing { status, detail } shape
+        // is preserved so the tool API does not change mid-milestone.
+        return { ...baseEntry, status: "suspended", detail: status.reason };
     }
   });
   return {
