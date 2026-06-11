@@ -3,7 +3,7 @@
 ## Current State
 
 **Shipped:** v0.2 Agent UX (2026-06-08)
-**Active:** v0.3 Reliability & Cache Rethink (started 2026-06-08)
+**Active:** v0.3 Reliability & Cache Rethink (started 2026-06-08) — Phase 12 (Connection Resilience Foundation) implementation complete (2026-06-11), pending real-network human UAT
 
 Production-ready MCP server wrapping IMAP email providers. Agents get structured, normalized access across multiple accounts with the context they need to act without extra round-trips. v0.2 added rich message metadata (to/cc, display names, custom keywords), batch reads, body search, and a keyword-tagging system for tracking which messages an agent has already processed.
 
@@ -48,12 +48,12 @@ An agent can reliably read, search, monitor, and tag email across multiple accou
 - ✓ Agent can tag messages with custom IMAP keywords to track processing state, with set/clear/filter — v0.2
 - ✓ Agent can download attachments by filename without first calling `read_message` for part IDs — v0.2
 - ✓ `list_messages.folder` defaults to INBOX, eliminating boilerplate from inbox calls — v0.2
+- ✓ Accounts auto-recover from transient network failures without server restart (unbounded jittered backoff) — v0.3 Phase 12 *(substrate verified; awaits real-network human UAT)*
+- ✓ Server distinguishes transient vs fatal account failures via pure-function classifier; fatal → suspended fast-path, transient → retry loop — v0.3 Phase 12 *(substrate verified; awaits real-network human UAT)*
 
 ### Active
 
 **v0.3 milestone scope:**
-- [ ] Accounts auto-recover from transient network failures without server restart
-- [ ] Server distinguishes transient vs fatal account failures (auth/permanent vs network/server)
 - [ ] Agents can query per-account health (connection status + last-error reason)
 - [ ] `get_new_mail` and poller cache architecture rethought based on domain research
 
@@ -150,4 +150,4 @@ Outlook/Microsoft began deprecating Basic Auth for IMAP — documented in README
 </details>
 
 ---
-*Last updated: 2026-06-08 — v0.3 milestone started*
+*Last updated: 2026-06-11 — Phase 12 (Connection Resilience Foundation) complete*
