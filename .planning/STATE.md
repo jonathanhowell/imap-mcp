@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
-status: executing
-stopped_at: Plan 12-04 complete — Phase 12 implementation done (CONN-01..CONN-07 + D-12 all green; awaiting /gsd:verify-work)
-last_updated: "2026-06-11T21:05:00.000Z"
-last_activity: 2026-06-11 -- Plan 12-04 (consumer wiring + imapflow ^1.3.7 + process-handlers.ts) committed
+status: verifying
+stopped_at: "Plan 12-04 complete — Phase 12 implementation done (commits d726be0 + 2077988 + 16cbd1e). All 7 CONN requirements (CONN-01..CONN-07) and the cross-cutting D-12 unhandledRejection handler have green automated tests. `npm test` 246/246 green; `npx tsc --noEmit` clean. The phase exit criteria from ROADMAP.md (Success Criteria 1–5) are met EXCEPT for the manual TCP-half-open / fatal-auth / multi-account-listener verifications which `/gsd:verify-work` must drive per 12-VALIDATION.md "Manual-Only Verifications" table. Next up: `/gsd:verify-work` for Phase 12 (then Phase 13 — health-and-cache)."
+last_updated: "2026-06-11T21:21:47.914Z"
+last_activity: 2026-06-11
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
   completed_plans: 4
   percent: 33
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 ## Current Position
 
 Milestone: **v0.3 Reliability & Cache Rethink**
-Phase: 12 (connection-resilience-foundation) — IMPLEMENTATION COMPLETE (awaiting `/gsd:verify-work` for phase exit)
-Plan: 12-01 complete (Wave 0 RED scaffolds shipped); 12-02 complete (error-classifier shipped); 12-03 complete (AccountConnection refactor — CONN-02..CONN-06 green); 12-04 complete (consumer wiring + imapflow ^1.3.7 bump + process-handlers.ts — CONN-01 final test + CONN-07 + D-12 all green).
+Phase: 13
+Plan: Not started
 Status: Phase 12 implementation done — 4/4 plans shipped. All 7 CONN requirements + D-12 cross-cutting handler have green automated tests. Full suite: 246/246. `tsc --noEmit` clean. Awaiting `/gsd:verify-work` (manual TCP-half-open / fatal-auth / multi-account-listener verifications per 12-VALIDATION.md).
-Last activity: 2026-06-11 -- Plan 12-04 (consumer wiring + imapflow ^1.3.7 + process-handlers.ts) committed (commits d726be0, 2077988, 16cbd1e)
+Last activity: 2026-06-11
 
 Progress: [███░░░░░░░] 33%
 
