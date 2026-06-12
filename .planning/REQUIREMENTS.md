@@ -29,7 +29,6 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 
 - [ ] **CACHE-01**: Poller cache tracks `last_polled_at` per account (replacing the current global timestamp).
 - [ ] **CACHE-02**: `get_new_mail` response exposes `last_polled_at` and `cache_age_seconds` per account so agents can reason about freshness.
-- [ ] **CACHE-03**: Cache evicts messages older than 30 days on each poll merge to bound memory growth on long-running servers.
 
 ### Manual Recovery
 
@@ -57,6 +56,7 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 
 - [ ] **CACHE-IDLE**: IMAP IDLE-driven cache invalidation for sub-minute freshness (requires dual `ImapFlow` connections per account)
 - [ ] **CACHE-DISK**: Cache persistence to disk so warm state survives MCP server restart
+- [ ] **CACHE-03**: Cache evicts messages older than 30 days on each poll merge to bound memory growth on long-running servers (*deferred from v0.3 Phase 13 — 2026-06-12. Rationale: in-memory cache dies with the process; restart frequency in practice handles the unbounded-growth concern. Pair with CACHE-DISK if/when cache becomes persistent.*)
 
 ### Tech Debt
 
@@ -89,7 +89,7 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 | HEALTH-03 | Phase 13 | Pending |
 | CACHE-01 | Phase 13 | Pending |
 | CACHE-02 | Phase 13 | Pending |
-| CACHE-03 | Phase 13 | Pending |
+| CACHE-03 | Deferred (v0.4+) | Deferred 2026-06-12 — in-memory cache dies with process |
 | RECONN-01 | Phase 14 | Pending |
 | RECONN-02 | Phase 14 | Pending |
 | RECONN-03 | Phase 14 | Pending |

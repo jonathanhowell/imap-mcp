@@ -41,7 +41,7 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
 **Milestone Goal:** Make IMAP accounts self-heal from transient failures and improve cache transparency so agents can reason about staleness and manually trigger recovery when needed.
 
 - [x] **Phase 12: Connection Resilience Foundation** - Error classifier, unbounded transient retry, jittered backoff, TCP keepalive, race guard, listener cleanup, suspended state, poller skip (completed 2026-06-11)
-- [ ] **Phase 13: Health Surface + Cache Improvements** - Per-account poll tracking, 30-day cache eviction, `list_accounts` health fields, `get_new_mail` freshness metadata
+- [ ] **Phase 13: Health Surface + Cache Improvements** - Per-account poll tracking, `list_accounts` health fields, `get_new_mail` freshness metadata (30-day eviction deferred to v0.4+)
 - [ ] **Phase 14: Manual Recovery Tool** - `reconnect_account` MCP tool wrapping the Phase 12 state machine
 
 ## Phase Details
@@ -65,12 +65,11 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
 ### Phase 13: Health Surface + Cache Improvements
 **Goal**: Agents can observe the freshness of cached mail data per account and understand account health in enough detail to explain failures to users
 **Depends on**: Phase 12
-**Requirements**: HEALTH-01, HEALTH-02, HEALTH-03, CACHE-01, CACHE-02, CACHE-03
+**Requirements**: HEALTH-01, HEALTH-02, HEALTH-03, CACHE-01, CACHE-02 (*CACHE-03 deferred to v0.4+ on 2026-06-12 — in-memory cache dies with process; pair with CACHE-DISK*)
 **Success Criteria** (what must be TRUE):
   1. `list_accounts` response includes `last_connected_at`, `last_error`, `last_error_at`, and `status` per account — an agent can distinguish "retrying after a 4-hour network drop" from "credentials need fixing"
   2. `get_new_mail` response includes `last_polled_at` and `cache_age_seconds` per account so an agent can tell the user "mail data is 8 minutes old" without additional tool calls
-  3. A server running continuously for 60+ days does not accumulate unbounded memory from the poller cache — messages older than 30 days are evicted on each poll cycle
-  4. When `get_new_mail` is called for an account that is currently reconnecting, the error message distinguishes "no cache yet" from "account disconnected"
+  3. When `get_new_mail` is called for an account that is currently reconnecting, the error message distinguishes "no cache yet" from "account disconnected"
 **Plans**: TBD
 
 ### Phase 14: Manual Recovery Tool
