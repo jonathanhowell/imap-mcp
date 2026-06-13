@@ -597,20 +597,17 @@ Step 2.5: This is a greenfield-extension phase, not a rename/refactor. The field
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **`reconnecting.last_error` stock-string strategy (V5 ASVS risk)**
+1. **`reconnecting.last_error` stock-string strategy (V5 ASVS risk)** — **RESOLVED 2026-06-13**
    - What we know: `status.lastError` contains raw `err.message` (confirmed at account-connection.ts:234). Surfacing it directly to agents violates T-12-09.
-   - What's unclear: Does the planner want `last_error: "Transient connection failure (retrying)"` (a static stock string, loses context) or `last_error: null` for reconnecting accounts (simplest safe option)?
-   - Recommendation: Use `null` for `last_error` when `status.kind === "reconnecting"` since `next_retry_at` and `attempt` already provide temporal context; or use a stock template that contains no error text. Do NOT use `status.lastError`.
+   - **Resolution:** Plan 02 sets `last_error: null` for the reconnecting branch — `next_retry_at` and `attempt` already provide temporal context. Plan 02 Task 1 includes a dedicated test that asserts `last_error` does NOT contain raw error text (`includes("ECONNRESET")` is false); Plan 02 Task 2 acceptance criterion `grep -c 'status\.lastError' src/tools/list-accounts.ts` returns 0. Refines CONTEXT.md D-05 with the safer interpretation.
 
-2. **`query()` return type extension — inline or `types.ts`?**
-   - What we know: `MultiAccountResult<T>` is used by both `search-service` and `poller.query()`. Adding `freshness` to the generic type pollutes it.
-   - Recommendation: Add `GetNewMailResult` in `types.ts` as documented in Option A above.
+2. **`query()` return type extension — inline or `types.ts`?** — **RESOLVED 2026-06-13**
+   - **Resolution:** Plan 04 Task 1 adds `GetNewMailResult` extending `MultiAccountResult<MultiAccountMessageHeader>` with a `freshness: Record<string, AccountFreshness>` field in `src/types.ts` (Option A above). Avoids polluting the generic `MultiAccountResult<T>` used by `search-service`.
 
-3. **`ConnectionManager` health accessors — return `null` or structured error for unknown account?**
-   - What we know: `getStatus()` returns `{ error: string }` for unknown account. Health accessors would return `null` for unknown accounts.
-   - Recommendation: Return `null` for health fields when account is unknown — health fields are `| null` by design, and the tool handler already guards on unknown accounts via the `"error" in status` check.
+3. **`ConnectionManager` health accessors — return `null` or structured error for unknown account?** — **RESOLVED 2026-06-13**
+   - **Resolution:** Plan 01 Task 3 specifies `null` return for unknown accountId on all three health accessors (`getLastConnectedAt`, `getLastError`, `getLastErrorAt`). Health fields are `Date | null / string | null` by design, and the tool handler already guards on unknown accounts via the `"error" in status` check from `getStatus()`.
 
 ---
 
