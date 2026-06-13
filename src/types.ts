@@ -126,3 +126,24 @@ export interface MultiAccountResult<T> {
   results: T[];
   errors?: Record<string, string>;
 }
+
+/**
+ * Phase 13 (D-08 / D-09 / D-10): per-account cache freshness for get_new_mail.
+ * `last_polled_at`: ISO 8601 string of the last successful poll for the account,
+ *   or null when the account has never been polled.
+ * `cache_age_seconds`: server-computed `Math.floor((Date.now() - lastPolledAt) / 1000)`,
+ *   or null when last_polled_at is null. Avoids client/agent clock-skew.
+ */
+export interface AccountFreshness {
+  last_polled_at: string | null;
+  cache_age_seconds: number | null;
+}
+
+/**
+ * Phase 13 (D-08): get_new_mail return shape. Extends MultiAccountResult with
+ * a REQUIRED freshness map keyed by account_id. `freshness` is always present
+ * (even when empty) so agents handle a single shape — never an absent key.
+ */
+export interface GetNewMailResult extends MultiAccountResult<MultiAccountMessageHeader> {
+  freshness: Record<string, AccountFreshness>;
+}
