@@ -268,7 +268,7 @@ describe("Poller", () => {
     expect(result.results[0].account).toBe("acct1");
   });
 
-  it("Test 11: incremental poll uses lastPollTime - 24h as since date", async () => {
+  it("Test 11: incremental poll uses lastPolledAt - 24h as since date", async () => {
     const manager = makeMockManager(["acct1"]);
     const poller = new Poller(manager, 60);
     // First poll (seed) — run and let it complete
@@ -277,7 +277,7 @@ describe("Poller", () => {
     mockSearchMessages.mockClear();
     // Run one more incremental poll
     await runOnePoll(poller);
-    // The since param on the incremental call should be ~24h before lastPollTime
+    // The since param on the incremental call should be ~24h before lastPolledAt
     expect(mockSearchMessages).toHaveBeenCalledTimes(1);
     const callArgs = mockSearchMessages.mock.calls[0][1];
     expect(callArgs).toHaveProperty("since");
@@ -339,7 +339,11 @@ describe("Poller", () => {
 
       // Directly populate the private cache
       (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
-      (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
+      // CACHE-01 / Pitfall 4: migrate from global lastPollTime to per-account
+      // lastPolledAt Map. Seed the Map so query() finds the account.
+      const lpa = new Map<string, Date | null>();
+      lpa.set("acct1", new Date());
+      (poller as unknown as Record<string, unknown>)["lastPolledAt"] = lpa;
 
       const result = poller.query(sinceDate, undefined, ["ClaudeProcessed"]);
       const uids = result.results.map((m) => m.uid);
@@ -367,7 +371,11 @@ describe("Poller", () => {
       ];
 
       (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
-      (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
+      // CACHE-01 / Pitfall 4: migrate from global lastPollTime to per-account
+      // lastPolledAt Map.
+      const lpa = new Map<string, Date | null>();
+      lpa.set("acct1", new Date());
+      (poller as unknown as Record<string, unknown>)["lastPolledAt"] = lpa;
 
       const result = poller.query(sinceDate, undefined, ["ClaudeProcessed"]);
       expect(result.results).toHaveLength(0);
@@ -402,7 +410,11 @@ describe("Poller", () => {
       ];
 
       (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
-      (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
+      // CACHE-01 / Pitfall 4: migrate from global lastPollTime to per-account
+      // lastPolledAt Map.
+      const lpa = new Map<string, Date | null>();
+      lpa.set("acct1", new Date());
+      (poller as unknown as Record<string, unknown>)["lastPolledAt"] = lpa;
 
       const result = poller.query(sinceDate);
       expect(result.results).toHaveLength(2);
@@ -447,7 +459,11 @@ describe("Poller", () => {
       ];
 
       (poller as unknown as Record<string, unknown>)["cache"].set("acct1", entries);
-      (poller as unknown as Record<string, unknown>)["lastPollTime"] = new Date();
+      // CACHE-01 / Pitfall 4: migrate from global lastPollTime to per-account
+      // lastPolledAt Map.
+      const lpa = new Map<string, Date | null>();
+      lpa.set("acct1", new Date());
+      (poller as unknown as Record<string, unknown>)["lastPolledAt"] = lpa;
 
       const result = poller.query(sinceDate, undefined, ["ClaudeProcessed", "ClaudeReplied"]);
       const uids = result.results.map((m) => m.uid);
@@ -637,6 +653,116 @@ describe("Poller", () => {
         String(args[0] ?? "").includes("flakyAcct")
       ).length;
       expect(debugCallsCycle2).toBe(0);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // Phase 13 / CACHE-01 — per-account lastPolledAt Map (D-11/D-12/D-13).
+  // RED at the start of Plan 13-03 Task 1: getLastPolledAt does not exist on
+  // Poller yet. Plan 13-03 Task 2 turns these green.
+  // --------------------------------------------------------------------------
+  describe("CACHE-01: per-account lastPolledAt", () => {
+    it("getLastPolledAt(id) returns null before any poll", () => {
+      const manager = makeMockManager(["acctA", "acctB"]);
+      const poller = new Poller(manager);
+      expect(poller.getLastPolledAt("acctA")).toBeNull();
+      expect(poller.getLastPolledAt("acctB")).toBeNull();
+    });
+
+    it("getLastPolledAt(id) returns a Date after a successful poll for that account", async () => {
+      const manager = makeMockManager(["acct1"]);
+      const poller = new Poller(manager);
+      await runOnePoll(poller);
+      const stamp = poller.getLastPolledAt("acct1");
+      expect(stamp).toBeInstanceOf(Date);
+    });
+
+    it("getLastPolledAt is stamped AFTER mergeIntoCache succeeds (NOT before)", async () => {
+      // Pitfall 2 guard: if searchMessages throws (caught by poll()'s outer
+      // try/catch), mergeIntoCache never runs, so the stamp must NOT happen.
+      // Verify by rejecting searchMessages — getLastPolledAt should stay null.
+      const manager = makeMockManager(["acct1"]);
+      mockSearchMessages.mockReset();
+      mockSearchMessages.mockRejectedValueOnce(new Error("simulated search failure"));
+      const poller = new Poller(manager);
+      await runOnePoll(poller);
+      expect(poller.getLastPolledAt("acct1")).toBeNull();
+    });
+
+    it("skipped account (status reconnecting) retains its prior lastPolledAt value across a poll cycle", async () => {
+      // Reuse the makeStatusAwareManager pattern from the CONN-07 describe.
+      const mockClient = { mailbox: "INBOX" };
+      const statuses: Record<
+        string,
+        { kind: string; client?: unknown; attempt?: number; nextRetryAt?: Date; lastError?: string }
+      > = {
+        flakyAcct: { kind: "connected", client: mockClient },
+      };
+      const manager = {
+        getAccountIds: vi.fn().mockReturnValue(Object.keys(statuses)),
+        getStatus: vi.fn().mockImplementation((id: string) => statuses[id]),
+        getClient: vi.fn().mockImplementation((id: string) => {
+          const status = statuses[id];
+          if (status.kind === "connected") return status.client ?? { mailbox: "INBOX" };
+          return { error: `account "${id}" is ${status.kind}` };
+        }),
+      } as unknown as ConnectionManager;
+
+      const poller = new Poller(manager, 60);
+      // Cycle 1: account connected → polled successfully → stamp recorded.
+      await runOnePoll(poller);
+      const cycle1Stamp = poller.getLastPolledAt("flakyAcct");
+      expect(cycle1Stamp).toBeInstanceOf(Date);
+
+      // Cycle 2: flip account to reconnecting → skipped → stamp retained.
+      statuses.flakyAcct = {
+        kind: "reconnecting",
+        attempt: 3,
+        nextRetryAt: new Date(),
+        lastError: "ECONNRESET",
+      };
+      await runOnePoll(poller);
+      const cycle2Stamp = poller.getLastPolledAt("flakyAcct");
+      // Same Date instance — skipped accounts do NOT clear or refresh the
+      // timestamp (D-11).
+      expect(cycle2Stamp).toBe(cycle1Stamp);
+    });
+
+    it("per-account seed: account A polled before, account B never polled — A uses 24h incremental window, B uses 30-day seed window", async () => {
+      const manager = makeMockManager(["acctA", "acctB"]);
+      // Pre-seed acctA's lastPolledAt entry to a known Date so the per-account
+      // branch in pollAccount picks the incremental path (24h since acctA's
+      // stamp) for A and the seed path (30 days) for B.
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      const lpa = new Map<string, Date | null>();
+      lpa.set("acctA", oneHourAgo);
+      const poller = new Poller(manager, 60);
+      (poller as unknown as Record<string, unknown>)["lastPolledAt"] = lpa;
+
+      mockSearchMessages.mockReset();
+      mockSearchMessages.mockResolvedValue([]);
+      await runOnePoll(poller);
+
+      // Two calls — one per account. Order matches getAccountIds() order.
+      expect(mockSearchMessages).toHaveBeenCalledTimes(2);
+      const acctASince = new Date(
+        mockSearchMessages.mock.calls[0][1].since as string
+      ).getTime();
+      const acctBSince = new Date(
+        mockSearchMessages.mock.calls[1][1].since as string
+      ).getTime();
+
+      const now = Date.now();
+      // acctA had a prior stamp 1h ago → incremental window is (stamp - 24h),
+      // so since ≈ now - 25h.
+      const acctAAge = now - acctASince;
+      expect(acctAAge).toBeGreaterThan(24 * 60 * 60 * 1000);
+      expect(acctAAge).toBeLessThan(26 * 60 * 60 * 1000);
+
+      // acctB never polled → seed window is 30 days back.
+      const acctBAge = now - acctBSince;
+      expect(acctBAge).toBeGreaterThan(29 * 24 * 60 * 60 * 1000);
+      expect(acctBAge).toBeLessThan(31 * 24 * 60 * 60 * 1000);
     });
   });
 });
