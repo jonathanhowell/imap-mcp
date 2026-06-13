@@ -110,10 +110,11 @@ describe("Poller", () => {
     vi.restoreAllMocks();
   });
 
-  // Tests 1+2 (legacy isCacheReady) replaced by the CACHE-01 describe block below
-  // ("CACHE-01: per-account lastPolledAt") which tests getLastPolledAt(id) — the
-  // per-account replacement. The legacy global isCacheReady() method is removed
-  // entirely in Plan 13-04 along with the handleGetNewMail global cold-cache gate.
+  // Tests 1+2 (legacy global cache-readiness check) replaced by the CACHE-01
+  // describe block below ("CACHE-01: per-account lastPolledAt") which tests
+  // getLastPolledAt(id) — the per-account replacement. The legacy global
+  // method is removed entirely in Plan 13-04 along with the handleGetNewMail
+  // global cold-cache gate.
 
   it("Test 3: start() calls searchMessages for each account immediately", async () => {
     const manager = makeMockManager(["acct1", "acct2"]);
