@@ -1,4 +1,4 @@
-import { vi, describe, it, expect } from "vitest";
+import { vi, describe, it, expect, beforeEach } from "vitest";
 import { EventEmitter } from "node:events";
 
 vi.mock("imapflow", () => {
@@ -241,4 +241,83 @@ describe("ConnectionManager suspended state (CONN-03 / D-01)", () => {
       expect(result.error).toMatch(/suspended/i);
     }
   }, 30_000);
+});
+
+// ----------------------------------------------------------------------------
+// Phase 13 Plan 01 — HEALTH-02 ConnectionManager health accessors.
+// RED at step 3a (delegating accessors don't exist on the manager yet);
+// GREEN at step 3b after implementation.
+// Contract: per CONTEXT.md D-07, the manager exposes three delegating
+// accessors returning `null` for unknown accounts (NOT { error } — that is
+// the getStatus() pattern; health fields are Date | null / string | null by
+// design and the tool layer treats null uniformly as "no value").
+// ----------------------------------------------------------------------------
+
+describe("HEALTH-02: ConnectionManager health accessors", () => {
+  // Reset the imapflow mock to the clean default at the start of every test.
+  // Necessary because earlier describe blocks in this file install sticky
+  // failure-mode mockImplementations on `vi.mocked(ImapFlow)` (auth failed
+  // for the suspended-state scaffold; connection refused for the partial-
+  // connect test) and vitest's default config does not clear mocks between
+  // tests. Without this, the freshly-connected expectations below see leaked
+  // failure mocks from prior describes and assert against a suspended state.
+  beforeEach(() => {
+    vi.mocked(ImapFlow).mockImplementation(function () {
+      const emitter = new EventEmitter();
+      return Object.assign(emitter, {
+        connect: vi.fn().mockResolvedValue(undefined),
+        logout: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn(),
+        usable: true,
+      });
+    });
+  });
+
+  it("getLastConnectedAt returns the AccountConnection.getConnectedAt value for a known account", async () => {
+    const config = makeTwoAccountConfig();
+    const manager = new ConnectionManager(config);
+    await manager.connectAll();
+
+    expect(manager.getLastConnectedAt("personal")).toBeInstanceOf(Date);
+  });
+
+  it("getLastConnectedAt returns null for an unknown account", async () => {
+    const config = makeTwoAccountConfig();
+    const manager = new ConnectionManager(config);
+    await manager.connectAll();
+
+    expect(manager.getLastConnectedAt("nonexistent")).toBeNull();
+  });
+
+  it("getLastError returns null for a freshly-connected account", async () => {
+    const config = makeTwoAccountConfig();
+    const manager = new ConnectionManager(config);
+    await manager.connectAll();
+
+    expect(manager.getLastError("personal")).toBeNull();
+  });
+
+  it("getLastError returns null for an unknown account", async () => {
+    const config = makeTwoAccountConfig();
+    const manager = new ConnectionManager(config);
+    await manager.connectAll();
+
+    expect(manager.getLastError("nonexistent")).toBeNull();
+  });
+
+  it("getLastErrorAt returns null for a freshly-connected account", async () => {
+    const config = makeTwoAccountConfig();
+    const manager = new ConnectionManager(config);
+    await manager.connectAll();
+
+    expect(manager.getLastErrorAt("personal")).toBeNull();
+  });
+
+  it("getLastErrorAt returns null for an unknown account", async () => {
+    const config = makeTwoAccountConfig();
+    const manager = new ConnectionManager(config);
+    await manager.connectAll();
+
+    expect(manager.getLastErrorAt("nonexistent")).toBeNull();
+  });
 });

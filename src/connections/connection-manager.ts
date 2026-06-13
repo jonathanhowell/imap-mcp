@@ -82,6 +82,26 @@ export class ConnectionManager {
   }
 
   /**
+   * Phase 13 (HEALTH-02 / HEALTH-03): delegating health accessors. Unknown
+   * accounts return null (not { error }) because health fields are
+   * Date | null / string | null by design — the tool layer treats null as
+   * "no value" uniformly. SECURITY: getLastError exposes the raw err.message;
+   * consumers (Plan 13-02 handleListAccounts) must sanitize for the
+   * reconnecting branch per T-12-09 / V5 ASVS.
+   */
+  getLastConnectedAt(accountId: string): Date | null {
+    return this.connections.get(accountId)?.getConnectedAt() ?? null;
+  }
+
+  getLastError(accountId: string): string | null {
+    return this.connections.get(accountId)?.getLastError() ?? null;
+  }
+
+  getLastErrorAt(accountId: string): Date | null {
+    return this.connections.get(accountId)?.getLastErrorAt() ?? null;
+  }
+
+  /**
    * Returns the names of all configured accounts (regardless of connection state).
    * Used by the list_accounts tool to enumerate accounts.
    */
