@@ -73,7 +73,7 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
 **Plans**: 4 plans
 - [ ] 13-01-PLAN.md — `AccountConnection.lastErrorAt` field + `ConnectionManager` health accessors (HEALTH-01/02/03)
 - [ ] 13-02-PLAN.md — `list_accounts` switch extension: flat snake_case health fields, drop `detail`, V5 ASVS-safe reconnecting `last_error` (HEALTH-02/03)
-- [ ] 13-03-PLAN.md — Per-account `Poller.lastPolledAt` Map + `getLastPolledAt` accessor (CACHE-01)
+- [x] 13-03-PLAN.md — Per-account `Poller.lastPolledAt` Map + `getLastPolledAt` accessor (CACHE-01) — completed 2026-06-13
 - [ ] 13-04-PLAN.md — `get_new_mail` freshness block + D-14 three-error-string dispatch + remove `isCacheReady` gate (HEALTH-01/CACHE-02 + Success Criteria 2-3)
 
 ### Phase 14: Manual Recovery Tool

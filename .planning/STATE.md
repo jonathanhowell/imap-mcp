@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
 status: verifying
-stopped_at: Phase 13 context gathered — HEALTH-01..03 + CACHE-01/02 in scope; CACHE-03 deferred to v0.4+
-last_updated: "2026-06-12T11:56:06.122Z"
-last_activity: 2026-06-11
+stopped_at: Plan 13-03 complete — per-account lastPolledAt Map + getLastPolledAt accessor shipped (CACHE-01)
+last_updated: "2026-06-13T08:44:39Z"
+last_activity: 2026-06-13
 progress:
   total_phases: 3
   completed_phases: 1
@@ -58,6 +58,7 @@ Full log in `.planning/PROJECT.md` Key Decisions table. Key v0.3 decisions:
 - **AccountConnection refactor shipped (Plan 12-03)**: CONN-02, CONN-03, CONN-04, CONN-05, CONN-06 all green. 4-state union (`connecting | connected | reconnecting | suspended`) with `failed` removed entirely. `shouldLogAttempt` cadence pinned to `1, 2, 3, 5, 10, 20, 40, 80, 160, …` (doubling starts at 5; CONTEXT.md D-14 at face value). `buildClient` socketOptions uses a typed intersection (not `as any`) because imapflow 1.2.13's TS declarations omit the field — Plan 04's ^1.3.7 bump drops the intersection. 5 tsc errors now surface in `src/connections/connection-manager.ts` and `src/tools/list-accounts.ts` — these are the intended Plan 04 migration TODO list.
 - **Phase 12 complete (Plan 12-04)**: CONN-07 + D-12 + final CONN-01 scaffold all green. `src/process-handlers.ts` (NEW) exports `installUnhandledRejectionHandler(log?: Logger = logger)`; called as the first line of `main()`. Poller `pollAccount()` consults `manager.getStatus()` before any IMAP work; non-connected status → quiet `return` with throttled `debug` log via `skipLoggedThisCycle: Set<string>` cleared every cycle. `imapflow ^1.2.13 → ^1.3.7` (resolves to 1.4.0); the typed-intersection workaround in `buildClient` is no longer strictly required (kept as-is — a future hygiene plan can drop it).
 - **RESEARCH Assumption A5 corrected (Plan 12-04)**: imapflow 1.4.0 STILL does NOT export `AuthenticationFailure` at the top level (the class lives in `lib/tools.js` and is never re-exported from `lib/imap-flow.js`). The classifier's `isAuthenticationFailure(err)` now uses a marker-property fallback (`err.authenticationFailed === true`) — the constructor sets this property on every instance internally, so the classifier is robust regardless of the top-level export. Both the typed-instanceof AND marker-property paths classify as fatal.
+- **Plan 13-03 shipped (CACHE-01)**: Poller's global `lastPollTime: Date | null` replaced with per-account `lastPolledAt: Map<string, Date | null>` (D-11). New public `getLastPolledAt(accountId)` accessor (D-12). Per-account seed-vs-incremental decision (D-13). The stamp `this.lastPolledAt.set(accountId, new Date())` is the LAST statement of `pollAccount`'s success path (after `mergeIntoCache`) — Pitfall 2 guard verified by a RED test that mocks `searchMessages` to reject and asserts `getLastPolledAt` stays `null`. `isCacheReady()` deliberately kept (rewired to scan the Map) — Plan 13-04 removes it atomically with the `handleGetNewMail` cold-cache gate. Full suite: 251/251 (246 baseline + 5 new CACHE-01). `tsc --noEmit` clean.
 - Carried from v0.2: `formatAddress` is canonical `Name <addr>` formatter; `{account_id, uid}` is globally unique message ref.
 
 ### Blockers/Concerns
@@ -77,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-06-12T11:56:06.119Z
-Stopped at: Phase 13 context gathered — HEALTH-01..03 + CACHE-01/02 in scope; CACHE-03 deferred to v0.4+
-Resume file: .planning/phases/13-health-surface-cache-improvements/13-CONTEXT.md
+Last session: 2026-06-13T08:44:39Z
+Stopped at: Plan 13-03 complete (parallel wave) — CACHE-01 shipped; awaiting orchestrator merge with sibling plans 13-01/13-02/13-04
+Resume file: .planning/phases/13-health-surface-cache-improvements/13-03-SUMMARY.md
