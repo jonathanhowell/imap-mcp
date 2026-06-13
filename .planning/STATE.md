@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
-status: executing
-stopped_at: "Wave 1 complete — Plans 13-01 (health accessors) + 13-03 (per-account lastPolledAt) shipped. Wave 2 next: Plans 13-02 + 13-04."
-last_updated: "2026-06-13T08:48:30.000Z"
+status: "Wave 2 half complete — Plan 13-02 shipped (HEALTH-02 / HEALTH-03 list_accounts surface + D-03 detail removal + T-13-03 V5 ASVS guard on reconnecting branch). Plan 13-04 (CACHE-02 freshness + cold-cache distinction) in flight in parallel worktree. Full suite 272/272; tsc --noEmit clean."
+stopped_at: Plan 13-02 shipped — Wave 2 half complete. Plan 13-04 (get_new_mail freshness — CACHE-02) in flight in parallel worktree.
+last_updated: "2026-06-13T08:59:03.070Z"
 last_activity: 2026-06-13
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 7
+  percent: 88
 ---
 
 # Project State
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 Milestone: **v0.3 Reliability & Cache Rethink**
 Phase: 13
-Plan: Wave 1 complete (13-01 + 13-03); Wave 2 next (13-02 + 13-04)
-Status: Wave 1 shipped in parallel worktrees. Plan 13-01 — internal health-field foundation: `AccountConnection.lastErrorAt` (D-07), 3 accessors on AccountConnection + 3 delegating accessors on ConnectionManager. Plan 13-03 — per-account `lastPolledAt: Map<string, Date | null>` (D-11/CACHE-01), `getLastPolledAt(accountId)` (D-12), per-account seed-vs-incremental (D-13), Pitfall-2-safe stamp ordering. Full suite passing; `tsc --noEmit` clean. Wave 2 unlocked.
+Plan: Wave 2 half complete — Plan 13-02 shipped; Plan 13-04 in flight in parallel worktree.
+Status: Wave 1 shipped (13-01 + 13-03). Plan 13-02 shipped (HEALTH-02 / HEALTH-03): `list_accounts` now carries flat snake_case `last_connected_at` / `last_error` / `last_error_at` on every entry (D-02); reconnecting branch additionally carries `attempt` + `next_retry_at` and hardcodes `last_error: null` per T-13-03 / V5 ASVS (the raw `err.message` stamped on the reconnecting status object is never echoed); suspended surfaces `humanReason()`'s stock string verbatim; the legacy `detail` field is fully removed (D-03 breaking change). Full suite 272/272; `tsc --noEmit` clean. Plan 13-04 (CACHE-02 freshness + per-account cold-cache distinction) is the last Wave 2 deliverable.
 Last activity: 2026-06-13
 
-Progress: [███████░░░] 75%
+Progress: [█████████░] 88%
 
 ## Velocity Reference
 
@@ -61,6 +61,7 @@ Full log in `.planning/PROJECT.md` Key Decisions table. Key v0.3 decisions:
 - **Phase 12 complete (Plan 12-04)**: CONN-07 + D-12 + final CONN-01 scaffold all green. `src/process-handlers.ts` (NEW) exports `installUnhandledRejectionHandler(log?: Logger = logger)`; called as the first line of `main()`. Poller `pollAccount()` consults `manager.getStatus()` before any IMAP work; non-connected status → quiet `return` with throttled `debug` log via `skipLoggedThisCycle: Set<string>` cleared every cycle. `imapflow ^1.2.13 → ^1.3.7` (resolves to 1.4.0); the typed-intersection workaround in `buildClient` is no longer strictly required (kept as-is — a future hygiene plan can drop it).
 - **RESEARCH Assumption A5 corrected (Plan 12-04)**: imapflow 1.4.0 STILL does NOT export `AuthenticationFailure` at the top level (the class lives in `lib/tools.js` and is never re-exported from `lib/imap-flow.js`). The classifier's `isAuthenticationFailure(err)` now uses a marker-property fallback (`err.authenticationFailed === true`) — the constructor sets this property on every instance internally, so the classifier is robust regardless of the top-level export. Both the typed-instanceof AND marker-property paths classify as fatal.
 - **Plan 13-03 shipped (CACHE-01)**: Poller's global `lastPollTime: Date | null` replaced with per-account `lastPolledAt: Map<string, Date | null>` (D-11). New public `getLastPolledAt(accountId)` accessor (D-12). Per-account seed-vs-incremental decision (D-13). The stamp `this.lastPolledAt.set(accountId, new Date())` is the LAST statement of `pollAccount`'s success path (after `mergeIntoCache`) — Pitfall 2 guard verified by a RED test that mocks `searchMessages` to reject and asserts `getLastPolledAt` stays `null`. `isCacheReady()` deliberately kept (rewired to scan the Map) — Plan 13-04 removes it atomically with the `handleGetNewMail` cold-cache gate. Full suite: 251/251 (246 baseline + 5 new CACHE-01). `tsc --noEmit` clean.
+- **Plan 13-02 shipped (HEALTH-02 / HEALTH-03)**: `list_accounts` MCP response now carries flat snake_case `last_connected_at` / `last_error` / `last_error_at` on every entry (D-02), with the legacy `detail` field fully removed (D-03 breaking change). Reconnecting branch additionally carries `attempt` + `next_retry_at` (ISO from `status.nextRetryAt`); `last_error` is hardcoded `null` per T-13-03 / V5 ASVS — the raw `err.message` stamped on the reconnecting status object (which may include `auth.user` / transport details) is NEVER echoed to agents. Suspended branch surfaces `humanReason()`'s stock string verbatim. Pattern established: when grep tokens (`grep -c 'detail'`, `grep -c 'status\\.lastError'`) are acceptance criteria as regression guards, source comments must also respect them — auto-fixed Rule 1 reformulated security/breaking-change comments to convey the same information without the literal tokens, preserving the grep-zero guard. Full suite 272/272 (+9 new HEALTH-02/03 tests vs. 263 Wave 1 baseline); `tsc --noEmit` clean. CHANGELOG follow-up needed at milestone ship per D-18.
 - Carried from v0.2: `formatAddress` is canonical `Name <addr>` formatter; `{account_id, uid}` is globally unique message ref.
 
 ### Blockers/Concerns
@@ -80,6 +81,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-06-13T08:48:30.000Z
-Stopped at: Wave 1 complete — Plans 13-01 + 13-03 shipped in parallel; Wave 2 (Plans 13-02, 13-04) starting next.
-Resume file: .planning/phases/13-health-surface-cache-improvements/13-01-SUMMARY.md, .planning/phases/13-health-surface-cache-improvements/13-03-SUMMARY.md
+Last session: 2026-06-13T08:58:54.322Z
+Stopped at: Plan 13-02 shipped — Wave 2 half complete. Plan 13-04 (get_new_mail freshness — CACHE-02) in flight in parallel worktree.
+Resume file: .planning/phases/13-health-surface-cache-improvements/13-02-SUMMARY.md
