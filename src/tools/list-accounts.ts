@@ -22,24 +22,68 @@ export function handleListAccounts(manager: ConnectionManager): ToolResult {
       ...(cfg?.display_name ? { display_name: cfg.display_name } : {}),
     };
 
+    // Phase 13 shape (HEALTH-02 / HEALTH-03): flat snake_case health fields
+    // per CONTEXT.md D-02..D-07. `last_connected_at` is the same across every
+    // branch — read via the Plan 13-01 accessor and emit as ISO string or null.
+    const lastConnectedAt = manager.getLastConnectedAt(id)?.toISOString() ?? null;
+
     if ("error" in status) {
-      return { ...baseEntry, status: "error", detail: status.error };
+      // D-03 breaking change: legacy free-form error key fully removed;
+      // last_error carries the same content via the flat shape.
+      return {
+        ...baseEntry,
+        status: "error",
+        last_error: status.error,
+        last_error_at: null,
+        last_connected_at: lastConnectedAt,
+      };
     }
     switch (status.kind) {
       case "connected":
-        return { ...baseEntry, status: "connected" };
+        // D-04: explicit nulls, not omitted keys.
+        return {
+          ...baseEntry,
+          status: "connected",
+          last_error: null,
+          last_error_at: null,
+          last_connected_at: lastConnectedAt,
+        };
       case "connecting":
-        return { ...baseEntry, status: "connecting" };
+        return {
+          ...baseEntry,
+          status: "connecting",
+          last_error: null,
+          last_error_at: null,
+          last_connected_at: lastConnectedAt,
+        };
       case "reconnecting":
-        return { ...baseEntry, status: "reconnecting", attempt: status.attempt };
+        // SECURITY (T-13-03 / T-12-09 / V5 ASVS — RESEARCH Pitfall 1):
+        // the reconnecting status object carries a raw err.message field
+        // (stamped in account-connection.ts at the reconnect-failure and
+        // initial-connect-failure sites). That raw text may include
+        // auth.user or transport metadata and MUST NOT be echoed. We
+        // hardcode last_error to null on this branch; the agent reads
+        // temporal context from `attempt` + `next_retry_at` instead.
+        return {
+          ...baseEntry,
+          status: "reconnecting",
+          attempt: status.attempt,
+          next_retry_at: status.nextRetryAt.toISOString(),
+          last_error: null,
+          last_error_at: null,
+          last_connected_at: lastConnectedAt,
+        };
       case "suspended":
-        // D-01 / Plan 12-04: `failed` is gone; `suspended` is the fatal terminal state
-        // populated by classifyConnectionError(err) === "fatal". `status.reason` is a
-        // stock string from humanReason() — never raw err.message (T-12-09 / V5 ASVS).
-        // Phase 13 (HEALTH-03) will replace `status: "suspended"` here with a richer
-        // health-surface object; for Phase 12 the existing { status, detail } shape
-        // is preserved so the tool API does not change mid-milestone.
-        return { ...baseEntry, status: "suspended", detail: status.reason };
+        // D-06: status.reason is a stock string from humanReason() — SAFE to
+        // surface verbatim. status.since is the wall-clock the account
+        // entered suspended (Phase 12 D-02).
+        return {
+          ...baseEntry,
+          status: "suspended",
+          last_error: status.reason,
+          last_error_at: status.since.toISOString(),
+          last_connected_at: lastConnectedAt,
+        };
     }
   });
   return {
