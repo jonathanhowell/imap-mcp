@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
 status: verifying
-stopped_at: "Phase 13 implementation complete — all 4 plans shipped (Wave 1: 13-01 + 13-03; Wave 2: 13-02 + 13-04). Running phase verification next."
-last_updated: "2026-06-13T09:00:00.000Z"
+stopped_at: Phase 13 implementation complete (4/4 plans). Phase verification next via gsd-verifier.
+last_updated: "2026-06-13T09:11:02.488Z"
 last_activity: 2026-06-13
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
   completed_plans: 8
   percent: 100
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 ## Current Position
 
 Milestone: **v0.3 Reliability & Cache Rethink**
-Phase: 13
-Plan: Phase 13 implementation complete — all 4 plans shipped (Wave 1: 13-01 + 13-03; Wave 2: 13-02 + 13-04).
+Phase: 14
+Plan: Not started
 Status: All Phase 13 plans shipped. Plan 13-02: `list_accounts` flat snake_case `last_connected_at`/`last_error`/`last_error_at` (D-02) + reconnecting `attempt`/`next_retry_at` with `last_error: null` (T-13-03 V5 ASVS) + suspended `humanReason()` stock string + legacy `detail` field removed (D-03). Plan 13-04: `get_new_mail` top-level `freshness:{}` map (CACHE-02 / D-08-D-10) with `last_polled_at` + `cache_age_seconds` + three D-14 stock-string error prefixes (cold-cache / reconnecting / suspended) dispatched per account + global `isCacheReady()` removed (Pitfall 3 complete). HEALTH-01/02/03 + CACHE-01/02 all delivered. Phase verification next.
 Last activity: 2026-06-13
 

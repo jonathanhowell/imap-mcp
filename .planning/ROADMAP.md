@@ -41,7 +41,7 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
 **Milestone Goal:** Make IMAP accounts self-heal from transient failures and improve cache transparency so agents can reason about staleness and manually trigger recovery when needed.
 
 - [x] **Phase 12: Connection Resilience Foundation** - Error classifier, unbounded transient retry, jittered backoff, TCP keepalive, race guard, listener cleanup, suspended state, poller skip (completed 2026-06-11)
-- [ ] **Phase 13: Health Surface + Cache Improvements** - Per-account poll tracking, `list_accounts` health fields, `get_new_mail` freshness metadata (30-day eviction deferred to v0.4+)
+- [x] **Phase 13: Health Surface + Cache Improvements** - Per-account poll tracking, `list_accounts` health fields, `get_new_mail` freshness metadata (30-day eviction deferred to v0.4+) (completed 2026-06-13)
 - [ ] **Phase 14: Manual Recovery Tool** - `reconnect_account` MCP tool wrapping the Phase 12 state machine
 
 ## Phase Details
@@ -94,5 +94,5 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
 | 1–6 (v0.1.0 phases) | v0.1.0 | 23/23 | Complete | 2026-03-11..2026-03-15 |
 | 7–11.1 (v0.2 phases) | v0.2 | 12/12 | Complete | 2026-03-15..2026-03-19 |
 | 12. Connection Resilience Foundation | v0.3 | 4/4 | Complete    | 2026-06-11 |
-| 13. Health Surface + Cache Improvements | v0.3 | 4/4 | In Progress |  |
+| 13. Health Surface + Cache Improvements | v0.3 | 4/4 | Complete    | 2026-06-13 |
 | 14. Manual Recovery Tool | v0.3 | 0/TBD | Not started | - |
