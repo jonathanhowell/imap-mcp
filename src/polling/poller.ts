@@ -12,7 +12,12 @@ import type { MultiAccountMessageHeader, MultiAccountResult } from "../types.js"
  */
 export class Poller {
   private cache = new Map<string, MultiAccountMessageHeader[]>();
-  private lastPollTime: Date | null = null;
+  // D-11 / CACHE-01: per-account poll timestamps. `null` means the account
+  // has been registered but never successfully polled (e.g. account in
+  // reconnect from server start). Stamped AFTER mergeIntoCache succeeds
+  // — RESEARCH Pitfall 2: never stamp before merge or a thrown
+  // searchMessages call would falsely advance the timestamp.
+  private lastPolledAt = new Map<string, Date | null>();
   private stopped = false;
 
   // D-15 / CONN-07: per-cycle tracking — at most one `debug` log per skipped
@@ -42,11 +47,27 @@ export class Poller {
   }
 
   /**
-   * Returns true once the initial poll has completed and the cache is populated.
-   * Callers should return an error to the agent if this returns false.
+   * DEPRECATED — Plan 13-04 removes this method together with the
+   * handleGetNewMail global gate. Returns true once at least one account
+   * has been successfully polled. Per-account freshness is the new
+   * contract (see getLastPolledAt).
    */
   isCacheReady(): boolean {
-    return this.lastPollTime !== null;
+    for (const v of this.lastPolledAt.values()) {
+      if (v !== null) return true;
+    }
+    return false;
+  }
+
+  /**
+   * D-12 / CACHE-01: per-account poll-time read path. Returns null when
+   * the account has never been successfully polled (initial state, OR
+   * account has been registered but always-skipped due to non-connected
+   * status). Used by handleGetNewMail (Plan 13-04) to build the
+   * `freshness:{}` block.
+   */
+  getLastPolledAt(accountId: string): Date | null {
+    return this.lastPolledAt.get(accountId) ?? null;
   }
 
   /**
@@ -111,7 +132,8 @@ export class Poller {
         logger.error(`Poller: failed to poll account ${accountId}: ${String(err)}`);
       }
     }
-    this.lastPollTime = new Date();
+    // D-11: per-account stamping happens inside pollAccount() after
+    // mergeIntoCache succeeds. The old global timestamp field is gone.
   }
 
   private async pollAccount(accountId: string): Promise<void> {
@@ -145,13 +167,15 @@ export class Poller {
     let since: string;
     let maxResults: number;
 
-    if (this.lastPollTime === null) {
+    // D-13: per-account seed vs incremental decision.
+    const accountLastPolled = this.lastPolledAt.get(accountId) ?? null;
+    if (accountLastPolled === null) {
       // Seed: last 30 days
       since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       maxResults = 1000;
     } else {
-      // Incremental: lastPollTime - 24h to handle IMAP SEARCH SINCE day-granularity
-      since = new Date(this.lastPollTime.getTime() - 24 * 60 * 60 * 1000).toISOString();
+      // Incremental: lastPolledAt - 24h to handle IMAP SEARCH SINCE day-granularity
+      since = new Date(accountLastPolled.getTime() - 24 * 60 * 60 * 1000).toISOString();
       maxResults = 100;
     }
 
@@ -167,6 +191,11 @@ export class Poller {
     }));
 
     this.mergeIntoCache(accountId, headers);
+
+    // D-11 / RESEARCH Pitfall 2: stamp AFTER mergeIntoCache so a thrown
+    // searchMessages call (caught by poll()'s outer try/catch) leaves
+    // lastPolledAt unchanged for this account.
+    this.lastPolledAt.set(accountId, new Date());
   }
 
   /**
