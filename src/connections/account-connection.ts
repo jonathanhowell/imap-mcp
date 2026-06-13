@@ -94,10 +94,14 @@ export class AccountConnection {
   private reconnectInFlight = false;
 
   // Phase 13 groundwork (NOT surfaced to tools in Phase 12). Internal fields
-  // so Phase 13's `list_accounts.last_connected_at` / `last_error` can read
-  // them without another union-shape revision.
+  // so Phase 13's `list_accounts.last_connected_at` / `last_error` /
+  // `last_error_at` can read them without another union-shape revision.
+  // Phase 13 Plan 01 (D-07) adds `lastErrorAt` paired with `lastError` at
+  // every stamp/clear site (4 sites: successful reconnect, reconnect transient
+  // failure, successful initial connect, initial connect failure).
   private connectedAt: Date | null = null;
   private lastError: string | null = null;
+  private lastErrorAt: Date | null = null;
 
   constructor(accountId: string, config: AccountConfig) {
     this.accountId = accountId;
@@ -109,6 +113,25 @@ export class AccountConnection {
 
   getStatus(): AccountConnectionStatus {
     return this.status;
+  }
+
+  /**
+   * Phase 13 (HEALTH-02 / HEALTH-03): public read path to the internal health
+   * fields. SECURITY (T-12-09 / V5 ASVS): getLastError() returns the raw
+   * err.message — Plan 13-02 (list_accounts) MUST NOT surface this directly
+   * for the reconnecting branch. Plan 13-02 either substitutes a stock
+   * template or returns last_error: null for reconnecting accounts.
+   */
+  getConnectedAt(): Date | null {
+    return this.connectedAt;
+  }
+
+  getLastError(): string | null {
+    return this.lastError;
+  }
+
+  getLastErrorAt(): Date | null {
+    return this.lastErrorAt;
   }
 
   /**
@@ -227,11 +250,13 @@ export class AccountConnection {
           this.status = { kind: "connected", client };
           this.connectedAt = new Date();
           this.lastError = null;
+          this.lastErrorAt = null;
           logger.info(`[${this.accountId}] Reconnected on attempt ${attempt}`);
           return;
         } catch (err: unknown) {
           const message = err instanceof Error ? err.message : String(err);
           this.lastError = message;
+          this.lastErrorAt = new Date();
 
           // CONN-03 / T-12-06: fatal verdict → suspended on attempt 1, no
           // further retries. humanReason returns a stock string — NEVER
@@ -295,10 +320,12 @@ export class AccountConnection {
       this.status = { kind: "connected", client };
       this.connectedAt = new Date();
       this.lastError = null;
+      this.lastErrorAt = null;
       logger.info(`[${this.accountId}] Connected`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       this.lastError = message;
+      this.lastErrorAt = new Date();
       logger.warn(`[${this.accountId}] Initial connect failed: ${message}`);
 
       // Initial-connect fatal fast-path: classify BEFORE entering the

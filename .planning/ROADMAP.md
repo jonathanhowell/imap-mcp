@@ -71,7 +71,7 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
   2. `get_new_mail` response includes `last_polled_at` and `cache_age_seconds` per account so an agent can tell the user "mail data is 8 minutes old" without additional tool calls
   3. When `get_new_mail` is called for an account that is currently reconnecting, the error message distinguishes "no cache yet" from "account disconnected"
 **Plans**: 4 plans
-- [ ] 13-01-PLAN.md — `AccountConnection.lastErrorAt` field + `ConnectionManager` health accessors (HEALTH-01/02/03)
+- [x] 13-01-PLAN.md — `AccountConnection.lastErrorAt` field + `ConnectionManager` health accessors (HEALTH-01/02/03) — completed 2026-06-13
 - [ ] 13-02-PLAN.md — `list_accounts` switch extension: flat snake_case health fields, drop `detail`, V5 ASVS-safe reconnecting `last_error` (HEALTH-02/03)
 - [ ] 13-03-PLAN.md — Per-account `Poller.lastPolledAt` Map + `getLastPolledAt` accessor (CACHE-01)
 - [ ] 13-04-PLAN.md — `get_new_mail` freshness block + D-14 three-error-string dispatch + remove `isCacheReady` gate (HEALTH-01/CACHE-02 + Success Criteria 2-3)
@@ -94,5 +94,5 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
 | 1–6 (v0.1.0 phases) | v0.1.0 | 23/23 | Complete | 2026-03-11..2026-03-15 |
 | 7–11.1 (v0.2 phases) | v0.2 | 12/12 | Complete | 2026-03-15..2026-03-19 |
 | 12. Connection Resilience Foundation | v0.3 | 4/4 | Complete    | 2026-06-11 |
-| 13. Health Surface + Cache Improvements | v0.3 | 0/4   | Not started | - |
+| 13. Health Surface + Cache Improvements | v0.3 | 1/4   | In progress | - |
 | 14. Manual Recovery Tool | v0.3 | 0/TBD | Not started | - |

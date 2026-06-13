@@ -421,3 +421,177 @@ describe("AccountConnection state machine", () => {
     expect(cleanedCount).toBeGreaterThanOrEqual(5);
   }, 30_000);
 });
+
+// ----------------------------------------------------------------------------
+// Phase 13 Plan 01 — HEALTH-02 lastErrorAt stamp + clear.
+// RED at Task 1 (field + accessors don't exist yet); GREEN at Task 2.
+// See 13-CONTEXT.md D-07 and 13-01-PLAN.md for the contract.
+// Accessors: getConnectedAt, getLastError, getLastErrorAt (camelCase internal —
+// snake_case only at the MCP tool boundary in Plan 13-02).
+// ----------------------------------------------------------------------------
+
+describe("HEALTH-02: lastErrorAt stamp + clear", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it("getConnectedAt() returns null before connect, returns a Date after successful connect()", async () => {
+    const { ImapFlow } = await import("imapflow");
+    const MockImapFlow = vi.mocked(ImapFlow);
+    MockImapFlow.mockImplementation(function () {
+      return makeMockClient();
+    });
+
+    const conn = new AccountConnection("test-account", makeAccountConfig());
+    expect(conn.getConnectedAt()).toBeNull();
+
+    await conn.connect();
+
+    expect(conn.getConnectedAt()).toBeInstanceOf(Date);
+  });
+
+  it("getLastError() returns null on successful connect (clears any previous value)", async () => {
+    const { ImapFlow } = await import("imapflow");
+    const MockImapFlow = vi.mocked(ImapFlow);
+    MockImapFlow.mockImplementation(function () {
+      return makeMockClient();
+    });
+
+    const conn = new AccountConnection("test-account", makeAccountConfig());
+    await conn.connect();
+
+    expect(conn.getLastError()).toBeNull();
+  });
+
+  it("getLastErrorAt() returns null on successful connect (clears any previous value)", async () => {
+    const { ImapFlow } = await import("imapflow");
+    const MockImapFlow = vi.mocked(ImapFlow);
+    MockImapFlow.mockImplementation(function () {
+      return makeMockClient();
+    });
+
+    const conn = new AccountConnection("test-account", makeAccountConfig());
+    await conn.connect();
+
+    expect(conn.getLastErrorAt()).toBeNull();
+  });
+
+  it("getLastError() returns ECONNRESET AND getLastErrorAt() returns a Date after initial-connect transient failure (probed mid-reconnect-loop before recovery)", async () => {
+    const { ImapFlow } = await import("imapflow");
+    const MockImapFlow = vi.mocked(ImapFlow);
+
+    // First call: reject with ECONNRESET. Second call onward: succeed.
+    let callIndex = 0;
+    MockImapFlow.mockImplementation(function () {
+      const isFirstAttempt = callIndex === 0;
+      callIndex++;
+      return makeMockClient({
+        connect: isFirstAttempt
+          ? () => Promise.reject(new Error("ECONNRESET"))
+          : () => Promise.resolve(),
+        usable: !isFirstAttempt,
+      });
+    });
+
+    const conn = new AccountConnection("test-account", makeAccountConfig());
+    // Don't await — we want to probe state mid-loop, before the second attempt succeeds.
+    const connectPromise = conn.connect();
+
+    // Let the first failed attempt run and stamp lastError + lastErrorAt.
+    await flushMicrotasks(10);
+
+    // At this point the reconnect loop is sleeping on the backoff (cap = 1000ms,
+    // full-jitter so 0..1000ms). lastError + lastErrorAt are stamped.
+    expect(conn.getLastError()).toBe("ECONNRESET");
+    expect(conn.getLastErrorAt()).toBeInstanceOf(Date);
+
+    // Drain — let the second attempt succeed so connect() resolves.
+    await vi.advanceTimersByTimeAsync(2_000);
+    await flushMicrotasks(20);
+    await connectPromise.catch(() => undefined);
+  }, 30_000);
+
+  it("lastErrorAt is stamped to a fresh Date on reconnect-loop transient failure", async () => {
+    const { ImapFlow } = await import("imapflow");
+    const MockImapFlow = vi.mocked(ImapFlow);
+
+    // First call succeeds (initial connect). Second call onward rejects.
+    let callIndex = 0;
+    MockImapFlow.mockImplementation(function () {
+      const isInitialConnect = callIndex === 0;
+      callIndex++;
+      return makeMockClient({
+        connect: isInitialConnect
+          ? () => Promise.resolve()
+          : () => Promise.reject(new Error("ETIMEDOUT")),
+        usable: isInitialConnect,
+      });
+    });
+
+    const conn = new AccountConnection("test-account", makeAccountConfig());
+    await conn.connect();
+
+    const status = conn.getStatus();
+    expect(status.kind).toBe("connected");
+    if (status.kind !== "connected") return;
+
+    // Trigger reconnect loop.
+    status.client.emit("close");
+    await flushMicrotasks(10);
+
+    // Drive past the first backoff sleep so the failed reconnect attempt runs.
+    await vi.advanceTimersByTimeAsync(2_000);
+    await flushMicrotasks(20);
+
+    // After the failed reconnect attempt, lastErrorAt is a fresh Date.
+    expect(conn.getLastErrorAt()).toBeInstanceOf(Date);
+
+    // Drain — the reconnect loop is unbounded; close out cleanly.
+    await conn.gracefulClose();
+    await flushMicrotasks(20);
+  }, 30_000);
+
+  it("lastErrorAt is cleared to null on successful reconnect", async () => {
+    const { ImapFlow } = await import("imapflow");
+    const MockImapFlow = vi.mocked(ImapFlow);
+
+    // Initial connect: succeed. First reconnect attempt: fail. Second reconnect attempt: succeed.
+    let callIndex = 0;
+    MockImapFlow.mockImplementation(function () {
+      const isFailure = callIndex === 1;
+      callIndex++;
+      return makeMockClient({
+        connect: isFailure
+          ? () => Promise.reject(new Error("ETIMEDOUT"))
+          : () => Promise.resolve(),
+        usable: !isFailure,
+      });
+    });
+
+    const conn = new AccountConnection("test-account", makeAccountConfig());
+    await conn.connect();
+
+    const status = conn.getStatus();
+    expect(status.kind).toBe("connected");
+    if (status.kind !== "connected") return;
+
+    // Trigger reconnect loop. Drive far enough for failure then success.
+    status.client.emit("close");
+
+    for (let i = 0; i < 3; i++) {
+      await flushMicrotasks(10);
+      await vi.advanceTimersByTimeAsync(3_000);
+    }
+    await flushMicrotasks(20);
+
+    // After successful reconnect, both fields are cleared.
+    expect(conn.getStatus().kind).toBe("connected");
+    expect(conn.getLastError()).toBeNull();
+    expect(conn.getLastErrorAt()).toBeNull();
+  }, 30_000);
+});
