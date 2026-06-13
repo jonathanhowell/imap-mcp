@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
-status: verifying
-stopped_at: Phase 13 context gathered — HEALTH-01..03 + CACHE-01/02 in scope; CACHE-03 deferred to v0.4+
-last_updated: "2026-06-12T11:56:06.122Z"
-last_activity: 2026-06-11
+status: executing
+stopped_at: "Plan 13-01 complete — internal health-field foundation shipped. Phase 13 progress: 1/4 plans. Next up: Plan 13-02 (list_accounts switch extension, HEALTH-02/03)."
+last_updated: "2026-06-13T08:45:00.000Z"
+last_activity: 2026-06-13
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 33
+  total_plans: 8
+  completed_plans: 5
+  percent: 38
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-08)
 
 **Core value:** An agent can reliably read, search, monitor, and tag email across multiple accounts — with the context it needs to act without guessing or re-fetching.
-**Current focus:** Phase 12 — connection-resilience-foundation
+**Current focus:** Phase 13 — health-surface-cache-improvements
 
 ## Current Position
 
 Milestone: **v0.3 Reliability & Cache Rethink**
 Phase: 13
-Plan: Not started
-Status: Phase 12 implementation done — 4/4 plans shipped. All 7 CONN requirements + D-12 cross-cutting handler have green automated tests. Full suite: 246/246. `tsc --noEmit` clean. Awaiting `/gsd:verify-work` (manual TCP-half-open / fatal-auth / multi-account-listener verifications per 12-VALIDATION.md).
-Last activity: 2026-06-11
+Plan: 13-01 complete; 13-02 next
+Status: Plan 13-01 shipped — internal health-field foundation. `AccountConnection.lastErrorAt` field (D-07) paired at all 4 stamp/clear sites; 3 accessors on `AccountConnection` (getConnectedAt/getLastError/getLastErrorAt); 3 delegating accessors on `ConnectionManager` (getLastConnectedAt/getLastError/getLastErrorAt, return null for unknown accounts). Full suite 258/258 green (+12 vs 246 baseline); `tsc --noEmit` clean. Commits: 53aee82 + aa28685 + 33147be.
+Last activity: 2026-06-13
 
-Progress: [███░░░░░░░] 33%
+Progress: [████░░░░░░] 38%
 
 ## Velocity Reference
 
@@ -48,6 +48,8 @@ Progress: [███░░░░░░░] 33%
 
 Full log in `.planning/PROJECT.md` Key Decisions table. Key v0.3 decisions:
 
+- **Plan 13-01 internal accessor pattern (D-07 ratified)**: `AccountConnection.lastErrorAt: Date | null` paired with `lastError` at all 4 stamp/clear sites (successful reconnect / reconnect failure / successful initial connect / initial connect failure). `ConnectionManager` exposes `getLastConnectedAt(id)` / `getLastError(id)` / `getLastErrorAt(id)` returning **null** for unknown accounts — distinct from `getStatus()`'s `{ error: string }` pattern because health fields are `Date | null` / `string | null` by design. JSDoc on both layers documents the T-12-09 / V5 ASVS sanitization contract Plan 13-02 must enforce (raw err.message returned by `getLastError(id)` is forbidden for the reconnecting branch at the MCP tool boundary). `AccountConnectionStatus` union unchanged — Plan 01 is purely additive.
+- **Plan 13-01 vitest mock-isolation pattern (auto-fixed)**: vitest 4's default config does not auto-clear `vi.mocked()` `mockImplementation` calls across describe blocks. A sticky failure-mode mock from an earlier describe (`ConnectionManager suspended state (CONN-03 / D-01)`) leaked into HEALTH-02 tests and caused 3 false RED-after-GREEN failures. Resolved by adding a `beforeEach` reset to clean default. Pattern documented in 13-01-SUMMARY.md `patterns-established` — Plans 13-02..13-04 inherit the awareness.
 - **State machine**: 5 named states — `connecting | connected | reconnecting | suspended | failed`. `suspended` is the fatal/non-retryable state (not `failed` with a boolean). `failed` reserved for edge cases like explicit operator stop. **OVERRIDDEN by Phase 12 D-01**: union reduces to 4 reachable states (drops `failed`); `humanReason` from Plan 12-02 supplies the `suspended.reason` string.
 - **Cache architecture**: Option A — keep and improve the polling cache. No IMAP IDLE adoption in v0.3 (dual-connection redesign is its own future milestone).
 - **`reconnect_account` tool**: Ships in v0.3 as Phase 14 — standalone phase, thin wrapper on Phase 12 state machine.
@@ -77,6 +79,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-06-12T11:56:06.119Z
-Stopped at: Phase 13 context gathered — HEALTH-01..03 + CACHE-01/02 in scope; CACHE-03 deferred to v0.4+
-Resume file: .planning/phases/13-health-surface-cache-improvements/13-CONTEXT.md
+Last session: 2026-06-13T08:45:00.000Z
+Stopped at: Plan 13-01 complete — internal health-field foundation (lastErrorAt + 6 new accessors + 12 new tests). Next up: Plan 13-02 (list_accounts switch extension — HEALTH-02 / HEALTH-03).
+Resume file: .planning/phases/13-health-surface-cache-improvements/13-01-SUMMARY.md
