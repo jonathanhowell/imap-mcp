@@ -3,7 +3,7 @@
 ## Current State
 
 **Shipped:** v0.2 Agent UX (2026-06-08)
-**Active:** v0.3 Reliability & Cache Rethink (started 2026-06-08) — Phase 12 (Connection Resilience Foundation) implementation complete (2026-06-11), pending real-network human UAT
+**Active:** v0.3 Reliability & Cache Rethink (started 2026-06-08) — Phase 12 (Connection Resilience Foundation) implementation complete (2026-06-11) + Phase 13 (Health Surface + Cache Improvements) complete (2026-06-13). Phase 14 (Manual Recovery Tool) next.
 
 Production-ready MCP server wrapping IMAP email providers. Agents get structured, normalized access across multiple accounts with the context they need to act without extra round-trips. v0.2 added rich message metadata (to/cc, display names, custom keywords), batch reads, body search, and a keyword-tagging system for tracking which messages an agent has already processed.
 
@@ -50,12 +50,13 @@ An agent can reliably read, search, monitor, and tag email across multiple accou
 - ✓ `list_messages.folder` defaults to INBOX, eliminating boilerplate from inbox calls — v0.2
 - ✓ Accounts auto-recover from transient network failures without server restart (unbounded jittered backoff) — v0.3 Phase 12 *(substrate verified; awaits real-network human UAT)*
 - ✓ Server distinguishes transient vs fatal account failures via pure-function classifier; fatal → suspended fast-path, transient → retry loop — v0.3 Phase 12 *(substrate verified; awaits real-network human UAT)*
+- ✓ Agents can query per-account health via `list_accounts` (status, `last_connected_at`, `last_error`, `last_error_at`, reconnecting `attempt`/`next_retry_at`); V5 ASVS-safe — raw `err.message` never echoed — v0.3 Phase 13
+- ✓ `get_new_mail` surfaces per-account cache freshness (`last_polled_at`, `cache_age_seconds`) and three stock-string error modes distinguishing cold-cache from reconnecting from suspended (no global cache-readiness gate) — v0.3 Phase 13
 
 ### Active
 
 **v0.3 milestone scope:**
-- [ ] Agents can query per-account health (connection status + last-error reason)
-- [ ] `get_new_mail` and poller cache architecture rethought based on domain research
+- [ ] Manual recovery: `reconnect_account` MCP tool wrapping Phase 12 state machine — v0.3 Phase 14
 
 **Deferred to later milestones:**
 - [ ] Agent can mark messages as read/unread (standard `\Seen` flag)
@@ -150,4 +151,4 @@ Outlook/Microsoft began deprecating Basic Auth for IMAP — documented in README
 </details>
 
 ---
-*Last updated: 2026-06-11 — Phase 12 (Connection Resilience Foundation) complete*
+*Last updated: 2026-06-13 — Phase 13 (Health Surface + Cache Improvements) complete*
