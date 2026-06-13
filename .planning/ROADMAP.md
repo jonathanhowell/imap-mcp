@@ -74,7 +74,7 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
 - [x] 13-01-PLAN.md — `AccountConnection.lastErrorAt` field + `ConnectionManager` health accessors (HEALTH-01/02/03) — completed 2026-06-13
 - [x] 13-02-PLAN.md — `list_accounts` switch extension: flat snake_case health fields, drop `detail`, V5 ASVS-safe reconnecting `last_error` (HEALTH-02/03)
 - [x] 13-03-PLAN.md — Per-account `Poller.lastPolledAt` Map + `getLastPolledAt` accessor (CACHE-01) — completed 2026-06-13
-- [ ] 13-04-PLAN.md — `get_new_mail` freshness block + D-14 three-error-string dispatch + remove `isCacheReady` gate (HEALTH-01/CACHE-02 + Success Criteria 2-3)
+- [x] 13-04-PLAN.md — `get_new_mail` freshness block + D-14 three-error-string dispatch + remove `isCacheReady` gate (HEALTH-01/CACHE-02 + Success Criteria 2-3) — completed 2026-06-13
 
 ### Phase 14: Manual Recovery Tool
 **Goal**: Agents can force-reconnect a `suspended` or stuck account after a user has fixed the underlying problem (wrong credentials, expired cert), without requiring a server restart
@@ -94,5 +94,5 @@ Full details: `.planning/milestones/v0.2-ROADMAP.md`
 | 1–6 (v0.1.0 phases) | v0.1.0 | 23/23 | Complete | 2026-03-11..2026-03-15 |
 | 7–11.1 (v0.2 phases) | v0.2 | 12/12 | Complete | 2026-03-15..2026-03-19 |
 | 12. Connection Resilience Foundation | v0.3 | 4/4 | Complete    | 2026-06-11 |
-| 13. Health Surface + Cache Improvements | v0.3 | 3/4 | In Progress|  |
+| 13. Health Surface + Cache Improvements | v0.3 | 4/4 | In Progress |  |
 | 14. Manual Recovery Tool | v0.3 | 0/TBD | Not started | - |

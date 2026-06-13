@@ -12,33 +12,8 @@ describe("GET_NEW_MAIL_TOOL schema", () => {
   });
 });
 
-describe("handleGetNewMail — cold cache", () => {
-  function makeMockPoller(overrides: {
-    isCacheReady?: () => boolean;
-    query?: (since: string, account?: string) => ReturnType<Poller["query"]>;
-  }) {
-    return {
-      isCacheReady: vi.fn(overrides.isCacheReady ?? (() => true)),
-      query: vi.fn(overrides.query ?? (() => ({ results: [] }))),
-    } as unknown as Poller;
-  }
-
-  it("returns isError true with agent-actionable message when cache is not ready", async () => {
-    const poller = makeMockPoller({ isCacheReady: () => false });
-    const result = await handleGetNewMail({ since: "2024-01-01T00:00:00Z" }, poller);
-    expect(result.isError).toBe(true);
-    expect(result.content).toEqual([
-      {
-        type: "text",
-        text: "Polling has not completed yet — no cached results available. Retry in ~5 minutes.",
-      },
-    ]);
-  });
-});
-
 describe("handleGetNewMail — cache ready, query delegation", () => {
   function makeMockPoller(overrides: {
-    isCacheReady?: () => boolean;
     query?: (
       since: string,
       account?: string,
@@ -46,8 +21,7 @@ describe("handleGetNewMail — cache ready, query delegation", () => {
     ) => ReturnType<Poller["query"]>;
   }) {
     return {
-      isCacheReady: vi.fn(overrides.isCacheReady ?? (() => true)),
-      query: vi.fn(overrides.query ?? (() => ({ results: [] }))),
+      query: vi.fn(overrides.query ?? (() => ({ results: [], freshness: {} }))),
     } as unknown as Poller;
   }
 
@@ -63,6 +37,7 @@ describe("handleGetNewMail — cache ready, query delegation", () => {
           account: "work",
         },
       ],
+      freshness: {},
     };
     const poller = makeMockPoller({ query: () => queryResult });
     const result = await handleGetNewMail({ since: "2024-01-01T00:00:00Z" }, poller);
@@ -83,7 +58,11 @@ describe("handleGetNewMail — cache ready, query delegation", () => {
   });
 
   it("returns isError false with JSON body when query returns partial errors", async () => {
-    const queryResult = { results: [], errors: { work: "unavailable" } };
+    const queryResult = {
+      results: [],
+      errors: { work: "unavailable" },
+      freshness: {},
+    };
     const poller = makeMockPoller({ query: () => queryResult });
     const result = await handleGetNewMail({ since: "2024-01-01T00:00:00Z" }, poller);
     expect(result.isError).toBe(false);
@@ -106,5 +85,48 @@ describe("handleGetNewMail — cache ready, query delegation", () => {
     const poller = makeMockPoller({});
     await handleGetNewMail({ since: "2024-01-01T00:00:00Z" }, poller);
     expect(poller.query).toHaveBeenCalledWith("2024-01-01T00:00:00Z", undefined, undefined);
+  });
+});
+
+describe("CACHE-02 / D-14: cold-cache returns errors not isError=true", () => {
+  function makeMockPoller(queryResult: ReturnType<Poller["query"]>) {
+    return {
+      query: vi.fn(() => queryResult),
+    } as unknown as Poller;
+  }
+
+  it("cold cache scenario returns isError: false with the cold-cache error string in JSON body", async () => {
+    const queryResult = {
+      results: [],
+      errors: { acctA: "no cache yet — polling has not completed" },
+      freshness: { acctA: { last_polled_at: null, cache_age_seconds: null } },
+    };
+    const poller = makeMockPoller(queryResult);
+    const result = await handleGetNewMail({ since: "2024-01-01T00:00:00Z" }, poller);
+    expect(result.isError).toBe(false);
+    const parsed = JSON.parse((result.content[0] as { text: string }).text);
+    expect(parsed.errors.acctA).toBe("no cache yet — polling has not completed");
+  });
+
+  it("response always carries a `freshness` key even when all accounts are healthy", async () => {
+    const queryResult = {
+      results: [
+        {
+          uid: 1,
+          from: "x@y.com",
+          subject: "hello",
+          date: "2026-06-13T08:00:00Z",
+          unread: false,
+          account: "acctA",
+        },
+      ],
+      freshness: { acctA: { last_polled_at: "2026-06-13T08:00:00.000Z", cache_age_seconds: 60 } },
+    } as unknown as ReturnType<Poller["query"]>;
+    const poller = makeMockPoller(queryResult);
+    const result = await handleGetNewMail({ since: "2024-01-01T00:00:00Z" }, poller);
+    expect(result.isError).toBe(false);
+    const parsed = JSON.parse((result.content[0] as { text: string }).text);
+    expect(parsed.freshness).toBeDefined();
+    expect(parsed.freshness.acctA.last_polled_at).toBe("2026-06-13T08:00:00.000Z");
   });
 });

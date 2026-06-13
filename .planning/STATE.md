@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
-status: "Wave 2 half complete — Plan 13-02 shipped (HEALTH-02 / HEALTH-03 list_accounts surface + D-03 detail removal + T-13-03 V5 ASVS guard on reconnecting branch). Plan 13-04 (CACHE-02 freshness + cold-cache distinction) in flight in parallel worktree. Full suite 272/272; tsc --noEmit clean."
-stopped_at: Plan 13-02 shipped — Wave 2 half complete. Plan 13-04 (get_new_mail freshness — CACHE-02) in flight in parallel worktree.
-last_updated: "2026-06-13T08:59:03.070Z"
+status: verifying
+stopped_at: "Phase 13 implementation complete — all 4 plans shipped (Wave 1: 13-01 + 13-03; Wave 2: 13-02 + 13-04). Running phase verification next."
+last_updated: "2026-06-13T09:00:00.000Z"
 last_activity: 2026-06-13
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 7
-  percent: 88
+  completed_plans: 8
+  percent: 100
 ---
 
 # Project State
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 Milestone: **v0.3 Reliability & Cache Rethink**
 Phase: 13
-Plan: Wave 2 half complete — Plan 13-02 shipped; Plan 13-04 in flight in parallel worktree.
-Status: Wave 1 shipped (13-01 + 13-03). Plan 13-02 shipped (HEALTH-02 / HEALTH-03): `list_accounts` now carries flat snake_case `last_connected_at` / `last_error` / `last_error_at` on every entry (D-02); reconnecting branch additionally carries `attempt` + `next_retry_at` and hardcodes `last_error: null` per T-13-03 / V5 ASVS (the raw `err.message` stamped on the reconnecting status object is never echoed); suspended surfaces `humanReason()`'s stock string verbatim; the legacy `detail` field is fully removed (D-03 breaking change). Full suite 272/272; `tsc --noEmit` clean. Plan 13-04 (CACHE-02 freshness + per-account cold-cache distinction) is the last Wave 2 deliverable.
+Plan: Phase 13 implementation complete — all 4 plans shipped (Wave 1: 13-01 + 13-03; Wave 2: 13-02 + 13-04).
+Status: All Phase 13 plans shipped. Plan 13-02: `list_accounts` flat snake_case `last_connected_at`/`last_error`/`last_error_at` (D-02) + reconnecting `attempt`/`next_retry_at` with `last_error: null` (T-13-03 V5 ASVS) + suspended `humanReason()` stock string + legacy `detail` field removed (D-03). Plan 13-04: `get_new_mail` top-level `freshness:{}` map (CACHE-02 / D-08-D-10) with `last_polled_at` + `cache_age_seconds` + three D-14 stock-string error prefixes (cold-cache / reconnecting / suspended) dispatched per account + global `isCacheReady()` removed (Pitfall 3 complete). HEALTH-01/02/03 + CACHE-01/02 all delivered. Phase verification next.
 Last activity: 2026-06-13
 
-Progress: [█████████░] 88%
+Progress: [██████████] 100%
 
 ## Velocity Reference
 
@@ -62,6 +62,7 @@ Full log in `.planning/PROJECT.md` Key Decisions table. Key v0.3 decisions:
 - **RESEARCH Assumption A5 corrected (Plan 12-04)**: imapflow 1.4.0 STILL does NOT export `AuthenticationFailure` at the top level (the class lives in `lib/tools.js` and is never re-exported from `lib/imap-flow.js`). The classifier's `isAuthenticationFailure(err)` now uses a marker-property fallback (`err.authenticationFailed === true`) — the constructor sets this property on every instance internally, so the classifier is robust regardless of the top-level export. Both the typed-instanceof AND marker-property paths classify as fatal.
 - **Plan 13-03 shipped (CACHE-01)**: Poller's global `lastPollTime: Date | null` replaced with per-account `lastPolledAt: Map<string, Date | null>` (D-11). New public `getLastPolledAt(accountId)` accessor (D-12). Per-account seed-vs-incremental decision (D-13). The stamp `this.lastPolledAt.set(accountId, new Date())` is the LAST statement of `pollAccount`'s success path (after `mergeIntoCache`) — Pitfall 2 guard verified by a RED test that mocks `searchMessages` to reject and asserts `getLastPolledAt` stays `null`. `isCacheReady()` deliberately kept (rewired to scan the Map) — Plan 13-04 removes it atomically with the `handleGetNewMail` cold-cache gate. Full suite: 251/251 (246 baseline + 5 new CACHE-01). `tsc --noEmit` clean.
 - **Plan 13-02 shipped (HEALTH-02 / HEALTH-03)**: `list_accounts` MCP response now carries flat snake_case `last_connected_at` / `last_error` / `last_error_at` on every entry (D-02), with the legacy `detail` field fully removed (D-03 breaking change). Reconnecting branch additionally carries `attempt` + `next_retry_at` (ISO from `status.nextRetryAt`); `last_error` is hardcoded `null` per T-13-03 / V5 ASVS — the raw `err.message` stamped on the reconnecting status object (which may include `auth.user` / transport details) is NEVER echoed to agents. Suspended branch surfaces `humanReason()`'s stock string verbatim. Pattern established: when grep tokens (`grep -c 'detail'`, `grep -c 'status\\.lastError'`) are acceptance criteria as regression guards, source comments must also respect them — auto-fixed Rule 1 reformulated security/breaking-change comments to convey the same information without the literal tokens, preserving the grep-zero guard. Full suite 272/272 (+9 new HEALTH-02/03 tests vs. 263 Wave 1 baseline); `tsc --noEmit` clean. CHANGELOG follow-up needed at milestone ship per D-18.
+- **Plan 13-04 shipped (CACHE-02 / HEALTH-01 / D-08-D-17)**: `get_new_mail` response gets a top-level `freshness:{}` map keyed by account_id with `last_polled_at` (ISO 8601 or null) and `cache_age_seconds` (server-computed via `Date.now()` at response-build time, or null when never polled). Three D-14 stable stock-string error prefixes distinguish the failure modes by exact-prefix match: `"no cache yet — polling has not completed"` (connected + no prior poll), `"account reconnecting (attempt N)"` (reconnecting OR connecting — connecting maps to attempt-1), `"account suspended: <reason>"` (V5 ASVS: uses `status.reason` from `humanReason()` ONLY — `manager.getLastError(id)` is NEVER consulted by the dispatch; verified by a regression test that seeds a raw err.message with `ECONNRESET` and an email address and asserts neither appears in the output). Global `isCacheReady()` gone from production AND test code (Pitfall 3 complete; `grep -rc isCacheReady src/ tests/` → 0). D-15 partial-results policy enforced at the handler level: `isError: false` universally, per-account errors land in the JSON body. D-16 single-account shape parity: querying for one unhealthy account returns the multi-account shape with one entry per field. Handler body reduced to 2 statements. Full suite: 271/271 (263 baseline + 8 new D-14 + CACHE-02). `tsc --noEmit` clean.
 - Carried from v0.2: `formatAddress` is canonical `Name <addr>` formatter; `{account_id, uid}` is globally unique message ref.
 
 ### Blockers/Concerns
@@ -81,6 +82,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-06-13T08:58:54.322Z
-Stopped at: Plan 13-02 shipped — Wave 2 half complete. Plan 13-04 (get_new_mail freshness — CACHE-02) in flight in parallel worktree.
-Resume file: .planning/phases/13-health-surface-cache-improvements/13-02-SUMMARY.md
+Last session: 2026-06-13T09:00:00.000Z
+Stopped at: Phase 13 implementation complete (4/4 plans). Phase verification next via gsd-verifier.
+Resume file: .planning/phases/13-health-surface-cache-improvements/13-04-SUMMARY.md

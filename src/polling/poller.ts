@@ -1,7 +1,11 @@
 import { ConnectionManager } from "../connections/index.js";
 import { searchMessages } from "../services/search-service.js";
 import { logger } from "../logger.js";
-import type { MultiAccountMessageHeader, MultiAccountResult } from "../types.js";
+import type {
+  AccountFreshness,
+  GetNewMailResult,
+  MultiAccountMessageHeader,
+} from "../types.js";
 
 /**
  * Poller manages background IMAP polling and an in-memory cache of recent messages.
@@ -47,68 +51,119 @@ export class Poller {
   }
 
   /**
-   * DEPRECATED — Plan 13-04 removes this method together with the
-   * handleGetNewMail global gate. Returns true once at least one account
-   * has been successfully polled. Per-account freshness is the new
-   * contract (see getLastPolledAt).
-   */
-  isCacheReady(): boolean {
-    for (const v of this.lastPolledAt.values()) {
-      if (v !== null) return true;
-    }
-    return false;
-  }
-
-  /**
    * D-12 / CACHE-01: per-account poll-time read path. Returns null when
    * the account has never been successfully polled (initial state, OR
    * account has been registered but always-skipped due to non-connected
-   * status). Used by handleGetNewMail (Plan 13-04) to build the
-   * `freshness:{}` block.
+   * status). Used by `query()` to build the `freshness:{}` block.
    */
   getLastPolledAt(accountId: string): Date | null {
     return this.lastPolledAt.get(accountId) ?? null;
   }
 
   /**
-   * Query cached messages that arrived after `since`.
+   * Query cached messages that arrived after `since`. Returns a
+   * `GetNewMailResult` whose shape is:
+   *
+   * ```
+   * {
+   *   results: MultiAccountMessageHeader[],
+   *   errors?: Record<accountId, stockErrorString>,
+   *   freshness: Record<accountId, { last_polled_at, cache_age_seconds }>
+   * }
+   * ```
+   *
+   * The `freshness` block is ALWAYS present (D-08 / D-09 — explicit nulls
+   * for never-polled accounts; never an absent key).
+   *
+   * D-14 per-account error dispatch:
+   *   - `connected` + no prior poll → `errors[id] = "no cache yet — polling has not completed"`
+   *   - `reconnecting` → `errors[id] = "account reconnecting (attempt N)"`
+   *   - `connecting` → `errors[id] = "account reconnecting (attempt 1)"` (functionally indistinguishable for the agent)
+   *   - `suspended` → `errors[id] = "account suspended: <status.reason>"`
+   *     (`status.reason` is the stock string from `humanReason()` — NEVER
+   *     `err.message`. V5 ASVS / T-12-09).
+   *   - `connected` + has prior poll → cached results pushed (D-15
+   *     partial-results policy).
+   *
    * @param since ISO 8601 timestamp — return messages with internalDate after this time.
    * @param account Account name from config. Omit to query all accounts.
    * @param excludeKeywords Exclude messages that have any of these custom IMAP keywords set (case-insensitive).
    */
-  query(
-    since: string,
-    account?: string,
-    excludeKeywords?: string[]
-  ): MultiAccountResult<MultiAccountMessageHeader> {
+  query(since: string, account?: string, excludeKeywords?: string[]): GetNewMailResult {
     const sinceTime = new Date(since).getTime() || 0;
     const accountIds = account ? [account] : this.manager.getAccountIds();
+    const nowMs = Date.now();
 
     const results: MultiAccountMessageHeader[] = [];
     const errors: Record<string, string> = {};
+    const freshness: Record<string, AccountFreshness> = {};
 
     for (const id of accountIds) {
+      // D-08 / D-09 / D-10: build freshness for every account in scope,
+      // regardless of healthy/error mode. last_polled_at uses the per-account
+      // map; cache_age_seconds is server-computed using Date.now() to avoid
+      // client clock skew (D-10).
+      const lastPolled = this.lastPolledAt.get(id) ?? null;
+      freshness[id] = {
+        last_polled_at: lastPolled?.toISOString() ?? null,
+        cache_age_seconds:
+          lastPolled === null ? null : Math.floor((nowMs - lastPolled.getTime()) / 1000),
+      };
+
+      // D-14: per-account error dispatch.
+      const status = this.manager.getStatus(id);
+      if ("error" in status) {
+        // Unknown account — preserve existing semantics.
+        errors[id] = status.error;
+        continue;
+      }
+      if (status.kind === "suspended") {
+        // V5 ASVS: status.reason is the stock string from humanReason() — SAFE.
+        errors[id] = `account suspended: ${status.reason}`;
+        continue;
+      }
+      if (status.kind === "reconnecting") {
+        errors[id] = `account reconnecting (attempt ${status.attempt})`;
+        continue;
+      }
+      if (status.kind === "connecting") {
+        // Functionally indistinguishable from attempt-1 reconnect for the agent
+        // (cache unavailable, transient). Reuses the same stock prefix so
+        // D-14 stays at exactly three enumerated prefixes.
+        errors[id] = `account reconnecting (attempt 1)`;
+        continue;
+      }
+      // status.kind === "connected" — check whether we have a poll yet.
+      if (lastPolled === null) {
+        errors[id] = "no cache yet — polling has not completed";
+        continue;
+      }
+      // D-15: connected + has prior poll → push cached results normally.
       const entries = this.cache.get(id);
       if (entries === undefined) {
         errors[id] = "account not found in cache";
-      } else {
-        const filtered = entries.filter(
-          (m) =>
-            (new Date(m.date).getTime() || 0) > sinceTime &&
-            (excludeKeywords === undefined ||
-              excludeKeywords.length === 0 ||
-              !(m.keywords ?? []).some((mk) =>
-                excludeKeywords.some((ek) => mk.toLowerCase() === ek.toLowerCase())
-              ))
-        );
-        results.push(...filtered);
+        continue;
       }
+      const filtered = entries.filter(
+        (m) =>
+          (new Date(m.date).getTime() || 0) > sinceTime &&
+          (excludeKeywords === undefined ||
+            excludeKeywords.length === 0 ||
+            !(m.keywords ?? []).some((mk) =>
+              excludeKeywords.some((ek) => mk.toLowerCase() === ek.toLowerCase())
+            ))
+      );
+      results.push(...filtered);
     }
 
     // Sort newest-first
     results.sort((a, b) => (new Date(b.date).getTime() || 0) - (new Date(a.date).getTime() || 0));
 
-    return Object.keys(errors).length > 0 ? { results, errors } : { results };
+    // D-08: freshness is ALWAYS present. errors is only present when non-empty
+    // to keep parity with existing search-service shape (D-17).
+    return Object.keys(errors).length > 0
+      ? { results, errors, freshness }
+      : { results, freshness };
   }
 
   private async runLoop(): Promise<void> {

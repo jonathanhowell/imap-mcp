@@ -41,25 +41,19 @@ export const GET_NEW_MAIL_TOOL: Tool = {
 /**
  * Handle the get_new_mail MCP tool call.
  *
- * Cache-only: delegates to `poller.query()` and never touches IMAP.
- * Returns a cold-cache error if the initial poll has not yet completed.
+ * Cache-only: delegates to `poller.query()` and never touches IMAP. The
+ * returned shape is `GetNewMailResult` which always includes a
+ * `freshness:{}` block and may include `errors:{}` per account. Cold-
+ * cache, reconnecting, and suspended accounts surface as entries in
+ * `errors:{}` with stable D-14 stock-string prefixes — the handler
+ * returns isError: false in all such cases (D-15 partial-results
+ * policy). Agents distinguish the three modes by matching on the
+ * leading prefix of each errors entry.
  */
 export async function handleGetNewMail(
   params: GetNewMailParams,
   poller: Poller
 ): Promise<ToolResult> {
-  if (!poller.isCacheReady()) {
-    return {
-      isError: true,
-      content: [
-        {
-          type: "text",
-          text: "Polling has not completed yet — no cached results available. Retry in ~5 minutes.",
-        },
-      ],
-    };
-  }
-
   const result = poller.query(params.since, params.account, params.exclude_keywords);
   return {
     isError: false,

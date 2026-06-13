@@ -110,17 +110,11 @@ describe("Poller", () => {
     vi.restoreAllMocks();
   });
 
-  it("Test 1: isCacheReady() returns false before any poll", () => {
-    const poller = new Poller(makeMockManager());
-    expect(poller.isCacheReady()).toBe(false);
-  });
-
-  it("Test 2: isCacheReady() returns true after first poll completes", async () => {
-    const manager = makeMockManager();
-    const poller = new Poller(manager);
-    await runOnePoll(poller);
-    expect(poller.isCacheReady()).toBe(true);
-  });
+  // Tests 1+2 (legacy global cache-readiness check) replaced by the CACHE-01
+  // describe block below ("CACHE-01: per-account lastPolledAt") which tests
+  // getLastPolledAt(id) — the per-account replacement. The legacy global
+  // method is removed entirely in Plan 13-04 along with the handleGetNewMail
+  // global cold-cache gate.
 
   it("Test 3: start() calls searchMessages for each account immediately", async () => {
     const manager = makeMockManager(["acct1", "acct2"]);
@@ -763,6 +757,213 @@ describe("Poller", () => {
       const acctBAge = now - acctBSince;
       expect(acctBAge).toBeGreaterThan(29 * 24 * 60 * 60 * 1000);
       expect(acctBAge).toBeLessThan(31 * 24 * 60 * 60 * 1000);
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // Phase 13 / D-14 — per-account error-string dispatch in poller.query().
+  // RED at the start of Plan 13-04 Task 1: query() does not consult
+  // manager.getStatus() yet. Plan 13-04 Task 2 (GREEN) turns these green.
+  // --------------------------------------------------------------------------
+  describe("D-14: query() per-account error strings", () => {
+    /**
+     * Build a manager mock whose getStatus() returns the supplied status per
+     * accountId. Each account also has its own seedable getLastError so the
+     * V5 ASVS regression test can prove the dispatch never reads raw err.message.
+     */
+    function makeStatusAwareManager(
+      statuses: Record<
+        string,
+        {
+          kind: string;
+          client?: unknown;
+          attempt?: number;
+          nextRetryAt?: Date;
+          lastError?: string;
+          reason?: string;
+          since?: Date;
+        }
+      >,
+      lastErrors: Record<string, string> = {}
+    ): ConnectionManager {
+      return {
+        getAccountIds: vi.fn().mockReturnValue(Object.keys(statuses)),
+        getStatus: vi.fn().mockImplementation((id: string) => statuses[id]),
+        getClient: vi.fn().mockImplementation((id: string) => {
+          const status = statuses[id];
+          if (status.kind === "connected") return status.client ?? { mailbox: "INBOX" };
+          return { error: `account "${id}" is ${status.kind}` };
+        }),
+        getLastError: vi.fn().mockImplementation((id: string) => lastErrors[id] ?? null),
+      } as unknown as ConnectionManager;
+    }
+
+    it("connected account with null lastPolledAt produces 'no cache yet — polling has not completed' error", () => {
+      const manager = makeStatusAwareManager({
+        acctA: { kind: "connected", client: { mailbox: "INBOX" } },
+      });
+      const poller = new Poller(manager);
+      const result = poller.query(new Date(0).toISOString(), "acctA");
+      expect(result.errors?.acctA).toBe("no cache yet — polling has not completed");
+      expect(result.results.length).toBe(0);
+    });
+
+    it("reconnecting account produces 'account reconnecting (attempt N)' error with exact attempt", () => {
+      const manager = makeStatusAwareManager({
+        acctA: {
+          kind: "reconnecting",
+          attempt: 7,
+          nextRetryAt: new Date(),
+          lastError: "ECONNRESET",
+        },
+      });
+      const poller = new Poller(manager);
+      const result = poller.query(new Date(0).toISOString(), "acctA");
+      expect(result.errors?.acctA).toBe("account reconnecting (attempt 7)");
+    });
+
+    it("suspended account produces 'account suspended: <status.reason>' error from stock string", () => {
+      const manager = makeStatusAwareManager({
+        acctA: {
+          kind: "suspended",
+          reason: "Authentication failed — fix credentials",
+          since: new Date(),
+        },
+      });
+      const poller = new Poller(manager);
+      const result = poller.query(new Date(0).toISOString(), "acctA");
+      expect(result.errors?.acctA).toBe(
+        "account suspended: Authentication failed — fix credentials"
+      );
+    });
+
+    it("V5 ASVS: suspended error string must use status.reason from humanReason, NOT a raw err.message", () => {
+      // Seed status.reason with a stock string AND manager.getLastError with a raw err.message
+      // that contains a credential. The dispatch must surface the stock string ONLY.
+      const manager = makeStatusAwareManager(
+        {
+          acctA: {
+            kind: "suspended",
+            reason: "Authentication failed — fix credentials",
+            since: new Date(),
+          },
+        },
+        { acctA: "ECONNRESET 192.168.5.5 auth=me@example.com" }
+      );
+      const poller = new Poller(manager);
+      const result = poller.query(new Date(0).toISOString(), "acctA");
+      expect(result.errors?.acctA).toContain("Authentication failed — fix credentials");
+      expect(result.errors?.acctA).not.toContain("ECONNRESET");
+      expect(result.errors?.acctA).not.toContain("me@example.com");
+    });
+
+    it("partial-results: connected acctA with prior poll returns its results; reconnecting acctB returns errors entry", () => {
+      const manager = makeStatusAwareManager({
+        acctA: { kind: "connected", client: { mailbox: "INBOX" } },
+        acctB: {
+          kind: "reconnecting",
+          attempt: 3,
+          nextRetryAt: new Date(),
+          lastError: "ECONNRESET",
+        },
+      });
+      const poller = new Poller(manager);
+      // Seed acctA with one cached message past `since` AND a non-null lastPolledAt.
+      const entry = {
+        uid: 1,
+        from: "a@b.com",
+        subject: "hi",
+        date: "2024-01-01T00:00:00Z",
+        unread: false,
+        folder: "INBOX",
+        account: "acctA",
+      };
+      (poller as unknown as Record<string, unknown>)["cache"] = new Map([["acctA", [entry]]]);
+      const lpa = new Map<string, Date | null>();
+      lpa.set("acctA", new Date());
+      (poller as unknown as Record<string, unknown>)["lastPolledAt"] = lpa;
+
+      const result = poller.query(new Date(0).toISOString());
+      expect(result.results.length).toBe(1);
+      expect(result.results[0].uid).toBe(1);
+      expect(result.errors?.acctB).toMatch(/^account reconnecting \(attempt /);
+      expect(result.errors?.acctA).toBeUndefined();
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // Phase 13 / CACHE-02 — freshness block in poller.query() return.
+  // RED at the start of Plan 13-04 Task 1: query() returns
+  // MultiAccountResult, not GetNewMailResult (no freshness key). Plan 13-04
+  // Task 2 (GREEN) turns these green.
+  // --------------------------------------------------------------------------
+  describe("CACHE-02: freshness block", () => {
+    function makeStatusAwareManager(
+      statuses: Record<string, { kind: string; client?: unknown }>
+    ): ConnectionManager {
+      return {
+        getAccountIds: vi.fn().mockReturnValue(Object.keys(statuses)),
+        getStatus: vi.fn().mockImplementation((id: string) => statuses[id]),
+        getClient: vi.fn().mockImplementation((id: string) => {
+          const status = statuses[id];
+          if (status.kind === "connected") return status.client ?? { mailbox: "INBOX" };
+          return { error: `account "${id}" is ${status.kind}` };
+        }),
+      } as unknown as ConnectionManager;
+    }
+
+    it("result.freshness is always present (D-08 / D-09) — even when all accounts healthy", () => {
+      const manager = makeStatusAwareManager({
+        acctA: { kind: "connected", client: { mailbox: "INBOX" } },
+      });
+      const poller = new Poller(manager);
+      const lpa = new Map<string, Date | null>();
+      lpa.set("acctA", new Date());
+      (poller as unknown as Record<string, unknown>)["lastPolledAt"] = lpa;
+      (poller as unknown as Record<string, unknown>)["cache"] = new Map([["acctA", []]]);
+      const result = poller.query(new Date(0).toISOString());
+      expect(result.freshness).toBeDefined();
+      expect(result.freshness.acctA).toBeDefined();
+    });
+
+    it("freshness[acctA].last_polled_at is the ISO string of the stamped Date", () => {
+      const manager = makeStatusAwareManager({
+        acctA: { kind: "connected", client: { mailbox: "INBOX" } },
+      });
+      const poller = new Poller(manager);
+      const stampedDate = new Date("2026-06-12T08:51:33Z");
+      const lpa = new Map<string, Date | null>();
+      lpa.set("acctA", stampedDate);
+      (poller as unknown as Record<string, unknown>)["lastPolledAt"] = lpa;
+      (poller as unknown as Record<string, unknown>)["cache"] = new Map([["acctA", []]]);
+      const result = poller.query(new Date(0).toISOString());
+      expect(result.freshness.acctA.last_polled_at).toBe("2026-06-12T08:51:33.000Z");
+    });
+
+    it("freshness[acctA] = { last_polled_at: null, cache_age_seconds: null } when never polled (D-09)", () => {
+      const manager = makeStatusAwareManager({
+        acctA: { kind: "connected", client: { mailbox: "INBOX" } },
+      });
+      const poller = new Poller(manager);
+      // Note: lastPolledAt Map exists but acctA has no entry → null
+      const result = poller.query(new Date(0).toISOString());
+      expect(result.freshness.acctA.last_polled_at).toBeNull();
+      expect(result.freshness.acctA.cache_age_seconds).toBeNull();
+    });
+
+    it("cache_age_seconds is server-computed at query-build time using Date.now() — D-10", () => {
+      const manager = makeStatusAwareManager({
+        acctA: { kind: "connected", client: { mailbox: "INBOX" } },
+      });
+      vi.setSystemTime(new Date("2026-06-13T09:05:00Z"));
+      const poller = new Poller(manager);
+      const stamped = new Date("2026-06-13T09:00:00Z"); // 5 min = 300 s earlier
+      const lpa = new Map<string, Date | null>();
+      lpa.set("acctA", stamped);
+      (poller as unknown as Record<string, unknown>)["lastPolledAt"] = lpa;
+      (poller as unknown as Record<string, unknown>)["cache"] = new Map([["acctA", []]]);
+      const result = poller.query(new Date(0).toISOString());
+      expect(result.freshness.acctA.cache_age_seconds).toBe(300);
     });
   });
 });
