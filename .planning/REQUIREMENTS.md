@@ -21,14 +21,14 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 
 ### Account Health Surface
 
-- [ ] **HEALTH-01**: Account status type adds a `suspended` variant distinct from existing states, indicating fatal/non-retryable failure.
+- [x] **HEALTH-01**: Account status type adds a `suspended` variant distinct from existing states, indicating fatal/non-retryable failure. *(Done — Phase 12 introduced the `suspended` variant; Plan 13-04 made it observable in `get_new_mail` via the `"account suspended: <reason>"` stock-string error.)*
 - [ ] **HEALTH-02**: `list_accounts` response includes per-account health fields: `status`, `last_error`, `last_error_at`, `last_connected_at`.
 - [ ] **HEALTH-03**: Health metadata is detailed enough for an agent to explain to a user *why* an account is unavailable (e.g. distinguish "retrying after network drop" from "credentials need to be fixed").
 
 ### Cache Improvements
 
 - [x] **CACHE-01**: Poller cache tracks `last_polled_at` per account (replacing the current global timestamp). *(Done — Plan 13-03)*
-- [ ] **CACHE-02**: `get_new_mail` response exposes `last_polled_at` and `cache_age_seconds` per account so agents can reason about freshness.
+- [x] **CACHE-02**: `get_new_mail` response exposes `last_polled_at` and `cache_age_seconds` per account so agents can reason about freshness. *(Done — Plan 13-04)*
 
 ### Manual Recovery
 
@@ -84,11 +84,11 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 | CONN-05 | Phase 12 | Pending |
 | CONN-06 | Phase 12 | Pending |
 | CONN-07 | Phase 12 | Done (Plan 12-04, commit 2077988) |
-| HEALTH-01 | Phase 13 | Pending |
+| HEALTH-01 | Phase 13 | Done (Plan 13-04, commit 9309811) |
 | HEALTH-02 | Phase 13 | Pending |
 | HEALTH-03 | Phase 13 | Pending |
 | CACHE-01 | Phase 13 | Done (Plan 13-03, commit 0474625) |
-| CACHE-02 | Phase 13 | Pending |
+| CACHE-02 | Phase 13 | Done (Plan 13-04, commit 9309811) |
 | CACHE-03 | Deferred (v0.4+) | Deferred 2026-06-12 — in-memory cache dies with process |
 | RECONN-01 | Phase 14 | Pending |
 | RECONN-02 | Phase 14 | Pending |

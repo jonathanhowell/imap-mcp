@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
 status: executing
-stopped_at: "Wave 1 complete — Plans 13-01 (health accessors) + 13-03 (per-account lastPolledAt) shipped. Wave 2 next: Plans 13-02 + 13-04."
-last_updated: "2026-06-13T08:48:30.000Z"
+stopped_at: "Plan 13-04 complete — get_new_mail freshness block + D-14 per-account error dispatch + isCacheReady gate removal shipped. Phase 13 implementation done (4/4 plans). Awaiting Plan 13-02 (Wave 2 sibling — list_accounts health surface). Once 13-02 lands, /gsd:verify-work on Phase 13."
+last_updated: "2026-06-13T08:59:20.000Z"
 last_activity: 2026-06-13
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
-  percent: 75
+  completed_plans: 7
+  percent: 87
 ---
 
 # Project State
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 Milestone: **v0.3 Reliability & Cache Rethink**
 Phase: 13
-Plan: Wave 1 complete (13-01 + 13-03); Wave 2 next (13-02 + 13-04)
-Status: Wave 1 shipped in parallel worktrees. Plan 13-01 — internal health-field foundation: `AccountConnection.lastErrorAt` (D-07), 3 accessors on AccountConnection + 3 delegating accessors on ConnectionManager. Plan 13-03 — per-account `lastPolledAt: Map<string, Date | null>` (D-11/CACHE-01), `getLastPolledAt(accountId)` (D-12), per-account seed-vs-incremental (D-13), Pitfall-2-safe stamp ordering. Full suite passing; `tsc --noEmit` clean. Wave 2 unlocked.
+Plan: 13-04 shipped (Wave 2); 13-02 (Wave 2 sibling — list_accounts health surface) still in progress
+Status: Plan 13-04 — `get_new_mail` per-account `freshness:{}` block (CACHE-02 / D-08-D-10), three D-14 stock-string error prefixes (`no cache yet`, `account reconnecting (attempt N)`, `account suspended: <reason>`) dispatched per account inside `Poller.query()` via `manager.getStatus(id)`, global `isCacheReady()` gate removed from both Poller and handleGetNewMail (Pitfall 3 complete). HEALTH-01 observable in get_new_mail surface; V5 ASVS preserved (suspended branch reads `status.reason` from `humanReason()` only — raw err.message never surfaced). D-15 partial-results policy: handler always returns `isError: false`. Full suite: 271/271 (263 baseline + 8 new). `tsc --noEmit` clean.
 Last activity: 2026-06-13
 
-Progress: [███████░░░] 75%
+Progress: [█████████░] 87%
 
 ## Velocity Reference
 
@@ -61,6 +61,7 @@ Full log in `.planning/PROJECT.md` Key Decisions table. Key v0.3 decisions:
 - **Phase 12 complete (Plan 12-04)**: CONN-07 + D-12 + final CONN-01 scaffold all green. `src/process-handlers.ts` (NEW) exports `installUnhandledRejectionHandler(log?: Logger = logger)`; called as the first line of `main()`. Poller `pollAccount()` consults `manager.getStatus()` before any IMAP work; non-connected status → quiet `return` with throttled `debug` log via `skipLoggedThisCycle: Set<string>` cleared every cycle. `imapflow ^1.2.13 → ^1.3.7` (resolves to 1.4.0); the typed-intersection workaround in `buildClient` is no longer strictly required (kept as-is — a future hygiene plan can drop it).
 - **RESEARCH Assumption A5 corrected (Plan 12-04)**: imapflow 1.4.0 STILL does NOT export `AuthenticationFailure` at the top level (the class lives in `lib/tools.js` and is never re-exported from `lib/imap-flow.js`). The classifier's `isAuthenticationFailure(err)` now uses a marker-property fallback (`err.authenticationFailed === true`) — the constructor sets this property on every instance internally, so the classifier is robust regardless of the top-level export. Both the typed-instanceof AND marker-property paths classify as fatal.
 - **Plan 13-03 shipped (CACHE-01)**: Poller's global `lastPollTime: Date | null` replaced with per-account `lastPolledAt: Map<string, Date | null>` (D-11). New public `getLastPolledAt(accountId)` accessor (D-12). Per-account seed-vs-incremental decision (D-13). The stamp `this.lastPolledAt.set(accountId, new Date())` is the LAST statement of `pollAccount`'s success path (after `mergeIntoCache`) — Pitfall 2 guard verified by a RED test that mocks `searchMessages` to reject and asserts `getLastPolledAt` stays `null`. `isCacheReady()` deliberately kept (rewired to scan the Map) — Plan 13-04 removes it atomically with the `handleGetNewMail` cold-cache gate. Full suite: 251/251 (246 baseline + 5 new CACHE-01). `tsc --noEmit` clean.
+- **Plan 13-04 shipped (CACHE-02 / HEALTH-01 / D-08-D-17)**: `get_new_mail` response gets a top-level `freshness:{}` map keyed by account_id with `last_polled_at` (ISO 8601 or null) and `cache_age_seconds` (server-computed via `Date.now()` at response-build time, or null when never polled). Three D-14 stable stock-string error prefixes distinguish the failure modes by exact-prefix match: `"no cache yet — polling has not completed"` (connected + no prior poll), `"account reconnecting (attempt N)"` (reconnecting OR connecting — connecting maps to attempt-1), `"account suspended: <reason>"` (V5 ASVS: uses `status.reason` from `humanReason()` ONLY — `manager.getLastError(id)` is NEVER consulted by the dispatch; verified by a regression test that seeds a raw err.message with `ECONNRESET` and an email address and asserts neither appears in the output). Global `isCacheReady()` gone from production AND test code (Pitfall 3 complete; `grep -rc isCacheReady src/ tests/` → 0). D-15 partial-results policy enforced at the handler level: `isError: false` universally, per-account errors land in the JSON body. D-16 single-account shape parity: querying for one unhealthy account returns the multi-account shape with one entry per field. Handler body reduced to 2 statements. Full suite: 271/271 (263 baseline + 8 new D-14 + CACHE-02). `tsc --noEmit` clean.
 - Carried from v0.2: `formatAddress` is canonical `Name <addr>` formatter; `{account_id, uid}` is globally unique message ref.
 
 ### Blockers/Concerns
@@ -80,6 +81,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-06-13T08:48:30.000Z
-Stopped at: Wave 1 complete — Plans 13-01 + 13-03 shipped in parallel; Wave 2 (Plans 13-02, 13-04) starting next.
-Resume file: .planning/phases/13-health-surface-cache-improvements/13-01-SUMMARY.md, .planning/phases/13-health-surface-cache-improvements/13-03-SUMMARY.md
+Last session: 2026-06-13T08:59:20.000Z
+Stopped at: Plan 13-04 complete — get_new_mail freshness block + D-14 per-account error dispatch + isCacheReady gate removal. HEALTH-01 + CACHE-02 marked done in REQUIREMENTS.md. Plan 13-02 (Wave 2 sibling — list_accounts health surface) still in progress in its own worktree. Once 13-02 lands, full Phase 13 implementation is complete and /gsd:verify-work can run.
+Resume file: .planning/phases/13-health-surface-cache-improvements/13-04-SUMMARY.md
