@@ -22,8 +22,8 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 ### Account Health Surface
 
 - [ ] **HEALTH-01**: Account status type adds a `suspended` variant distinct from existing states, indicating fatal/non-retryable failure.
-- [ ] **HEALTH-02**: `list_accounts` response includes per-account health fields: `status`, `last_error`, `last_error_at`, `last_connected_at`.
-- [ ] **HEALTH-03**: Health metadata is detailed enough for an agent to explain to a user *why* an account is unavailable (e.g. distinguish "retrying after network drop" from "credentials need to be fixed").
+- [x] **HEALTH-02**: `list_accounts` response includes per-account health fields: `status`, `last_error`, `last_error_at`, `last_connected_at`.
+- [x] **HEALTH-03**: Health metadata is detailed enough for an agent to explain to a user *why* an account is unavailable (e.g. distinguish "retrying after network drop" from "credentials need to be fixed").
 
 ### Cache Improvements
 
@@ -85,8 +85,8 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 | CONN-06 | Phase 12 | Pending |
 | CONN-07 | Phase 12 | Done (Plan 12-04, commit 2077988) |
 | HEALTH-01 | Phase 13 | Pending |
-| HEALTH-02 | Phase 13 | Pending |
-| HEALTH-03 | Phase 13 | Pending |
+| HEALTH-02 | Phase 13 | Complete |
+| HEALTH-03 | Phase 13 | Complete |
 | CACHE-01 | Phase 13 | Done (Plan 13-03, commit 0474625) |
 | CACHE-02 | Phase 13 | Pending |
 | CACHE-03 | Deferred (v0.4+) | Deferred 2026-06-12 — in-memory cache dies with process |
