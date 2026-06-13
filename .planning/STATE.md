@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.3
 milestone_name: Reliability & Cache Rethink
 status: executing
-stopped_at: "Plan 13-01 complete — internal health-field foundation shipped. Phase 13 progress: 1/4 plans. Next up: Plan 13-02 (list_accounts switch extension, HEALTH-02/03)."
-last_updated: "2026-06-13T08:45:00.000Z"
+stopped_at: "Wave 1 complete — Plans 13-01 (health accessors) + 13-03 (per-account lastPolledAt) shipped. Wave 2 next: Plans 13-02 + 13-04."
+last_updated: "2026-06-13T08:48:30.000Z"
 last_activity: 2026-06-13
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
-  percent: 38
+  completed_plans: 6
+  percent: 75
 ---
 
 # Project State
@@ -27,11 +27,11 @@ See: .planning/PROJECT.md (updated 2026-06-08)
 
 Milestone: **v0.3 Reliability & Cache Rethink**
 Phase: 13
-Plan: 13-01 complete; 13-02 next
-Status: Plan 13-01 shipped — internal health-field foundation. `AccountConnection.lastErrorAt` field (D-07) paired at all 4 stamp/clear sites; 3 accessors on `AccountConnection` (getConnectedAt/getLastError/getLastErrorAt); 3 delegating accessors on `ConnectionManager` (getLastConnectedAt/getLastError/getLastErrorAt, return null for unknown accounts). Full suite 258/258 green (+12 vs 246 baseline); `tsc --noEmit` clean. Commits: 53aee82 + aa28685 + 33147be.
+Plan: Wave 1 complete (13-01 + 13-03); Wave 2 next (13-02 + 13-04)
+Status: Wave 1 shipped in parallel worktrees. Plan 13-01 — internal health-field foundation: `AccountConnection.lastErrorAt` (D-07), 3 accessors on AccountConnection + 3 delegating accessors on ConnectionManager. Plan 13-03 — per-account `lastPolledAt: Map<string, Date | null>` (D-11/CACHE-01), `getLastPolledAt(accountId)` (D-12), per-account seed-vs-incremental (D-13), Pitfall-2-safe stamp ordering. Full suite passing; `tsc --noEmit` clean. Wave 2 unlocked.
 Last activity: 2026-06-13
 
-Progress: [████░░░░░░] 38%
+Progress: [███████░░░] 75%
 
 ## Velocity Reference
 
@@ -60,6 +60,7 @@ Full log in `.planning/PROJECT.md` Key Decisions table. Key v0.3 decisions:
 - **AccountConnection refactor shipped (Plan 12-03)**: CONN-02, CONN-03, CONN-04, CONN-05, CONN-06 all green. 4-state union (`connecting | connected | reconnecting | suspended`) with `failed` removed entirely. `shouldLogAttempt` cadence pinned to `1, 2, 3, 5, 10, 20, 40, 80, 160, …` (doubling starts at 5; CONTEXT.md D-14 at face value). `buildClient` socketOptions uses a typed intersection (not `as any`) because imapflow 1.2.13's TS declarations omit the field — Plan 04's ^1.3.7 bump drops the intersection. 5 tsc errors now surface in `src/connections/connection-manager.ts` and `src/tools/list-accounts.ts` — these are the intended Plan 04 migration TODO list.
 - **Phase 12 complete (Plan 12-04)**: CONN-07 + D-12 + final CONN-01 scaffold all green. `src/process-handlers.ts` (NEW) exports `installUnhandledRejectionHandler(log?: Logger = logger)`; called as the first line of `main()`. Poller `pollAccount()` consults `manager.getStatus()` before any IMAP work; non-connected status → quiet `return` with throttled `debug` log via `skipLoggedThisCycle: Set<string>` cleared every cycle. `imapflow ^1.2.13 → ^1.3.7` (resolves to 1.4.0); the typed-intersection workaround in `buildClient` is no longer strictly required (kept as-is — a future hygiene plan can drop it).
 - **RESEARCH Assumption A5 corrected (Plan 12-04)**: imapflow 1.4.0 STILL does NOT export `AuthenticationFailure` at the top level (the class lives in `lib/tools.js` and is never re-exported from `lib/imap-flow.js`). The classifier's `isAuthenticationFailure(err)` now uses a marker-property fallback (`err.authenticationFailed === true`) — the constructor sets this property on every instance internally, so the classifier is robust regardless of the top-level export. Both the typed-instanceof AND marker-property paths classify as fatal.
+- **Plan 13-03 shipped (CACHE-01)**: Poller's global `lastPollTime: Date | null` replaced with per-account `lastPolledAt: Map<string, Date | null>` (D-11). New public `getLastPolledAt(accountId)` accessor (D-12). Per-account seed-vs-incremental decision (D-13). The stamp `this.lastPolledAt.set(accountId, new Date())` is the LAST statement of `pollAccount`'s success path (after `mergeIntoCache`) — Pitfall 2 guard verified by a RED test that mocks `searchMessages` to reject and asserts `getLastPolledAt` stays `null`. `isCacheReady()` deliberately kept (rewired to scan the Map) — Plan 13-04 removes it atomically with the `handleGetNewMail` cold-cache gate. Full suite: 251/251 (246 baseline + 5 new CACHE-01). `tsc --noEmit` clean.
 - Carried from v0.2: `formatAddress` is canonical `Name <addr>` formatter; `{account_id, uid}` is globally unique message ref.
 
 ### Blockers/Concerns
@@ -79,6 +80,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-06-13T08:45:00.000Z
-Stopped at: Plan 13-01 complete — internal health-field foundation (lastErrorAt + 6 new accessors + 12 new tests). Next up: Plan 13-02 (list_accounts switch extension — HEALTH-02 / HEALTH-03).
-Resume file: .planning/phases/13-health-surface-cache-improvements/13-01-SUMMARY.md
+Last session: 2026-06-13T08:48:30.000Z
+Stopped at: Wave 1 complete — Plans 13-01 + 13-03 shipped in parallel; Wave 2 (Plans 13-02, 13-04) starting next.
+Resume file: .planning/phases/13-health-surface-cache-improvements/13-01-SUMMARY.md, .planning/phases/13-health-surface-cache-improvements/13-03-SUMMARY.md

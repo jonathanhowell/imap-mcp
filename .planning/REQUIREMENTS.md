@@ -27,7 +27,7 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 
 ### Cache Improvements
 
-- [ ] **CACHE-01**: Poller cache tracks `last_polled_at` per account (replacing the current global timestamp).
+- [x] **CACHE-01**: Poller cache tracks `last_polled_at` per account (replacing the current global timestamp). *(Done — Plan 13-03)*
 - [ ] **CACHE-02**: `get_new_mail` response exposes `last_polled_at` and `cache_age_seconds` per account so agents can reason about freshness.
 
 ### Manual Recovery
@@ -87,7 +87,7 @@ For prior milestones see `.planning/milestones/v0.1.0-REQUIREMENTS.md` and `.pla
 | HEALTH-01 | Phase 13 | Pending |
 | HEALTH-02 | Phase 13 | Pending |
 | HEALTH-03 | Phase 13 | Pending |
-| CACHE-01 | Phase 13 | Pending |
+| CACHE-01 | Phase 13 | Done (Plan 13-03, commit 0474625) |
 | CACHE-02 | Phase 13 | Pending |
 | CACHE-03 | Deferred (v0.4+) | Deferred 2026-06-12 — in-memory cache dies with process |
 | RECONN-01 | Phase 14 | Pending |
