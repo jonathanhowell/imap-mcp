@@ -12,8 +12,6 @@
  * messages).
  */
 
-import { AuthenticationFailure } from "imapflow";
-
 export type ErrorClass = "transient" | "fatal";
 
 /**
@@ -55,33 +53,15 @@ const TLS_FAILED_REASON = "TLS certificate validation failed";
 const GENERIC_FALLBACK_REASON = "Connection failed (see logs for details)";
 
 /**
- * Detect an imapflow `AuthenticationFailure` error.
- *
- * Two checks (either passes → fatal):
- *
- * 1. `err instanceof AuthenticationFailure` — preferred typed check. imapflow's
- *    TypeScript declarations export the class but the published CJS module
- *    does NOT re-export it from the top-level entry (`lib/imap-flow.js`).
- *    The class is buried in `lib/tools.js` and never surfaces on the
- *    `imapflow` module's named exports. Verified empirically on `^1.2.13`,
- *    `^1.3.7`, and `^1.4.0`. The `typeof === "function"` guard keeps the
- *    classifier crash-free on every version (without it,
- *    `instanceof <undefined>` throws `TypeError`).
- *
- * 2. `err.authenticationFailed === true` — the marker property the
- *    `AuthenticationFailure` constructor sets on every instance
- *    (`class AuthenticationFailure extends Error { authenticationFailed = true; }`
- *    in `imapflow/lib/tools.js`). This is the canonical runtime detection
- *    path when the class itself isn't exported from the top level.
- *    Phase 12 Plan 04 added this fallback after confirming the constructor
- *    is still unexported on imapflow ^1.4.0 (RESEARCH Assumption A5 was
- *    wrong about the ^1.3.7 export — corrected here).
+ * Detect an imapflow `AuthenticationFailure` error via the marker property
+ * the constructor sets on every instance (`authenticationFailed = true` —
+ * verified in `imapflow/lib/tools.js`). The class is NOT exported from the
+ * top-level entry on any tested version (^1.2.13, ^1.3.7, ^1.4.0), so an
+ * `import { AuthenticationFailure } from "imapflow"` crashes Node's native
+ * ESM loader at module load. The marker property is the canonical runtime
+ * detection path.
  */
 function isAuthenticationFailure(err: unknown): boolean {
-  if (typeof AuthenticationFailure === "function" && err instanceof AuthenticationFailure) {
-    return true;
-  }
-  // Marker-property fallback — survives imapflow's lack of top-level export.
   if (typeof err === "object" && err !== null) {
     const flag = (err as { authenticationFailed?: unknown }).authenticationFailed;
     if (flag === true) {
@@ -116,8 +96,7 @@ function readStringField(err: unknown, field: string): string | undefined {
  * kills an account.
  */
 export function classifyConnectionError(err: unknown): ErrorClass {
-  // D-05 #1 — typed AuthenticationFailure (guarded for runtime safety on
-  // imapflow 1.2.x; see isAuthenticationFailure docstring).
+  // D-05 #1 — AuthenticationFailure (marker-property detection; see docstring).
   if (isAuthenticationFailure(err)) {
     return "fatal";
   }

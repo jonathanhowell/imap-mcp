@@ -1,35 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { classifyConnectionError, humanReason } from "../../src/connections/error-classifier.js";
-import { AuthenticationFailure } from "imapflow";
-
-// Phase 12 Wave 0 scaffolds for CONN-01.
-// These tests are intentionally red — `src/connections/error-classifier.ts` does not yet
-// exist. Plan 02 creates the module and drives every assertion below green.
 
 describe("classifyConnectionError", () => {
   describe("classifies fatal sources: AuthenticationFailure instance", () => {
-    it("returns 'fatal' for an AuthenticationFailure instance", () => {
-      // imapflow 1.2.13 declares AuthenticationFailure in its .d.ts but does NOT
-      // export it from JS — Plan 04 will bump to ^1.3.7 which fixes the runtime
-      // export. Until then we construct a stand-in via Object.setPrototypeOf or
-      // — when even that fails — fall back to the marker property the classifier
-      // also checks (`authenticationFailed: true`).
-      let err: unknown;
-      if (typeof AuthenticationFailure === "function") {
-        try {
-          err = new AuthenticationFailure("auth failed");
-        } catch {
-          const base = new Error("auth failed");
-          if (AuthenticationFailure.prototype) {
-            Object.setPrototypeOf(base, AuthenticationFailure.prototype);
-          }
-          err = base;
-        }
-      } else {
-        // Wave 0 / pre-Plan-04 fallback: imapflow class not yet exported at runtime.
-        // Use the marker property `authenticationFailed: true` (matches the .d.ts shape).
-        err = Object.assign(new Error("auth failed"), { authenticationFailed: true });
-      }
+    it("returns 'fatal' for an AuthenticationFailure-shaped error", () => {
+      // imapflow does NOT export `AuthenticationFailure` from its top-level
+      // entry (verified on ^1.2.13, ^1.3.7, ^1.4.0) — see error-classifier.ts.
+      // The marker property `authenticationFailed: true` is the runtime contract.
+      const err = Object.assign(new Error("auth failed"), { authenticationFailed: true });
       expect(classifyConnectionError(err)).toBe("fatal");
     });
   });

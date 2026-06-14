@@ -12,16 +12,7 @@ vi.mock("imapflow", () => {
       usable: true,
     });
   });
-  // Phase 12 Plan 04: error-classifier.ts imports `AuthenticationFailure`
-  // at module load time. Vitest 4's strict module-mock factory throws
-  // (`No "AuthenticationFailure" export is defined on the "imapflow" mock`)
-  // when the classifier's `isAuthenticationFailure(err)` evaluates `typeof
-  // AuthenticationFailure`. Stub the class so `typeof === "function"` is
-  // true and downstream `instanceof` checks return false for our non-
-  // AuthenticationFailure mock errors. This mirrors the same stub added in
-  // tests/connections/account-connection.test.ts during Plan 12-03.
-  class MockAuthenticationFailure extends Error {}
-  return { ImapFlow: MockImapFlow, AuthenticationFailure: MockAuthenticationFailure };
+  return { ImapFlow: MockImapFlow };
 });
 
 import { ConnectionManager } from "../../src/connections/connection-manager.js";

@@ -24,14 +24,7 @@ vi.mock("imapflow", () => {
   const MockImapFlow = vi.fn(function () {
     return makeMockClient();
   });
-  // The error-classifier imports `AuthenticationFailure` and probes it via
-  // `typeof AuthenticationFailure === "function"`. Vitest's strict module mock
-  // throws if any property NOT listed here is accessed at runtime, so we must
-  // declare it explicitly. A stub class is sufficient — the classifier just
-  // needs the `typeof === "function"` guard to evaluate, and the tests in this
-  // file never construct an AuthenticationFailure instance.
-  class MockAuthenticationFailure extends Error {}
-  return { ImapFlow: MockImapFlow, AuthenticationFailure: MockAuthenticationFailure };
+  return { ImapFlow: MockImapFlow };
 });
 
 import { AccountConnection } from "../../src/connections/account-connection.js";
@@ -566,9 +559,7 @@ describe("HEALTH-02: lastErrorAt stamp + clear", () => {
       const isFailure = callIndex === 1;
       callIndex++;
       return makeMockClient({
-        connect: isFailure
-          ? () => Promise.reject(new Error("ETIMEDOUT"))
-          : () => Promise.resolve(),
+        connect: isFailure ? () => Promise.reject(new Error("ETIMEDOUT")) : () => Promise.resolve(),
         usable: !isFailure,
       });
     });
